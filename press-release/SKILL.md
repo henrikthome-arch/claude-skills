@@ -322,6 +322,7 @@ Update the CR's MAR Assessment section (or the launch folder's `02-mar-assessmen
 - [ ] **Folder name reflects firm T0 date** (e.g. `2026-05-15-mobile-public-beta` not `2026-05-08-mobile-public-beta`). Rename only after all internal cross-references are updated.
 - [ ] **All numbered derivations in the launch folder re-derived against current `10-press-release-sv.md` and `00-story.md`** (per Step 7.6). No derivation carries an earlier-iteration headline, date, time, framing word ("Release N" vs "first public beta"), CEO quote wording, or key fact. This includes — at minimum — `11-hub-post.md`, `12-linkedin-ceo.md`, `13-linkedin-co.md`, `14-x.md`, `20-customer-email.md`, `21-in-app-banner.md`, `50-internal-slack.md`, `60-app-store-copy.md`, and **`99-cision-paste.html`** (the actual Cision-paste artifact — its H1 and dateline must match `10-press-release-sv.md` exactly). Re-derive from scratch per derivation; do not search-and-replace.
 - [ ] **Step 7.7 Swedish grammar-pass executed** on all Swedish quote blocks + every post-Step-3-gate body-prose edit. Any flagged issues fixed before save. Skip only if entire body has been re-polished via Step 2 Tier 1 since last edit AND zero issues were flagged in that polish. Don't ship Swedish quotes that haven't been grammar-validated since their last edit — Claude's Swedish blind spot is documented (CLAUDE.md rule 9) and Claude-agent reviewers share it.
+- [ ] **Step 7.8 source-grounding check executed** on every new claim / customer-benefit assertion / descriptive characterization introduced into body or quote AFTER Step 3 score gate. Each new content element traces to master story (`00-story.md`) sourcing-block, customer-vinkel paragraph, or `Numbers och claims (sourcing rules)`. Ungrounded claims dropped or escalated to CEO before ship. **GPT-5 consultation outputs especially**: if GPT-5 bundled a content rewrite with a grammar fix, the content rewrite is validated separately against master sourcing — do not adopt as a package.
 - [ ] **`01-checklist.md` carries no open "date sweep" / "headline sweep" / "framing sweep" warning.** If any such warning is open, the press release is not ready to ship — clear the warning by completing the sweep, or escalate to CEO.
 - [ ] **Brief handoffs (`30-blog-brief.md`, `31-help-brief.md`) point downstream owners at current framing.** Each brief explicitly references `10-press-release-sv.md` as the source of truth so sonetel.com / CS draft against the current text, not an earlier iteration.
 - [ ] EN-spegel `10-press-release-en.md` translated from final SV; numbers and facts identical.
@@ -430,6 +431,63 @@ Otherwise, run the grammar-pass. The marginal cost is ~$0.01–0.05 per call.
 
 **Hard-learned 2026-05-16:** CEO Henrik caught *"innebär lägre kostnader och enklare vardag"* — missing indefinite article "en" before "enklare vardag" (countable singular noun in parallel construction with plural "kostnader"). The bug had survived iterations 14 (Tier 1 GPT polish focused on different reformulations), 15 (board-feedback CR on §3), 16 (chair-feedback CR on headline + §3 + §4), and 17 (chair text-edit on §1). Four iterations, multiple Step 3 agent reviews, two audit cycles — none caught it because Claude-agents share Claude's Swedish blind spot. GPT-5 caught it on first focused grammar-pass. Step 7.7 now codifies focused grammar-pass on every Swedish quote block + every post-Step-3-edit before final pre-publish sign-off.
 
+### Step 7.8 — Source-grounding check on post-Step-3 substance edits (MANDATORY pre-publish gate)
+
+**🚨 Step 7.7 fixed Swedish grammar bugs. Step 7.8 fixes UNGROUNDED CLAIMS that slip in via chair/board feedback adoption, GPT-5 consultation outputs, or Claude analytical tweaks AFTER the Step 3 score gate.**
+
+The Step 3 investor-lens review validates the draft against master-story sourcing. But after Step 3 closes, every subsequent iteration (chair feedback, board feedback, CEO edits, GPT-5 consultation passes) introduces new content that has **not** been re-validated against master sourcing. Without an explicit gate, ungrounded claims can survive into ship-text — especially when bundled inside an edit that *also* fixes a real issue (e.g., a grammar fix that arrives bundled with a content rewrite).
+
+**Trigger: any new claim, customer-benefit assertion, descriptive characterization, or factual statement introduced into the body or quote AFTER Step 3 score gate.** Includes:
+
+1. **Chair / board / CEO feedback adoption** — when feedback introduces a new claim (not just word-substitution of an existing claim).
+2. **GPT-5 consultation outputs** — when GPT-5 (called for grammar or voice polish) bundles a content rewrite with its grammar fix. **Isolate the grammar fix; reject or separately-validate the content rewrite.**
+3. **Pattern A re-brief** — any new content emerging from a re-brief cycle.
+4. **Claude analytical "improvements"** — synonyms-with-different-meaning, "more concrete" substitutions, tightening that changes the underlying claim.
+
+**For each new content element, the check:**
+
+1. **Identify the claim** — what is being asserted (substantive customer benefit / factual descriptor / forward-looking statement)?
+2. **Trace to source** — search master story (`00-story.md`) for:
+   - `Varför nyheten är viktig — kund-vinkel` section (customer-side benefits)
+   - `Vad som lanseras` section (capability claims)
+   - `Numbers och claims (sourcing rules)` block (numeric / factual claims)
+   - `Vokabulär-check` lead-with list (approved framing terms)
+3. **Verdict**:
+   - **Found in master with source** → claim is grounded; can stay.
+   - **Found in master but unsourced** → flag to CEO; do not ship until source confirmed.
+   - **Not found in master** → **drop the claim, replace with grounded equivalent, OR escalate to CEO** for a documented source-of-record decision.
+
+**Hard rule: no unsourced claims ship.** Even if:
+- (a) GPT-5 suggested it — GPT-5 has no master-story context and recommends B2B-best-practice prose, not Sonetel-specific validated claims.
+- (b) CEO appeared to approve via "OK. update" — that approval is scope-bound to whatever was *explicitly presented* for approval; bundled side-effects (content rewrites tucked inside grammar fixes) require their own explicit sign-off.
+- (c) The formulation reads convincingly — convincing-prose is exactly the failure mode (it slips past Claude-agent reviewers who don't trace claims to source).
+
+**GPT-5 consultation prompt template addendum (when calling for PR work):**
+
+When calling `~/.claude/scripts/openai_call.py` for any press-release Swedish prose work, include the master story sourcing rules in the system prompt so GPT-5 doesn't suggest ungrounded content:
+
+```
+KONTEKST FÖR FÖRSLAG:
+- Master story sourcing-block: [paste 00-story.md "Numbers och claims (sourcing rules)" + "Varför nyheten är viktig — kund-vinkel"]
+- Begränsning: alla föreslagna kundnyttor / påståenden måste spåra till master story. Föreslå inte content som inte finns där. Om grammatik-fix kräver omformulering: fixa bara grammatiken, ändra inte sakinnehållet.
+```
+
+This prevents GPT-5 from bundling content rewrites with grammar fixes (Lesson 31).
+
+**Decision rule — when can you skip Step 7.8?**
+
+Skip only when the post-Step-3 edits are **either**:
+- Pure deletions (no new content introduced), **or**
+- CEO-supplied verbatim swaps where the new prose is CEO-authored (not Claude- or GPT-authored) AND the swap doesn't introduce a new claim type.
+
+Otherwise, run Step 7.8.
+
+**When to run:** between Step 7.7 (Swedish grammar pass) and Step 7 final pre-publish checklist sign-off. The pre-publish checklist verifies this step was executed.
+
+**Hard-learned 2026-05-16:** Iteration 18 of the Sonetel mobile-app PR. CEO Henrik caught a Swedish grammar bug in the CEO quote (missing indefinite article "en" before "enklare vardag"). Claude consulted GPT-5 per CLAUDE.md rule 9. GPT-5's response bundled the grammar fix with a content rewrite suggesting "mindre administration" as a more concrete B2B benefit. Claude presented GPT-5's full rewrite as "better than the chair-strict alternatives" without verifying that "administration" traces to master-story customer-benefit sourcing. Henrik approved with "OK. uppdatera" — but the approval was scope-bound to the grammar fix, not the bundled content rewrite. Two iterations later (iter-20), Henrik caught the ungrounded claim: *"Vad syftar 'mindre administration' på? Varje påstående måste vara grundat."* Reverted to chair-supplied "en enklare vardag" with grammar fix preserved.
+
+Step 7.8 codifies the gate that should have caught this in iteration 18: when GPT-5 returns a content rewrite bundled with a grammar fix, isolate them — take the grammar fix, validate or reject the content rewrite separately against master-story sourcing.
+
 ### Step 8 — Publish
 
 - Henrik (or Henrik with Niklas's coordination) publishes via Cision UI.
@@ -515,3 +573,16 @@ Otherwise, run the grammar-pass. The marginal cost is ~$0.01–0.05 per call.
 29. **Headline propagation to four surface locations is not enough — every numbered derivation in the launch folder also needs re-derivation.** Hard-learned 2026-05-14 (same day as lesson 27): Step 7.5 was added to propagate the final headline to four canonical surface locations (`10-press-release-*.md`, `00-story.md` Slutgodkänd, `ir_calendar.json`, bilingual HTML calendar summaries). That fix was incomplete. An audit of the mobile-public-beta launch folder later that day found **9 of 13 derivations still stale** after two retones (CEO master-story rewrite 2026-05-12 + headline change 2026-05-14): wrong H1 + wrong date in `99-cision-paste.html` (THE Cision artifact), wrong "Release 2" framing in all four social derivations (`11`, `12`, `13`, `14`), wrong subject + body in `20-customer-email.md` + `21-in-app-banner.md`, wrong T0 in `50-internal-slack.md`, wrong "Release 2" in `60-app-store-copy.md`. CEO's verdict: *"Skill needs updating to not leave such mess behind."* Step 7.6 now codifies the per-derivation re-derivation gate — re-read master + PR, re-express each derivation from scratch (do NOT search-and-replace, framing isn't always carried by a single quotable string), treat `01-checklist.md` open warnings as STOP signals, and don't ship until every numbered derivation in the folder reflects the current PR. Process docs (`00-story.md`, `01-checklist.md`, `02-mar-decision.md`, brief handoffs) are out of scope for re-derivation — they record process, not ship copy.
 
 30. **Step 2 Tier 1 GPT polish doesn't carry forward to subsequent iterations — Swedish grammar bugs survive across cycles unless explicitly re-polished.** Hard-learned 2026-05-16: CEO Henrik caught *"innebär lägre kostnader och enklare vardag"* — missing indefinite article "en" before "enklare vardag" (countable singular noun in parallel construction with plural "kostnader"). The bug had survived four iterations: iteration 14 (Tier 1 GPT polish; that polish-pass focused on different reformulations and didn't word-for-word scrutinise this sentence), iteration 15 (board-feedback CR on §3 — quote untouched), iteration 16 (chair-feedback CR on headline + §3 + §4 — quote untouched), iteration 17 (chair text-edit on §1 — quote untouched). Each iteration modified other parts of the file but left the CEO quote frozen at its iteration-14 state. Step 3 investor-lens agents + audit agents are Claude models with the same Swedish blind spot per CLAUDE.md rule 9 — they can verify MAR/voice/framing but not catch missing articles, broken parallel constructions, or genus/numerus errors. **Lesson 12 ("Pattern B narrow") covered Claude-formulated new prose; it didn't cover Claude-formulated old prose that survives iterations untouched.** Step 7.7 now codifies a focused GPT-5 grammar-pass on every Swedish quote block + every post-Step-3-edit Swedish body-prose line before save. The marginal cost is ~$0.01–0.05 per call; the cost of a published grammar bug in a CEO quote is far higher. **Trust GPT-5 for Swedish grammar verification, not Claude or Claude-agent reviewers.**
+
+31. **GPT-5 consultations bundle content rewrites with grammar fixes — isolate them.** Hard-learned 2026-05-16: Same Sonetel mobile-app PR. After Lesson 30 surfaced the grammar bug, Claude consulted GPT-5 per Step 7.7 / Lesson 30 protocol. GPT-5's response bundled the grammar fix with a content rewrite suggesting *"mindre administration"* as a more concrete B2B customer benefit. Claude presented GPT-5's full rewrite as "better than the chair-strict alternatives" without verifying that "administration" traces to master-story customer-benefit sourcing. CEO Henrik approved via *"OK. uppdatera"* — interpreted by Claude as approval of GPT-5's helversion, but the approval was scope-bound to the grammar fix. The bundled content rewrite slipped past. Two iterations later, Henrik caught it: *"Vad syftar 'mindre administration' på? Varje påstående måste vara grundat."* Master story `Varför nyheten är viktig — kund-vinkel` lists four concrete customer benefits — none about administrative burden. Ungrounded claim reverted in iteration 20 to chair-supplied *"en enklare vardag"* with grammar fix preserved.
+
+   Diagnosis: GPT-5 has no master-story context. Its recommendations are B2B-best-practice prose, not Sonetel-specific validated claims. When called for grammar/voice polish, GPT-5 may bundle a content rewrite alongside the grammar fix. The skill author must:
+   - **Isolate the grammar fix** — take only the article correction / parallel-construction fix / genus correction.
+   - **Validate or reject the content rewrite separately** against master story sourcing.
+   - **Never present a bundled GPT-5 helversion as "better" without source-grounding check** on the new content elements.
+
+   **CEO marginal-discipline**: "OK. uppdatera" is approval of *what was explicitly presented for approval*. If Claude presents a helversion that includes both a grammar fix and a content rewrite, CEO approval is bound to whichever element CEO was focused on (the grammar bug, in this case). Bundled side-effects require their own explicit sign-off. Surface the marginal: "Note: GPT-5 bundled a content rewrite — would you like the grammar fix only, or both?"
+
+   **GPT-5 prompt template addition** when calling for PR work: include the master story sourcing-block in the system prompt so GPT-5 doesn't suggest ungrounded content. Template at Step 7.8.
+
+   Step 7.8 now codifies the source-grounding gate that should have caught this in iteration 18: every new claim post-Step-3 traces to master story OR is dropped. **Trust GPT-5 for Swedish grammar (per Lesson 30); do NOT trust GPT-5 (or anyone) for Sonetel-specific claim sourcing. The master story is the only source.**

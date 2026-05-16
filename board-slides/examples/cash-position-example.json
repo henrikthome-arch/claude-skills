@@ -1,0 +1,45 @@
+{
+  "period_label": "EOM Cash Position · Nov 2025 – Apr 2026",
+  "currency": "SEK",
+  "trend": [
+    {"month": "2025-11", "value": 517766},
+    {"month": "2025-12", "value": 61058},
+    {"month": "2026-01", "value": -576604},
+    {"month": "2026-02", "value": -621768},
+    {"month": "2026-03", "value": -650434},
+    {"month": "2026-04", "value": -755967}
+  ],
+  "april_change_msek": -0.11,
+  "april_drivers": [
+    {
+      "label": "Skatteverket MOSS/OSS Q1 EU VAT",
+      "amount_sek": -206000,
+      "note": "Quarterly EU VAT payment (Jan/Apr/Jul/Oct). Apr 2026 actual: 18,714 EUR ~206K SEK. Grows with EU revenue; largest non-recurring April outflow."
+    },
+    {
+      "label": "Forvis Mazars annual audit fee (a conto)",
+      "amount_sek": -100000,
+      "note": "Annual audit fee, a conto invoice booked April only. Recurring payment id 46 (annual_month=4). Slutfaktura 35.5K hits May."
+    },
+    {
+      "label": "G&W Certified Advisor quarterly fee",
+      "amount_sek": -34500,
+      "note": "Certified Advisor (Nasdaq First North) quarterly fee, hits Jan/Apr/Jul/Oct (quarter_months=1,4,7,10). Non-recurring vs monthly run-rate."
+    }
+  ],
+  "_metadata": {
+    "source_endpoints": [
+      "GET /api/v1/cash-position/{YYYY-MM} (Nov 2025 – Apr 2026)",
+      "GET /api/v1/cash-flow/recurring (annual_month=4 and quarter_months containing 4)",
+      "GET /api/v1/cash-flow/forecast (top_cost_items confirm April actuals via descriptions)"
+    ],
+    "method": "Drivers identified by filtering recurring_payment table for items with annual_month=4 or quarter_months including 4 — i.e. items that fire in April outside the normal monthly run-rate. Confirmed against cash-flow forecast top_cost_items, whose descriptions reference April 2026 actuals (Skatteverket 206K Apr 2026, Forvis 100K a conto April). Bank_outflow_transaction table empty for April (CSV not yet imported) — could not compute transaction-level rolling deviation, so used recurring-payment metadata as the authoritative source for April-only obligations. A 4th April annual (Schibsted AGM ads 7.6K) omitted as below materiality.",
+    "data_caveats": [
+      "Total April delta vs March: -106K SEK. The three drivers sum to -340.5K, larger than the net delta — this reflects that April also had positive cashflow (revenue collections, ~2.2M implied) and DBT Capital ~134K amortization+interest was DELAYED from April 28 to May 11 due to credit-line saturation (offsetting outflow).",
+      "Rainbow to the Stars 38.8K supplier invoice hejdad May 1 due to SEK saldo headroom of only 428 SEK at EOM Apr — confirms cash position tightness, not an April driver per se.",
+      "Bank_outflow_transaction table empty for Feb 2026 and Apr 2026 — bank CSV import process appears not yet run for those months. Cash position totals come from auto-populated end-of-month balances (account-level snapshots), not transaction sums."
+    ],
+    "extraction_date": "2026-05-14",
+    "source_system": "financial-ops portal (Staging, http://44.194.218.109:8000)"
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "meta": {
+    "cover_subtitle": null,
+    "cover_date_label": "21 May 2026",
+    "closing_message": "Thank you"
+  },
+  "items": {
+    "1": [
+      {
+        "type": "bullets",
+        "title": "Opening & formalities",
+        "bullets": [
+          "Opening by the Chair",
+          "Approval of the agenda",
+          "Appointment of minute-keeper (Secretary) and verifier (Justeringsman)",
+          "Minutes signed: #4 (ÅR), #5 (kallelse)",
+          "Out for digital signing via eAvtal: #2 (BK), #3 (board meeting), #6 (konstituerande)"
+        ]
+      }
+    ],
+    "2": [
+      {
+        "type": "pnl_table",
+        "title": "Q1 2026 — Condensed P&L vs budget",
+        "subtitle": "January – March 2026, koncernen (SEK)",
+        "pnl_columns": ["Actual", "Budget", "Δ"],
+        "pnl_rows": [
+          {"label": "Nettoomsättning", "actual": 7460106, "budget": 7943362, "variance_pct": -6.1},
+          {"label": "Direkta kostnader sålda tjänster", "actual": -1741296, "budget": -1648009, "variance_pct": -5.7},
+          {"label": "Bruttoresultat", "actual": 5718810, "budget": 6295353, "variance_pct": -9.2, "summa": true},
+          {"label": "Personal- och övriga externa kostnader", "actual": -3379239, "budget": -3008725, "variance_pct": -12.3},
+          {"label": "Övriga rörelsekostnader", "actual": -257010, "budget": null, "variance_pct": null},
+          {"label": "EBITDA", "actual": 2082803, "budget": 2340427, "variance_pct": -11.0, "summa": true},
+          {"label": "Av/nedskrivningar", "actual": -2095078, "budget": -2791983, "variance_pct": 25.0},
+          {"label": "Rörelseresultat", "actual": -12275, "budget": -79312, "variance_pct": 84.5, "summa": true},
+          {"label": "Finansiella poster", "actual": -214636, "budget": -171128, "variance_pct": -25.4},
+          {"label": "Resultat före skatt", "actual": -226911, "budget": -250441, "variance_pct": 9.4, "summa": true}
+        ],
+        "notes": "Sources — Actuals: Kvartalsredogörelse Q1 2026, koncernen (resultaträkning). Budget: Finops group_pl_budget FY 2026 (Jan–Mar). Personal- och övriga externa kostnader merges KR Personalkostnader (−2,479,308) + Övriga externa kostnader (−899,931); budget maps to Sweden team & board + India support & sustaining + External services (excludes ~1.8 MSEK capitalised India R&D personnel). Övriga rörelsekostnader −257,010 has no comparable Finops budget category. Övriga rörelseintäkter +242 (immaterial) omitted."
+      },
+      {
+        "type": "kpi_grid",
+        "title": "April 2026 — KPI snapshot",
+        "subtitle": "MoM = Mar 2026 · YoY = Apr 2025",
+        "kpis": [
+          {"label": "ARR", "value": "+6%", "tone": "positive",
+            "lines": [
+              "2.7 MUSD · MoM −2% · YoY +6%",
+              "24.8 MSEK · MoM −2% · YoY +0%",
+              "Budget 29.5 MSEK · −16% behind"
+            ]},
+          {"label": "Revenue", "value": "−8%", "tone": "negative",
+            "lines": [
+              "282 KUSD · MoM +2% · YoY −8%",
+              "2.6 MSEK · MoM +2% · YoY −13%",
+              "Budget 2.8 MSEK · −5% behind"
+            ]},
+          {"label": "Customer acquisition", "value": "−48%", "tone": "negative",
+            "lines": [
+              "109 / day · 3,257 MTD",
+              "MoM −4% · YoY −48%",
+              "2,267 with sub / 990 without"
+            ]},
+          {"label": "Net churn", "value": "7.5%", "tone": "neutral",
+            "lines": [
+              "MoM −0.8 pp · YoY +0.2 pp"
+            ]},
+          {"label": "Subscribers", "value": "+32%", "tone": "positive",
+            "lines": [
+              "33,570 subscribers",
+              "MoM −1% · YoY +32%"
+            ]},
+          {"label": "EBITDA (Mar 2026)", "value": "+53%", "tone": "positive",
+            "lines": [
+              "737 KSEK",
+              "MoM −15% · YoY +53%",
+              "April SIE not yet booked"
+            ]}
+        ]
+      },
+      {
+        "type": "breakeven",
+        "title": "Breakeven & profitability — April 2026",
+        "subtitle": "Estimate: April revenue vs March 2026 cost run-rate",
+        "breakeven_boxes": [
+          {"label": "Breakeven", "target_msek": 2.57, "actual_msek": 2.61, "gap_msek": 0.04, "gap_pct": 1.7, "status": "ok"},
+          {"label": "Cash flow positive", "target_msek": 2.34, "actual_msek": 2.61, "gap_msek": 0.28, "gap_pct": 11.8, "status": "ok"}
+        ],
+        "breakeven_note": "Estimate — April SIE not yet booked. Cost base from March 2026 run-rate; April revenue is actual."
+      },
+      {
+        "type": "trends_grid",
+        "title": "13-month trends",
+        "subtitle": "Apr 2025 – Apr 2026",
+        "data_ref": "financials-data/13-month-trends.json",
+        "trends_layout": [
+          {"title": "Net Revenue (USD)", "key": "net_revenue_usd", "kind": "bar", "y_format": "usd_k"},
+          {"title": "Net Revenue (SEK)", "key": "net_revenue_sek", "kind": "bar", "y_format": "msek"},
+          {"title": "ARR (USD)", "key": "arr_usd", "kind": "bar", "y_format": "usd_m"},
+          {"title": "New customers / day", "keys": ["new_customers_per_day_with_sub", "new_customers_per_day_without_sub"], "kind": "stacked_bar"},
+          {"title": "Net churn rate", "key": "net_churn_rate_pct", "kind": "line", "y_format": "percent"},
+          {"title": "Total subscribers", "key": "total_subscribers", "kind": "line", "y_format": "k"}
+        ]
+      },
+      {
+        "type": "cash_position",
+        "title": "Cash position — End of month",
+        "subtitle": "Nov 2025 – Apr 2026, SEK",
+        "data_ref": "financials-data/cash-position.json",
+        "drivers_title": "April outflows outside monthly run-rate"
+      },
+      {
+        "type": "cash_flow_forecast",
+        "title": "Cash flow forecast — Daily projection",
+        "subtitle": "14 May – 12 Aug 2026 (90 days)",
+        "data_ref": "financials-data/cash-flow-forecast.json"
+      }
+    ],
+    "3": [],
+    "4": [
+      {
+        "type": "numbered_two_col",
+        "title": "Tim and Henrik's list",
+        "entries": [
+          {"text": "Free callback via SMS"},
+          {"text": "Shareable recording summaries", "badge": "Implemented", "badge_tone": "positive"},
+          {"text": "Chatphone / hybrid messaging"},
+          {"text": "Invite others to call you for free", "badge": "Implemented", "badge_tone": "positive"},
+          {"text": "Shareholder discount program", "badge": "Tax issues", "badge_tone": "warn"},
+          {"text": "Video in app-to-app calls"},
+          {"text": "Apple Watch recording"},
+          {"text": "Geotagged recordings", "badge": "Implemented", "badge_tone": "positive"},
+          {"text": "Decisions & actions ready at meeting end"},
+          {"text": "Smart filtering of unknown callers"}
+        ]
+      }
+    ],
+    "5": [],
+    "6": []
+  }
+}

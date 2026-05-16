@@ -1,0 +1,17 @@
+{
+  "name": "sonetel-ad-images",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code skill for generating Sonetel-brand social-media ad images via OpenRouter.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "generate": "node --env-file=.env.local scripts/generate-image.mjs",
+    "validate": "node --env-file=.env.local scripts/validate-image.mjs"
+  },
+  "dependencies": {
+    "sharp": "^0.33.5"
+  }
+}

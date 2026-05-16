@@ -1,0 +1,62 @@
+{
+  "meeting": {
+    "title": "Board Meeting #7",
+    "company": "Sonetel AB",
+    "meeting_number": 7,
+    "date": "2026-05-21",
+    "time": "TBD",
+    "location": "Stockholm, Sweden",
+    "language": "English",
+    "status": "Draft",
+    "attendees": []
+  },
+  "agenda_items": [
+    {
+      "number": 1,
+      "title": "Opening & formalities",
+      "presenter": "Chair",
+      "duration_minutes": null,
+      "subitems": []
+    },
+    {
+      "number": 2,
+      "title": "Financials",
+      "presenter": "Henrik Thomé",
+      "duration_minutes": null,
+      "subitems": []
+    },
+    {
+      "number": 3,
+      "title": "Product",
+      "presenter": null,
+      "duration_minutes": null,
+      "subitems": [
+        {"title": "Roadmap", "presenter": "Prashant", "duration_minutes": null},
+        {"title": "Mobile app", "presenter": "Tomas", "duration_minutes": null},
+        {"title": "Web app & Voice Lake", "presenter": "Henrik Thomé", "duration_minutes": null}
+      ]
+    },
+    {
+      "number": 4,
+      "title": "Growth",
+      "presenter": "Henrik Thomé",
+      "duration_minutes": null,
+      "subitems": []
+    },
+    {
+      "number": 5,
+      "title": "Churn",
+      "presenter": "Henrik Thomé",
+      "duration_minutes": null,
+      "subitems": []
+    },
+    {
+      "number": 6,
+      "title": "Org",
+      "presenter": "Prashant",
+      "duration_minutes": null,
+      "subitems": []
+    }
+  ],
+  "total_duration_minutes": null
+}

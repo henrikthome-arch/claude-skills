@@ -1,0 +1,2140 @@
+{
+  "version": "2",
+  "last_updated": "2026-05-14",
+  "notes": "Single source of truth for Sonetel IR activities. Claude reads and writes this file; human-readable views are generated on demand. Schema documented in ir_calendar_readme.md. Product-release activities derived from 01_strategy/product_release_calendar_2026.md; update both together.",
+  "vocabularies": {
+    "types": [
+      "disclosure",
+      "content",
+      "event",
+      "ops",
+      "decision",
+      "meeting",
+      "campaign",
+      "coverage",
+      "sentiment-event",
+      "insider-transaction",
+      "subscription-renewal",
+      "blackout"
+    ],
+    "statuses": [
+      "planned",
+      "in-progress",
+      "done",
+      "deferred",
+      "cancelled",
+      "stale"
+    ],
+    "channels": [
+      "mfn",
+      "cision",
+      "website",
+      "linkedin-ceo",
+      "linkedin-co",
+      "youtube",
+      "newsletter",
+      "podcast",
+      "meta-ads",
+      "linkedin-ads",
+      "press",
+      "email",
+      "in-app",
+      "zoom",
+      "aktiedagen",
+      "x"
+    ],
+    "roles": [
+      "ceo",
+      "cfo",
+      "chair",
+      "board",
+      "certified-adviser",
+      "drafter",
+      "moderator"
+    ],
+    "audiences": [
+      "retail-se",
+      "institutional",
+      "customers",
+      "ai-curious",
+      "media",
+      "staff"
+    ],
+    "languages": [
+      "sv",
+      "en"
+    ],
+    "mar_sensitivities": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "confidence": [
+      "placeholder",
+      "tentative",
+      "confirmed"
+    ]
+  },
+  "series": [
+    {
+      "id": "s-newsletter",
+      "title": "Monthly IR newsletter (DEPRECATED — superseded by s-hub-posts)",
+      "cadence": "monthly",
+      "weekday": "tuesday",
+      "week_of_month": 2,
+      "channel": "newsletter",
+      "default_owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "default_languages": [
+        "sv"
+      ],
+      "default_audience": [
+        "retail-se",
+        "customers"
+      ],
+      "default_mar_sensitivity": "medium",
+      "deprecated": true,
+      "superseded_by": "s-hub-posts",
+      "notes": "Deprecated 2026-04-17 per CR-2026-04-17-ir-content-hub-and-mfn-subscribe. Kept in array for history."
+    },
+    {
+      "id": "s-hub-posts",
+      "title": "Monthly IR content hub post (/investors/insights)",
+      "cadence": "monthly",
+      "weekday": "tuesday",
+      "week_of_month": 2,
+      "channel": "website",
+      "default_owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "default_languages": [
+        "sv"
+      ],
+      "default_audience": [
+        "retail-se",
+        "customers"
+      ],
+      "default_mar_sensitivity": "medium",
+      "notes": "Public MDX post at /investors/insights/YYYY-MM-slug with RSS feed and MFN subscribe CTA. Each post cites ≥1 under-read fact from 07_analytics/published_fact_inventory.md Top-10 list. Companion CEO LinkedIn post with 2-line hook same day."
+    },
+    {
+      "id": "s-linkedin-ceo",
+      "title": "CEO LinkedIn post",
+      "cadence": "weekly",
+      "weekday": "thursday",
+      "channel": "linkedin-ceo",
+      "default_owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "default_languages": [
+        "sv"
+      ],
+      "default_audience": [
+        "retail-se",
+        "ai-curious"
+      ],
+      "default_mar_sensitivity": "medium",
+      "default_effort_hours": 0.3,
+      "notes": "Claude drafts Monday, Henrik reviews Wednesday, post Thursday morning."
+    },
+    {
+      "id": "s-linkedin-co",
+      "title": "Company LinkedIn post",
+      "cadence": "biweekly",
+      "channel": "linkedin-co",
+      "default_owner": {
+        "role": "drafter",
+        "person": "claude",
+        "approver": "henrik"
+      },
+      "default_languages": [
+        "sv",
+        "en"
+      ],
+      "default_audience": [
+        "retail-se",
+        "customers"
+      ],
+      "default_mar_sensitivity": "low"
+    },
+    {
+      "id": "s-sentiment-scan",
+      "title": "Friday sentiment scan",
+      "cadence": "weekly",
+      "weekday": "friday",
+      "channel": null,
+      "default_owner": {
+        "role": "drafter",
+        "person": "claude",
+        "approver": "henrik"
+      },
+      "notes": "Shareville, Placera forums, FinTwit-SE $SONE mentions, competitor moves, Holdings diff."
+    }
+  ],
+  "activities": [
+    {
+      "id": "2026-04-001",
+      "type": "disclosure",
+      "title": "Mangold utsedd till likviditetsgarant",
+      "status": "done",
+      "confidence": "confirmed",
+      "start_date": "2026-04-15",
+      "completed_at": "2026-04-15T08:00:00+02:00",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "board"
+      },
+      "channel": "cision",
+      "audience": [
+        "retail-se"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [
+        {
+          "label": "Cision release",
+          "url": "https://news.cision.com/se/sonetel-aktiebolag/r/sonetel-utser-mangold-till-likviditetsgarant,c4335416"
+        }
+      ],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "high",
+      "effort_hours": 3,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "measurement": {
+        "baseline": null,
+        "observed": {
+          "price_pct_change": -19,
+          "volume": "low",
+          "window": "T+2 trading days"
+        },
+        "measured_at": "2026-04-17",
+        "notes": "Exact baseline price and volume to be filled from Nasdaq Nordic data. One-seller exit before Mangold started quoting. Teaching case for thin-liquidity narrative."
+      },
+      "tags": [
+        "liquidity",
+        "mangold",
+        "teaching-case"
+      ],
+      "next_review_at": "2026-05-15",
+      "last_touched_at": "2026-04-17",
+      "notes": "Drives framing of the inaugural numbers-led post (2026-04-003). Earlier references to 'newsletter #1' and a Mangold-lead LinkedIn post have been cancelled (2026-06-001 retitled; 2026-05-006 cancelled); see memory/feedback_do_not_lead_with_mangold.md.",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "(Done) Mangold appointed — historical record only. Do not lead public content with this per memory."
+    },
+    {
+      "id": "2026-04-002",
+      "type": "decision",
+      "title": "Decline Aktiespararna Aktiedagen Stockholm 9–10 June 2026 offer",
+      "status": "planned",
+      "confidence": "confirmed",
+      "start_date": "2026-04-22",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "audience": [],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 0.2,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "earned-channels",
+        "aktiedagen"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Polite decline to Mats Lagerholm at Aktiespararna. Reasons: no measurable impact historically, high prep time, no aligned news hook. See memory/feedback_aktiedagen.md.",
+      "story": "(Confirmed) Decline Aktiespararna Aktiedagen June offer. Historical decision."
+    },
+    {
+      "id": "2026-05-001",
+      "type": "decision",
+      "title": "Board approves Disclosure Calendar 2026",
+      "status": "planned",
+      "confidence": "confirmed",
+      "start_date": "2026-05-21",
+      "owner": {
+        "role": "board",
+        "person": null,
+        "approver": "chair"
+      },
+      "audience": [],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [
+        {
+          "label": "Disclosure Calendar 2026",
+          "url": "02_policy/disclosure_calendar_2026.md"
+        }
+      ],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 2,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "governance",
+        "foundations",
+        "blocker"
+      ],
+      "next_review_at": "2026-05-18",
+      "last_touched_at": "2026-04-30",
+      "notes": "Board meeting 2026-05-21. Per Henrik 2026-04-30: board only needs to approve the **Disclosure Calendar 2026** — they don't need to see detailed policies. Information Policy v1.4 SV PDF is already board-confirmed; Social Media Guidelines stays as management-level document, not board-approved. Disclosure Calendar 2026 must be brought current (currently has 'TBC' dates) BEFORE the meeting — needs Q1 26 May, Halvårsrapport 25 Aug, Q3 24 Nov, Bokslut 25 Feb 2027, plus AGM/Årsredovisning dates per the official Sonetel financial calendar.",
+      "story": "Board meeting 2026-05-21 approving the Disclosure Calendar 2026 (the only document that requires board sign-off per First North 6-month-ahead rule). Internal decision; not external content."
+    },
+    {
+      "id": "2026-05-002",
+      "type": "subscription-renewal",
+      "title": "Cancel Cision subscription",
+      "status": "deferred",
+      "confidence": "tentative",
+      "start_date": "2026-05-31",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "cision",
+      "audience": [],
+      "languages": [],
+      "links": [],
+      "depends_on": [
+        "2026-05-003"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 1,
+      "cost": {
+        "amount": -50400,
+        "currency": "SEK",
+        "recurring": "annual",
+        "notes": "Cost avoidance — confirmed from April 2026 invoice SEK 4,200/mo."
+      },
+      "tags": [
+        "vendor-migration",
+        "foundations"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Deferred 2026-04-23 — Henrik has not agreed to the switch. CR in Draft; no approval. Revisit when a clear trigger event emerges (Holdings data becomes critical, Cision prices up, or vendor consolidation decision).",
+      "story": "(Deferred — no agreement to switch vendors.) Proposed CR to switch press distribution from Cision to MFN with Holdings + Strictlog bundle. Pending Henrik decision."
+    },
+    {
+      "id": "2026-05-003",
+      "type": "ops",
+      "title": "Switch to MFN (contract + sonetel.com code swap + transition release)",
+      "status": "deferred",
+      "confidence": "tentative",
+      "start_date": "2026-05-10",
+      "end_date": "2026-05-31",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "board"
+      },
+      "audience": [],
+      "languages": [
+        "sv"
+      ],
+      "links": [
+        {
+          "label": "Vendor comparison",
+          "url": "06_partners/vendor_comparison.md"
+        }
+      ],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 6,
+      "cost": {
+        "amount": 50000,
+        "currency": "SEK",
+        "recurring": "annual",
+        "notes": "Bundle estimate MFN + Holdings + Strictlog; confirm on contract."
+      },
+      "tags": [
+        "vendor-migration",
+        "foundations"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Deferred 2026-04-23 — Henrik has not agreed to the switch. CR in Draft; no approval. Revisit when a clear trigger event emerges (Holdings data becomes critical, Cision prices up, or vendor consolidation decision).",
+      "story": "(Deferred — no agreement to switch vendors.) Proposed CR to switch press distribution from Cision to MFN with Holdings + Strictlog bundle. Pending Henrik decision."
+    },
+    {
+      "id": "2026-05-004",
+      "type": "ops",
+      "title": "Launch IR hub at sonetel.com",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-05-27",
+      "end_date": "2026-06-03",
+      "owner": {
+        "role": "drafter",
+        "person": "claude",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "audience": [
+        "retail-se",
+        "institutional",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [
+        {
+          "label": "Owned channels spec",
+          "url": "03_channels/owned_channels.md"
+        },
+        {
+          "label": "Published-fact inventory",
+          "url": "07_analytics/published_fact_inventory.md"
+        }
+      ],
+      "depends_on": [
+        "2026-05-001"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 10,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "foundations",
+        "llm-discoverability",
+        "owned",
+        "ir-hub"
+      ],
+      "last_touched_at": "2026-05-14",
+      "notes": "Single launch covering /investors landing (hero, reports archive, calendar) AND /investors/insights blog area (MDX posts, RSS, Cision-subscribe CTA). Previously split as 2026-05-004 and 2026-05-005; merged 2026-04-29 — they're one ship. Date moved 2026-05-14 (CR-2026-05-14) from 20/5 to 27/5 — must land after the 21/5 mobile beta release; first hub-post can be the Q1 verksamhetsredogörelse commentary published 26/5. Hero shows Rule of 40 >40, monthly growth curve, named insider transactions. JSON-LD + FAQ schema for LLM discoverability. No external ESP — Cision handles email subscriptions.",
+      "story": "Launch the IR hub at sonetel.com — /investors landing + /investors/insights blog with public MDX posts, RSS feed, and 'Get Sonetel disclosures' CTA routing to Cision's subscriber signup. Primary owned channel through which the IR plan communicates."
+    },
+    {
+      "id": "2026-05-006",
+      "type": "content",
+      "title": "CEO LinkedIn post — \"Our stock dropped 19% on low volume. Here's why, and what we did about it.\"",
+      "status": "cancelled",
+      "confidence": "tentative",
+      "start_date": "2026-05-22",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "linkedin-ceo",
+      "series_id": "s-linkedin-ceo",
+      "audience": [
+        "retail-se",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-05-001"
+      ],
+      "linked_disclosure_ids": [
+        "2026-04-001"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.3,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "mangold",
+        "founder-voice",
+        "launch"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Cancelled 2026-04-23 — contradicts the 'never lead with Mangold' rule (memory/feedback_do_not_lead_with_mangold.md). Mangold is a paid prop for a failure, not a narrative hook. The numbers-led first hub post (2026-04-003) is the opening move instead.",
+      "syndication": [
+        "linkedin-ceo",
+        "x"
+      ],
+      "story": "(Cancelled.) This activity was drafted before the 'never lead with Mangold' feedback landed. Mangold is already disclosed via Cision; narrating it on LinkedIn unprompted warns investors off rather than interesting them. Kept in JSON for audit; hidden from forward views."
+    },
+    {
+      "id": "2026-05-007",
+      "type": "content",
+      "title": "CEO LinkedIn post — \"We've been profitable since late 2023. Did you know?\"",
+      "status": "cancelled",
+      "confidence": "tentative",
+      "start_date": "2026-05-29",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "linkedin-ceo",
+      "series_id": "s-linkedin-ceo",
+      "audience": [
+        "retail-se",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [
+        {
+          "label": "Nov 2023 release",
+          "url": "https://news.cision.com/se/sonetel-aktiebolag/r/ai-foretaget-sonetel-gar-med-vinst,c3870247"
+        }
+      ],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 0.3,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "profitability",
+        "distribution-fix"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Cancelled 2026-04-23 — 'profitable since late 2023' was unverified. Based on the Nov 2023 Cision release title 'Sonetel går med vinst' but not cross-checked against subsequent reports. AGM 2026-04-23 discussion suggests cash flow is near-break-even, which contradicts a clean 'continuously profitable' claim. Do not re-draft this post without first reading the actual quarterly reports since Nov 2023 and confirming with Henrik/CFO what's defensible.",
+      "syndication": [
+        "linkedin-ceo",
+        "x"
+      ],
+      "story": "(Cancelled.) The claim 'profitable since late 2023' was based on a press-release headline and never cross-checked. Replacement content, if any, requires proper verification against the underlying reports first."
+    },
+    {
+      "id": "2026-06-001",
+      "type": "content",
+      "title": "Monthly hub post — May in review",
+      "status": "cancelled",
+      "confidence": "tentative",
+      "start_date": "2026-06-09",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [
+        {
+          "label": "Published-fact inventory",
+          "url": "07_analytics/published_fact_inventory.md"
+        }
+      ],
+      "depends_on": [
+        "2026-05-005"
+      ],
+      "linked_disclosure_ids": [
+        "2026-04-001"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 1,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "monthly-digest"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Cancelled 2026-04-30 per Henrik VTT feedback: 'Vi ska komma med nyheter, inte bara göra slags insamlingshit.' Monthly digest as press item dropped — doesn't fit the press-release cadence. Could be revived as hub-post-only if the content bank ever has a real combined story worth surfacing; for now, no monthly digest activity in the calendar.",
+      "story": "The regular monthly digest per the s-hub-posts cadence (2nd Tuesday of the month). Wraps May: the product launches that actually shipped (mobile GA, inbound SMS, customer service portal if it landed), one under-read fact from 07_analytics/published_fact_inventory.md Top-10, a forward look to June (meeting recording, memo, recording search — each when they ship), and 1–2 reader Q&A if any arrived. Standard template-3 structure. Does NOT lead with Mangold. Does NOT re-reveal Rule of 40 (already stated in the inaugural post 2026-04-003). Claude drafts from the content bank accumulated during May; Henrik reviews + approves ~30 min.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ]
+    },
+    {
+      "id": "2026-06-002",
+      "type": "content",
+      "title": "CEO LinkedIn post — Skype comp pre-emption",
+      "status": "cancelled",
+      "confidence": "tentative",
+      "start_date": "2026-06-05",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "linkedin-ceo",
+      "series_id": "s-linkedin-ceo",
+      "audience": [
+        "retail-se"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.3,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "skype-comp",
+        "pre-emption"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Cancelled 2026-04-23 — same mistake pattern as the Mangold-lead post: narrating a negative comp unprompted warns investors off rather than interests them. The Skype-comp framing belongs in the Q2 report commentary (and accompanying CEO video + hub post), where we have the actual number and can contextualize. Not as a pre-emptive LinkedIn post.",
+      "syndication": [
+        "linkedin-ceo",
+        "x"
+      ],
+      "story": "(Cancelled.) Pre-warning LinkedIn readers about weak YoY growth before the Q2 report drops is self-inflicted negative framing. The Skype-comp framing is legitimate in the Q2 report's commentary (2026-08-001) and the accompanying CEO video (2026-08-002) and hub post — not as a standalone social post."
+    },
+    {
+      "id": "2026-06-003",
+      "type": "content",
+      "title": "CEO LinkedIn post — whole-company AI as operating mechanism (concrete before/after)",
+      "headline_sv": "Sonetel använder AI i hela bolaget — webb, finans, kundportal",
+      "headline_en": "Sonetel runs the whole company on AI — website, finance, customer portal",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-06-11",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "linkedin-ceo",
+      "series_id": "s-linkedin-ceo",
+      "audience": [
+        "ai-curious",
+        "retail-se"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 0.3,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "ai-as-mechanism"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "AI as mechanism, not identity. Concrete before/after across website, mobile, finance, annual report, AGM.",
+      "syndication": [
+        "linkedin-ceo",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. CEO LinkedIn post — concrete before/after of AI-driven transformation across the whole company, not just product. **Concrete examples to use:** website rebuilt — 2019 took months and cost SEK 500k+; 2025 took 2 weeks at negligible cost (only AI cost). **300+ finance-ops processes automated** with AI — traditionally a 4–5 person-year project; Sonetel did it in months internally. Customer portal rebuild ongoing on the same pattern. AI also used in marketing, AGM preparation, annual report drafting, quarterly reports. **Investor angle:** AI as operating leverage — visible margin expansion mechanism, not just an AI-feature claim. Per the IR skill rule, AI is the *mechanism*, not the company's *identity*."
+    },
+    {
+      "id": "2026-07-001",
+      "type": "blackout",
+      "title": "Quiet period — Halvårsrapport 2026",
+      "status": "planned",
+      "confidence": "confirmed",
+      "start_date": "2026-07-26",
+      "end_date": "2026-08-24",
+      "owner": {
+        "role": "cfo",
+        "person": null,
+        "approver": "chair"
+      },
+      "audience": [],
+      "languages": [],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [
+        "2026-08-001"
+      ],
+      "mar_sensitivity": "high",
+      "tags": [
+        "quiet-period",
+        "compliance"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Updated 2026-04-30: Halvårsrapport date moved from 2026-08-15 (placeholder) to 2026-08-25 (confirmed per Sonetel's official financial calendar). Quiet period accordingly shifts to 2026-07-26 – 2026-08-24. **Voice Lake commercial launch on 2026-08-20 now falls inside this quiet period — needs Henrik decision: move launch to post-report, or treat as separate MAR-grade disclosure during quiet?**",
+      "story": "Quiet period ahead of Halvårsrapport. Blackout window — financial commentary stops; product/culture content continues."
+    },
+    {
+      "id": "2026-08-001",
+      "type": "disclosure",
+      "title": "Halvårsrapport jan–jun 2026",
+      "headline_sv": "Sonetel halvårsrapport jan–jun 2026",
+      "headline_en": "Sonetel half-year report Jan–Jun 2026",
+      "status": "planned",
+      "confidence": "confirmed",
+      "start_date": "2026-08-25",
+      "start_time": "08:30+02:00",
+      "owner": {
+        "role": "cfo",
+        "person": null,
+        "approver": "board"
+      },
+      "channel": "cision",
+      "audience": [
+        "retail-se",
+        "institutional"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "high",
+      "effort_hours": 16,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": "quarterly"
+      },
+      "tags": [
+        "financial-report",
+        "skype-comp"
+      ],
+      "next_review_at": "2026-06-01",
+      "last_touched_at": "2026-04-17",
+      "notes": "Date confirmed 2026-04-30 per Sonetel's official financial calendar (sonetel.com/sv/investerare): 25 augusti 2026, Halvårsrapport. NOTE: This is a Halvårsrapport (half-year report covering Jan–Jun), not just a Q2 interim — different content depth. Sonetel's official term is 'halvårsrapport' (matching corpus pattern e.g. c4240037). Skype-normalized numbers alongside reported numbers.",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Q2 interim report. Full financial disclosure. Honest Skype-normalisation framing so the comp isn't a surprise."
+    },
+    {
+      "id": "2026-08-002",
+      "type": "content",
+      "title": "Halvårsrapport CEO commentary",
+      "status": "cancelled",
+      "confidence": "placeholder",
+      "start_date": "2026-08-25",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "youtube",
+      "audience": [
+        "retail-se",
+        "institutional"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-08-001"
+      ],
+      "linked_disclosure_ids": [
+        "2026-08-001"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 2,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": "quarterly"
+      },
+      "tags": [
+        "quarterly-video",
+        "report"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "5–8 min. Released alongside the report.",
+      "story": "CEO video update accompanying the Q2 report. 5–8 min, YouTube, same spot each quarter."
+    },
+    {
+      "id": "2026-11-001",
+      "type": "disclosure",
+      "title": "Verksamhetsredogörelse Q3 2026 (jul–sep)",
+      "headline_sv": "Sonetel verksamhetsredogörelse jul–sep 2026",
+      "headline_en": "Sonetel Q3 2026 interim report (Jul–Sep)",
+      "status": "planned",
+      "confidence": "confirmed",
+      "start_date": "2026-11-24",
+      "start_time": "08:30+01:00",
+      "owner": {
+        "role": "cfo",
+        "person": null,
+        "approver": "board"
+      },
+      "channel": "cision",
+      "audience": [
+        "retail-se",
+        "institutional"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "high",
+      "effort_hours": 16,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": "quarterly"
+      },
+      "tags": [
+        "financial-report"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Date confirmed 2026-04-30 per Sonetel's official financial calendar (sonetel.com/sv/investerare): 24 november 2026. Sonetel uses 'Verksamhetsredogörelse' (not 'kvartalsredogörelse') for First North Q-reports.",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Q3 verksamhetsredogörelse covering Jul–Sep 2026."
+    },
+    {
+      "id": "2027-02-001",
+      "type": "disclosure",
+      "title": "Bokslutskommuniké 2026",
+      "headline_sv": "Sonetel: Bokslutskommuniké januari–december 2026",
+      "headline_en": "Sonetel: Year-end report 2026",
+      "status": "planned",
+      "confidence": "confirmed",
+      "start_date": "2027-02-25",
+      "start_time": "08:30+01:00",
+      "owner": {
+        "role": "cfo",
+        "person": null,
+        "approver": "board"
+      },
+      "channel": "cision",
+      "audience": [
+        "retail-se",
+        "institutional"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "high",
+      "effort_hours": 20,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": "annual"
+      },
+      "tags": [
+        "financial-report",
+        "year-end"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "Date confirmed 2026-04-30 per Sonetel's official financial calendar (sonetel.com/sv/investerare): 25 februari 2027. Thursday. Bokslutskommuniké covers full calendar year Jan–Dec 2026.",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Bokslutskommuniké 2026 (full-year report)."
+    },
+    {
+      "id": "open-q-001",
+      "type": "decision",
+      "title": "Henrik answers 12 open questions (unblocks execution)",
+      "status": "done",
+      "confidence": "confirmed",
+      "start_date": "2026-04-17",
+      "end_date": "2026-04-29",
+      "completed_at": "2026-04-29T18:00:00+02:00",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "audience": [],
+      "languages": [],
+      "links": [
+        {
+          "label": "Open questions",
+          "url": "08_open_questions.md"
+        }
+      ],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 1,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "foundations",
+        "blocker"
+      ],
+      "next_review_at": "2026-04-24",
+      "last_touched_at": "2026-04-17",
+      "notes": "Q1 (Cision cost) answered. 11 remaining. Priority: Q3 time budget, Q5 cap table, Q10 website write-access.",
+      "story": "Henrik answers the 12 open planning questions. Unblocks concrete execution of Month-1 foundations."
+    },
+    {
+      "id": "2026-04-003",
+      "type": "content",
+      "title": "Inaugural IR hub post — numbers asymmetry opener",
+      "headline_sv": "Sonetels Rule of 40 över 40 — värdering 1,25× EV/Revenue",
+      "headline_en": "Sonetel's Rule of 40 above 40 — valuation at 1.25× EV/Revenue",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-04-28",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [
+        {
+          "label": "Equity story v0.3",
+          "url": "01_strategy/equity_story.md"
+        },
+        {
+          "label": "Product release calendar",
+          "url": "01_strategy/product_release_calendar_2026.md"
+        }
+      ],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 1.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "launch",
+        "website-rewrite",
+        "category-shift",
+        "numbers-led"
+      ],
+      "last_touched_at": "2026-04-17",
+      "notes": "First real IR content of the new cadence. Leads with Rule of 40 > 40 + EV/Revenue 1.25x asymmetry. Website rewrite (2 weeks, in-house with Claude, vs months + SEK 500k+) as the proof. Does NOT lead with Mangold. Any industry scale numbers require verifiable sources per feedback_source_numeric_claims memory.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "First content of the new IR cadence. Hub post + companion CEO LinkedIn post published same day. The hub post opens with the valuation asymmetry — Rule of 40 > 40 published in filings, while the share trades at EV/Revenue ~1.25× (public SaaS median 6–7×) — and invites readers to verify in the reports themselves. Doesn't sell anything; doesn't make forward claims. Simply points to a gap between disclosed fundamentals and market price. Purpose: end the external-communication silence and put a verifiable case in front of the ~11,000 LinkedIn followers the company has but hasn't been posting to."
+    },
+    {
+      "id": "2026-05-008",
+      "type": "content",
+      "title": "Mobile apps first public beta — inbound calls + inbound SMS in app",
+      "headline_sv": "Sonetel stärker mobilerbjudandet med inkommande samtal i appen",
+      "headline_en": "Sonetel strengthens its mobile offering with inbound calls in the app",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-05-21",
+      "start_time": "08:00+02:00",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 1,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "mobile",
+        "first-public-beta",
+        "coordinated-launch"
+      ],
+      "last_touched_at": "2026-05-14",
+      "notes": "**First public beta** — corrected per CEO 2026-05-12 (was incorrectly framed as 'Release 2'; no prior public release exists). T0 set to **Tue 2026-05-21, 08:00 CET (Cision)** per CR-2026-05-14 — moved from earlier 2026-05-15 after chair Sebastian's klämdag flag (Tor 14/5 = Kristi himmelsfärd; Fre 15/5 = klämdag = worst pickup day of the year). Folds in inbound SMS (previously standalone activity 2026-05-009, now removed per CR-2026-05-14). Aligns with Tomas R2 product roadmap: 'Cut Fri 8/5; public beta late next week if backend + Apple windows hold.' Sai leads the build. Launch folder at `04_content/press_releases/2026-05-08-mobile-public-beta/` (folder rename to `2026-05-21-...` deferred until all 13 derivations updated).",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** customers can now answer incoming calls inside the Sonetel mobile app over internet. Previously customers had to forward incoming calls to a mobile number — a structural gap in the old apps. Forwarding cost was painful for European customers (EU telecom operators charge ~20× per minute for calls originating outside the EU since rules tightened to stop fraud) and for cost-sensitive markets like India. Customer service has long named this gap as the **#1 reason customers leave Sonetel after signing up**. **What's also new:** the apps are rebuilt from scratch using Claude Code (AI-coded experiment started summer 2025) — easier to use, no legacy tech debt. Both iOS and Android. **What's NOT new:** Sonetel had mobile apps before — they were just slow, broken, and unable to answer incoming calls. Frame as gap-closing per Sebastian's timing rule, not as a speed example."
+    },
+    {
+      "id": "2026-05-010",
+      "type": "content",
+      "title": "New customer service portal — AI-developed — hub post + Kristina-candidate pitch",
+      "headline_sv": "Sonetel lanserar ny kundportal byggd in-house med AI",
+      "headline_en": "Sonetel launches new customer portal built in-house with AI",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-06-30",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "ai-curious",
+        "media"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 1.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "ai-built",
+        "kristina-pitch-candidate",
+        "kristina-pitch"
+      ],
+      "last_touched_at": "2026-05-14",
+      "notes": "Strongest Kristina-pitchable item of the spring. Before-after: build time, cost, AI tool used. Collect specifics internally before drafting. Date moved 2026-05-14 (CR-2026-05-14) from 2/6 to 30/6 — original date too optimistic per CEO; landing after midsommar (Sat 20/6) gives the build-team runway and avoids competing with the midsommarvecka quiet row in the publishing schedule.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "AI-built customer service portal. Per Henrik 2026-04-29 VTT brief: 'Andra juni är väl okej' (no detailed brief beyond date approval). **What's actually new:** complete rewrite of Sonetel's customer service portal, built in-house with Claude Code in weeks rather than the months and SEK 500k+ that the 2019 web build cost. Strongest Kristina-pitchable item of the spring per the AI-built before/after frame. Build-time and prior-cost numbers need verification before publication."
+    },
+    {
+      "id": "2026-05-011",
+      "type": "content",
+      "title": "In-portal AI assistant — config without touching UI",
+      "headline_sv": "Sonetel lanserar AI-assistent — konfigurerar tjänsten genom dialog",
+      "headline_en": "Sonetel launches AI assistant — configure the service through conversation",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-08-04",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-05-010"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "ai-built",
+        "customer-portal"
+      ],
+      "last_touched_at": "2026-05-14",
+      "notes": "Date moved 2026-05-14 (CR-2026-05-14) from 30/6 to **Wed 29/7** — needs to come several weeks after the kundportal lands (now 30/6), and review flagged that the original 22/7 candidate clustered too tightly with Tue 21/7 Gen II AI summaries. 29/7 lands inside Halvårsrapport quiet period (26/7–24/8) — product communication permitted; no financial framing. Sequenced one day after the 28/7 'full telefoni' SMS post; OK because they are different product surfaces (SMS capability vs. portal-AI configuration). Feature extension of customer portal: AI assistant helps with service configuration, reducing UI dependence.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** customers configure their Sonetel service by talking to the AI assistant instead of clicking through the portal UI. Phone numbers, forwarding rules, extra services — all configured by conversation. The AI also answers questions about how features work and what they cost. **Customer value:** customers no longer need to learn the portal's interface or understand how forwarding/numbering works. Like having a personal assistant or mini IT department do the configuration work. ChatGPT-style dialogue replaces UI navigation. **Differentiator:** generic AI assistants don't know your Sonetel setup; Sonetel's assistant has full context of your account and can change it on your behalf."
+    },
+    {
+      "id": "2026-06-004",
+      "type": "content",
+      "title": "Automatic meeting recording — Teams, Google Meet, Zoom — hub post",
+      "headline_sv": "Sonetel spelar automatiskt in dina möten från Outlook och Google Calendar",
+      "headline_en": "Sonetel automatically records your meetings from Outlook and Google Calendar",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-07-02",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "voice-lake-build-up"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Part of Voice Lake build-up arc. Investors paying attention connect the dots toward August launch; casual readers see feature releases.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** Sonetel reads the customer's Outlook or Google Calendar, identifies upcoming meetings (Teams / Google Meet / Zoom), and a not-taker bot joins automatically to record, transcribe and summarise. Result: meeting recordings join existing call recordings inside the same Sonetel app. **What's NOT new:** call recording itself has existed centrally for years. The new bit is calendar-integrated automatic meeting capture, joining the unified record."
+    },
+    {
+      "id": "2026-06-005",
+      "type": "content",
+      "title": "Memo recording + transcription — hub post",
+      "headline_sv": "Sonetel lanserar inspelning av fysiska möten och röstmemo",
+      "headline_en": "Sonetel launches recording of physical meetings and voice memos",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-07-07",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-06-004"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "voice-lake-build-up"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Voice Lake build-up arc.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** physical-meeting recording (push a button, record, transcribe, summarise) and voice memos (same flow). Both feed into the same unified record as call recordings, calendar-meeting recordings, and SMS. Action items are extracted automatically into to-do-style lists. **What already existed:** call recording, calendar-meeting recording (Teams/Meet/Zoom — shipping Jun 10), transcription, summarisation. **Customer value:** one button captures any voice moment — physical meeting, idea on the train, call between calls — and it ends up in the same searchable record as everything else."
+    },
+    {
+      "id": "2026-06-006",
+      "type": "content",
+      "title": "Search across all recordings — hub post",
+      "headline_sv": "Sonetel lanserar sökning över samtal, SMS och möten",
+      "headline_en": "Sonetel launches search across calls, SMS and meetings",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-07-09",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-06-005"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "voice-lake-build-up"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Final feature in the pre-Voice-Lake build-up arc. Primes the category-shift narrative for August.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** customers can search across the text of all their calls, SMS and meetings — through transcriptions and summaries — to find any topic or person mentioned. 'When did we talk about X?' returns the answer in milliseconds, regardless of which channel it happened on. **Customer value:** the unified record is now actually findable. The data layer (built up across May–early Jul) becomes useful at the point of search."
+    },
+    {
+      "id": "2026-08-003",
+      "type": "disclosure",
+      "title": "Voice Lake commercial launch + new priced tier — flagship event",
+      "headline_sv": "Sonetel lanserar konversationsintelligens över samtal, SMS, e-post och möten",
+      "headline_en": "Sonetel launches conversation intelligence across calls, SMS, email and meetings",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-08-27",
+      "start_time": "08:30+02:00",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "board"
+      },
+      "channel": "cision",
+      "audience": [
+        "retail-se",
+        "institutional",
+        "customers",
+        "ai-curious",
+        "media"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-08-001"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "high",
+      "effort_hours": 16,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "voice-lake",
+        "flagship",
+        "category-shift",
+        "kristina-pitch"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Per Henrik 2026-04-30: moved from Thu 20 Aug to **Thu 27 Aug 08:30 CET pre-market** to land AFTER the Halvårsrapport (Tue 25 Aug) and outside the quiet period (26 Jul – 24 Aug). Live web-research feature gets its own follow-up beat the next week (2026-08-004 on Wed 2 Sep). Full content package: Cision release, hub post, CEO LinkedIn, short-form video, Kristina-assisted pitch to Di Digital / Breakit / Dagens Industri / Börsvärlden. At launch, Voice Lake transitions from POC to commercial; vocabulary filter must be updated. **'Voice Lake' remains internal-only — external messaging uses 'konversationsintelligens' or 'AI-assistent' with Sonetel as subject** (per Henrik 2026-04-29). Pricing public-commitment posture TBD.",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "FLAGSHIP. Per Henrik 2026-04-29 VTT brief. Commercial launch of the conversation-intelligence layer (internally called Voice Lake; market-facing wording is Sonetel + capability description, not 'Voice Lake' as a product name). **Customer value:** every customer conversation — private + work + projects + meetings + calls + SMS — gets structure and is made searchable. Customers can ask the AI assistant questions across all of it: 'what did we agree about Acme last quarter?' returns a synthesis pulled from seven Teams meetings, eight calls, three SMS threads. The assistant builds knowledge of the customer's world: their projects, contacts, deals, recurring topics. **Differentiator:** Fireflies/Otter have meetings but no phone; Gong has calls and AI but no SMB pricing and no SMS; Dialpad has phone but shallow cross-recording intelligence; Google Meet/MS Teams have meetings but no PSTN, no SMS, no real ownership of the data. Sonetel is the only player combining the telecom infrastructure (carrier relationships, real phone numbers) with the AI layer across all conversation channels. **Category shift:** Sonetel exits commodity virtual-numbers (Category 0, where it competes with OpenPhone/CallHippo) and enters intelligent business communications. **At launch:** Voice Lake transitions from POC to commercial; pricing TBD (~$90/user/mo internal target — not external). Full press package + Kristina pitch."
+    },
+    {
+      "id": "2026-08-004",
+      "type": "content",
+      "title": "Voice Lake web research — hub post",
+      "headline_sv": "Sonetel lanserar AI som forskar på webben utifrån er konversationshistorik",
+      "headline_en": "Sonetel launches AI that researches the web grounded in your own conversations",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-09-02",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "ai-curious",
+        "customers"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-08-003"
+      ],
+      "linked_disclosure_ids": [
+        "2026-08-003"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "voice-lake",
+        "feature-extension"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Restored 2026-04-30 (Henrik flagged that I'd unilaterally cancelled this when moving the flagship — undone). Now Wed 2 Sep — week after the Aug 27 conversation-intelligence flagship; gives the live-web-search feature its own beat. Differentiator: no closed-system competitor reaches the live web mid-conversation.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-30 VTT-grounded brief. **The point that matters:** web search by an AI assistant is generic on its own (every assistant does it now). The differentiator is the *combination*: Sonetel's assistant **already has full context of every customer conversation** (calls, SMS, meetings, email) AND can fetch live web data — and reasons across both. ChatGPT only knows what you type. Pure web-search agents have no customer context. Conversation-AI tools (Otter, Gong, Fireflies) have context but no live web. Sonetel does both, in one answer. **Customer value:** ask 'what's happening with Acme right now?' — get a synthesis of the last ten conversations with Acme + the latest news/announcements about Acme from the web, in one answer. Hub post emphasises the combination, not the web-search capability alone."
+    },
+    {
+      "id": "2026-09-002",
+      "type": "content",
+      "title": "Email ingestion into Voice Lake — hub post",
+      "headline_sv": "Sonetel lägger till e-post i konversationsintelligensen",
+      "headline_en": "Sonetel adds email to conversation intelligence",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-09-01",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-08-003"
+      ],
+      "linked_disclosure_ids": [
+        "2026-08-003"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "voice-lake",
+        "feature-extension"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Adds email as a first-class signal source alongside calls + SMS + meetings. Voice Lake five-legged wedge #2.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** email is added as a fifth ingestion channel into the conversation-intelligence layer (alongside calls, SMS, meetings, voice memos). **Customer value:** the AI assistant now has access to email correspondence (if the customer chooses to connect it) — making the picture per customer / topic / project genuinely complete. **Investor angle:** Sonetel's strength is the telecom infrastructure layer underneath (carrier relationships, real phone numbers in 80+ countries) — that's hard to build, which gives Sonetel a unique position to do this kind of cross-channel intelligence. Generic LLMs have email but no phone; pure phone services have no AI on top; only Sonetel has the combination plus the years of regulatory plumbing. Email ingestion completes the five-leg unified-stream wedge no competitor can assemble in one product."
+    },
+    {
+      "id": "2026-09-003",
+      "type": "content",
+      "title": "Voice Lake generates files (Skills) — hub post",
+      "headline_sv": "Sonetel lanserar AI-genererade dokument från era kundsamtal",
+      "headline_en": "Sonetel launches AI-generated documents from your customer conversations",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-09-16",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-08-003"
+      ],
+      "linked_disclosure_ids": [
+        "2026-08-003"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "voice-lake",
+        "feature-extension",
+        "skills"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Skills = document generation that learns format preferences. Voice Lake competitive differentiator #4.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** the AI assistant — equipped with both the customer's full conversation history AND live web research (shipped 2026-08-004) — can now generate documents on request. **Customer value:** ask the assistant to prepare a board update, a quarterly summary, a customer-call dossier — it pulls from every relevant conversation the customer has had + live external data + writes the document in the requested format. **Differentiator:** Gong delivers similar enterprise capability at $100–200/user/mo; Sonetel offers it at SMB pricing within the existing plan. Generic LLMs can write documents but lack the proprietary input (the customer's own conversation history)."
+    },
+    {
+      "id": "2026-09-004",
+      "type": "content",
+      "title": "Voice Lake writes emails (action loop) — hub post",
+      "headline_sv": "Sonetel lanserar AI-uppföljning — skriver och skickar mejl",
+      "headline_en": "Sonetel launches AI follow-up — drafts and sends emails",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-09-29",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-09-002"
+      ],
+      "linked_disclosure_ids": [
+        "2026-08-003"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "voice-lake",
+        "feature-extension",
+        "action-loop"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Action loop: Voice Lake drafts follow-up emails and sends via user's provider with approval. Voice Lake five-legged wedge #5.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** the AI assistant closes the loop from listening to acting. Based on customer instructions, it suggests email replies and can send them on the customer's behalf via the customer's email provider. **Customer value:** the conversation-intelligence layer becomes an action layer. Most AI tools stop at the summary; Sonetel's writes and sends the follow-up. **Differentiator:** the action loop is the wedge-leg meeting-AI competitors don't have — Otter/Gong/Fireflies summarise but don't act. Combined with calls + SMS + meetings + email + web research already in place, this completes a full intelligent-business-communications offering."
+    },
+    {
+      "id": "2026-10-001",
+      "type": "disclosure",
+      "title": "AI voice assistant answering your calls — flagship product launch",
+      "headline_sv": "Sonetel lanserar AI-assistent som svarar i telefonen",
+      "headline_en": "Sonetel launches AI assistant that answers the phone",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-10-06",
+      "start_time": "08:30+02:00",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "board"
+      },
+      "channel": "cision",
+      "audience": [
+        "retail-se",
+        "institutional",
+        "customers",
+        "ai-curious",
+        "media"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "high",
+      "effort_hours": 16,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "ai-voice-assistant",
+        "flagship",
+        "kristina-pitch"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "AI as front-line receptionist for Sonetel customers. Ties back to 170+ country phone-number footprint as moat — the AI runs on real phone numbers, not in a silo. MAR classification confirmed in 2026-09-005 review. Full content package same as Voice Lake launch.",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "FLAGSHIP. Per Henrik 2026-04-29 VTT brief. **What's actually new:** AI voice assistant that answers customers' phone calls on their behalf — like a personal secretary. Protects users from unwanted calls (sellers, scams, unknown numbers) by greeting callers and asking who they are and what they want. Users get the message, not the interruption. **Customer value:** never miss a call from someone important; never get interrupted by someone unimportant. **Investor angle:** makes the moat tangible — the AI runs on Sonetel's own real phone numbers (80+ countries with local presence; customer base in 170 countries; calls and SMS work globally), not in a silo behind a meeting app. Demonstrates the full stack: phone-layer (moat) + AI-layer (differentiator) + business-impact (answered calls, scheduled meetings, captured leads) unified. Second press-pitchable event of the year. Same package as the August flagship: Cision, hub, LinkedIn (CEO + Co), X, short-form video, Kristina-assisted pitches."
+    },
+    {
+      "id": "2026-10-002",
+      "type": "content",
+      "title": "ChatGPT integration — Voice Lake knowledge as a Custom GPT",
+      "headline_sv": "Sonetel lanserar integration med ChatGPT som anpassad GPT",
+      "headline_en": "Sonetel launches ChatGPT integration as Custom GPT",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-10-20",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "ai-curious",
+        "customers"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-08-003"
+      ],
+      "linked_disclosure_ids": [
+        "2026-08-003"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "voice-lake",
+        "feature-extension",
+        "ecosystem-integration"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Users can query Voice Lake knowledge from ChatGPT. Per Voice Lake competitive-analysis: 'leveraging, not competing with, general AI assistants'. Investor-relevant as distribution moat. Date tentative — may ship earlier with Voice Lake launch.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "ChatGPT integration. Sonetel's conversation memory becomes available inside ChatGPT as a Custom GPT. **Customer value:** users can query Sonetel's data (customer conversations, calls, meetings, etc.) from inside ChatGPT, where many of them already work, without learning a new interface. **Investor angle:** distribution moat — Sonetel meets users where they live (ChatGPT). Leverages OpenAI's distribution rather than competing for attention with it. Date tentative — may ship earlier with the August flagship."
+    },
+    {
+      "id": "2026-12-001",
+      "type": "content",
+      "title": "Agent-based sales — A2A + MCP for AI-agent purchases",
+      "headline_sv": "Sonetel öppnar för agentbaserade inköp via A2A och MCP",
+      "headline_en": "Sonetel opens up for agent-based purchases via A2A and MCP",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-12-01",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "institutional",
+        "ai-curious",
+        "media",
+        "customers"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-10-002",
+        "2026-10-003"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 1.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "agent-economy",
+        "distribution-moat",
+        "mcp",
+        "a2a",
+        "kristina-pitch-candidate"
+      ],
+      "last_touched_at": "2026-04-30",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-30. **What's actually new:** Sonetel rolls out agent-based sales infrastructure — exposing the service so LLM-driven agents (Claude, ChatGPT, future agentic systems) can discover, evaluate and purchase Sonetel services on behalf of users. Built on emerging standards: A2A (Agent-to-Agent) and MCP (Model Context Protocol). **Distinct from earlier ChatGPT/Claude integrations** (Oct 20/27) which exposed Sonetel data for query — this exposes Sonetel as a *purchasable service*. **Investor angle:** distribution moat extension from human discovery to agent-driven discovery; positions Sonetel ahead of the agent-economy curve in 2026. **Differentiator:** very few SaaS companies in 2026 are exposing themselves to AI agents for purchase. Kristina-pitch candidate — agent economy is a journalist-friendly theme. Lands post-Q3 (Nov 24) in early December; gives it room and ties to the year's AI-distribution arc."
+    },
+    {
+      "id": "2026-10-003",
+      "type": "content",
+      "title": "Claude integration — Voice Lake MCP server",
+      "headline_sv": "Sonetel lanserar integration med Claude via MCP-server",
+      "headline_en": "Sonetel launches Claude integration via MCP server",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-10-27",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "ai-curious",
+        "customers"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-08-003"
+      ],
+      "linked_disclosure_ids": [
+        "2026-08-003"
+      ],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "voice-lake",
+        "feature-extension",
+        "ecosystem-integration",
+        "mcp"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "MCP server exposes Voice Lake knowledge to Claude Code / Claude Desktop. Date tentative — may be bundled with ChatGPT integration. Distribution moat.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Claude integration via MCP server. Same pattern as the ChatGPT integration the previous week — Sonetel's conversation memory available from Claude Code / Claude Desktop via the open Model Context Protocol standard. **Investor angle:** Sonetel distributed through the AI interfaces that knowledge workers increasingly live in. The week-after-ChatGPT cadence shows multi-platform AI distribution, not a single-vendor bet. Open-standard framing (MCP) plays well with the Swedish retail audience that distrusts walled gardens."
+    },
+    {
+      "id": "2026-07-003",
+      "type": "content",
+      "title": "Mobile Release 3 — async communication (recordings, voicemail, outgoing SMS, in-app channel)",
+      "headline_sv": "Sonetel: samtalsinspelningar och röstbrevlåda visas nu i mobilappen",
+      "headline_en": "Sonetel: call recordings and voicemail now visible in the mobile app",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-07-15",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-05-008"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 1,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "tags": [
+        "mobile",
+        "release-3",
+        "voice-lake-feeder"
+      ],
+      "last_touched_at": "2026-04-30",
+      "story": "Per Henrik 2026-04-29 VTT brief: the headline-worthy news on Jul 15 is that **call recordings (which have existed centrally for years) now show up inside the mobile app**, plus **voicemail recordings appear in the mobile app** when callers leave them. Outgoing SMS was originally bundled here but Henrik flagged it as deserving a separate press release — moved to 2026-07-005 (Jul 28) as the dedicated 2-way SMS launch. Lands inside Halvårsrapport quiet period (26 Jul – 24 Aug) — product content allowed; no financial framing.",
+      "notes": "Per Tomas André update 2026-04-21. Target date is mid-July; treat as placeholder until product team confirms."
+    },
+    {
+      "id": "2026-08-005",
+      "type": "content",
+      "title": "Mobile Release 4 — marketed public release + self-service registration",
+      "status": "cancelled",
+      "confidence": "placeholder",
+      "start_date": "2026-08-25",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers",
+        "media"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-07-003"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 1.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "tags": [
+        "mobile",
+        "release-4",
+        "marketed-launch"
+      ],
+      "last_touched_at": "2026-04-23",
+      "story": "Release 4 is the marketed public release of the new mobile apps — the first version with self-service registration. This is the 'real GA' moment: customers can sign up for Sonetel straight from the app without going through the website funnel. Investor point: closes the last structural mobile gap (onboarding friction), starts the adoption-compounding clock, and feeds customer-acquisition metrics that matter. Dependency: the sonetel.com website onboarding flow must support the self-service signup path.",
+      "notes": "Cancelled 2026-04-30 per Henrik VTT feedback — Henrik did not recognise this activity and could not identify the underlying news ('vad var det för en nyhet från början?'). Likely a hallucination from earlier planning. Removed. Aug 25 is the Halvårsrapport date per Sonetel's official financial calendar — see 2026-08-001."
+    },
+    {
+      "id": "2026-05-014",
+      "type": "disclosure",
+      "title": "Verksamhetsredogörelse Q1 2026 (jan–mar)",
+      "headline_sv": "Sonetel verksamhetsredogörelse jan–mar 2026",
+      "headline_en": "Sonetel Q1 2026 interim report (Jan–Mar)",
+      "status": "planned",
+      "confidence": "confirmed",
+      "start_date": "2026-05-26",
+      "start_time": "08:30+02:00",
+      "owner": {
+        "role": "cfo",
+        "person": null,
+        "approver": "board"
+      },
+      "channel": "cision",
+      "audience": [
+        "retail-se",
+        "institutional"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "high",
+      "effort_hours": 16,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": "quarterly"
+      },
+      "tags": [
+        "financial-report"
+      ],
+      "next_review_at": "2026-05-12",
+      "last_touched_at": "2026-04-30",
+      "notes": "Added 2026-04-30 — was missing from the IR calendar. Date confirmed per Sonetel's official financial calendar (sonetel.com/sv/investerare): 26 maj 2026. Sonetel uses 'Verksamhetsredogörelse' for First North Q1/Q3 reports (matches corpus pattern). Q1 covers Jan–Mar 2026. Tuesday 08:30 CET pre-market.",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Q1 verksamhetsredogörelse covering Jan–Mar 2026. First financial report under the new IR program. Lands one week before the board meeting (2026-05-21 → policy approval; report 2026-05-26)."
+    },
+    {
+      "id": "2026-05-013",
+      "type": "disclosure",
+      "title": "AI-driven operational restructuring — quiet framing per CEO 2026-05-14, not-MAR",
+      "headline_sv": "Sonetel anpassar organisationen kring AI-driven produktutveckling",
+      "headline_en": "Sonetel adjusts its organisation around AI-driven product development",
+      "status": "planned",
+      "confidence": "tentative",
+      "start_date": "2026-05-19",
+      "start_time": "08:30+02:00",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "board"
+      },
+      "channel": "cision",
+      "audience": [
+        "retail-se",
+        "institutional",
+        "customers",
+        "staff"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "high",
+      "effort_hours": 8,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "operational-restructuring",
+        "ai-driven-product-development",
+        "company-reformation",
+        "coordinated-launch"
+      ],
+      "next_review_at": "2026-05-15",
+      "last_touched_at": "2026-05-14",
+      "notes": "Per Henrik 2026-05-01: announcement moved from Tue 2026-05-05 to **Tue 2026-05-19 08:30 CET pre-market**. **Headline reframed 2026-05-14 (CR-2026-05-14)** per CEO direction: 'header should align more with Prashant's direction; we can't make a big splash. Then it becomes MAR.' Earlier headline 'sänker kostnadsbasen och stärker kassaflödet med AI' replaced with 'anpassar organisationen kring AI-driven produktutveckling' — operational/qualitative wording, no quantitative cash-flow claim, no headcount-by-country in headline. The 2026-05-13 MAR re-test addendum (per Prashant's verified scope: ~10 medarbetare, ~SEK 1.5m/yr steady-state from Oct 2027) confirmed prong-4 still fails → not-MAR. This headline change reinforces the MAR call by removing the cash-flow-pressure framing that pushed prong-4 closest. **Two timing notes:** (1) Per-capsulam board-approval window (ABL 8:22 unanimous) is now Tue 19/5 → Thu 21/5 board meeting = 2 days; Henrik must circulate immediately. (2) Tue 19/5 falls inside Q1 quiet period (26 Apr – 25 May before 26/5 Q1 verksamhetsredogörelse) — acceptable for not-MAR releases per Informationspolicy §7.6; framing avoids period-financials overlay. Coordinated launch per CLAUDE.md item 6 — launch folder at 04_content/press_releases/2026-05-19-cost-reduction/. Internal framing must align — same story, different emphasis (Prashant three-audience framework documented in folder).",
+      "story": "Cost reduction tied to AI-driven transformation: stronger cash flow, improved profitability, more agile organisation. Public-by date now **Tue 2026-05-19 08:30 CET**. Investor-side message: AI is enabling Sonetel to accelerate growth while ensuring healthy financials. Staff-side message: rationale is the AI-enabled transformation, not cost-cutting in isolation — the same story, different emphasis. Lands one week before the Q1 verksamhetsredogörelse (Tue 26 May), which lets the Q1 report carry the first signs of the financial impact in the natural reporting cadence. Until the Cision release ships, content quarantine remains in force per the existing memory rule.",
+      "syndication": [
+        "cision",
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ]
+    },
+    {
+      "id": "2026-05-012",
+      "type": "ops",
+      "title": "Add IR email-subscription form to sonetel.com",
+      "status": "in-progress",
+      "confidence": "confirmed",
+      "start_date": "2026-05-01",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "audience": [
+        "retail-se",
+        "institutional"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "low",
+      "effort_hours": 2,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "foundations",
+        "owned",
+        "ir-hub",
+        "subscription"
+      ],
+      "last_touched_at": "2026-05-01",
+      "notes": "Per Henrik 2026-04-29 (Q2 answer): Cision already manages Sonetel's IR email list; the signup form is missing from the new website. Add a working form on sonetel.com that writes to Cision's existing list. **Status update 2026-05-01 (Henrik):** form has been added, currently on staging — going live early next week (target Mon 4 May / Tue 5 May 2026). Mark `done` once production-live. Precedes the full IR-hub launch (2026-05-004) — this is the minimal subscription endpoint.",
+      "story": "Add the missing IR email-subscription form to sonetel.com so visitors can opt in to Sonetel disclosures. Cision already manages the list; the website-side signup function is missing. Quick fix ahead of the full IR-hub launch.",
+      "end_date": "2026-05-05"
+    },
+    {
+      "id": "2026-07-005",
+      "type": "content",
+      "title": "Outbound SMS — full telefoni över internet (hub post)",
+      "headline_sv": "Sonetel lanserar utgående SMS — full telefoni över internet",
+      "headline_en": "Sonetel launches outbound SMS — full telephony over the internet",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-07-28",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [
+        "2026-05-008",
+        "2026-07-003"
+      ],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "sms",
+        "telecom-moat"
+      ],
+      "last_touched_at": "2026-05-14",
+      "notes": "Per Henrik 2026-04-29: outbound / 2-way SMS expected end July. Placeholder date Tue 2026-07-28. Title reframed 2026-05-14 (CR-2026-05-14) to lead with 'full telefoni över internet' per CEO framing. Lands inside Halvårsrapport quiet period (26/7–24/8) — product content allowed; no financial framing. Investor angle: completes the SMS leg of the unified-stream wedge; activates the 170+ country regulatory plumbing competitors can't replicate. Inbound SMS now folded into 2026-05-008 (mobile beta 21/5) per CR-2026-05-14 — earlier standalone activity 2026-05-009 deleted; depends_on updated to reference 2026-05-008 directly. Outbound in mobile ships with R3 2026-07-15 (2026-07-003); this beat is the *capability completion* announcement.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief: outgoing SMS deserves its own release because two-way SMS is the big news customers have wanted. SMS available in ~20 countries (including major markets US, Sweden); not all 80+ local-number countries support SMS. **Customer impact:** with two-way SMS, customers can run their entire phone communication via Sonetel — get a Swedish or US number, answer calls in app, send/receive SMS in app — no fixed number needed, no SIM card needed, just internet. Equivalent to a full mobile subscription, over the internet. Lands inside Halvårsrapport quiet period (26 Jul – 24 Aug)."
+    },
+    {
+      "id": "2026-07-004",
+      "type": "content",
+      "title": "Gen II AI summaries — call + meeting summaries upgrade — hub post",
+      "headline_sv": "Sonetel lanserar nästa generations AI-sammanfattningar i mobil och webb",
+      "headline_en": "Sonetel launches next-generation AI summaries in mobile and web",
+      "status": "planned",
+      "confidence": "placeholder",
+      "start_date": "2026-07-21",
+      "owner": {
+        "role": "ceo",
+        "person": "henrik",
+        "approver": "henrik"
+      },
+      "channel": "website",
+      "series_id": "s-hub-posts",
+      "audience": [
+        "retail-se",
+        "customers",
+        "ai-curious"
+      ],
+      "languages": [
+        "sv",
+        "en"
+      ],
+      "links": [],
+      "depends_on": [],
+      "linked_disclosure_ids": [],
+      "mar_sensitivity": "medium",
+      "effort_hours": 0.5,
+      "cost": {
+        "amount": 0,
+        "currency": "SEK",
+        "recurring": false
+      },
+      "tags": [
+        "product-launch",
+        "ai-built",
+        "voice-lake-build-up",
+        "gen-ii"
+      ],
+      "last_touched_at": "2026-04-30",
+      "notes": "Mid-July product release: Generation II AI for call summaries + meeting summaries. Lands inside the pre-Q2 quiet period (2026-07-16 – 2026-08-15) — product content is allowed; financial commentary is not. Keep the post strictly product-facts and customer value; no revenue/adoption numbers.",
+      "syndication": [
+        "website",
+        "linkedin-ceo",
+        "linkedin-co",
+        "x"
+      ],
+      "story": "Per Henrik 2026-04-29 VTT brief. **What's actually new:** modern second-generation AI summaries shipped across mobile and web. Customers can listen to the recording while watching the transcription scroll, download PDF summaries, share with colleagues. **What already existed:** Sonetel built call summaries and transcription in 2023 on the technology of that time. The 2026 rewrite is a major refresh of both the user-facing capability AND the underlying technology — the latter creates the foundation that the August conversation-intelligence flagship builds on. Lands inside the Halvårsrapport quiet period — product framing only, no financial claims."
+    }
+  ]
+}

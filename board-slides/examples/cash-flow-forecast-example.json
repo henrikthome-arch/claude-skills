@@ -1,0 +1,625 @@
+{
+  "as_of_date": "2026-05-14",
+  "assumed_revenue_msek_month": 2.6,
+  "assumed_revenue_sek_day": 86667,
+  "revenue_assumption_rationale": "Apr 2026 actual 2.61 MSEK · 6-mo avg 2.51 MSEK · Matches recent month (+3.5% vs run-rate).",
+  "actuals_through_date": "2026-05-12",
+  "credit_line_sek": -1000000,
+  "warning_line_sek": -650000,
+  "minimum_projected_balance_sek": -814398.58,
+  "minimum_projected_date": "2026-05-28",
+  "minimum_actual_balance_sek": -822012.37,
+  "minimum_actual_date": "2026-05-11",
+  "starting_cash_sek": -755966.75,
+  "starting_cash_source": "EOM April 2026 cash position snapshot",
+  "forecast_horizon_days": 90,
+  "cogs_percent_effective": 16.2,
+  "cogs_percent_full": 21.8,
+  "daily_balance": [
+    {
+      "date": "2026-05-01",
+      "balance_sek": -774691.46,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-02",
+      "balance_sek": -724844.94,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-03",
+      "balance_sek": -672409.81,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-04",
+      "balance_sek": -629297.68,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-05",
+      "balance_sek": -575958.06,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-06",
+      "balance_sek": -493728.61,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-07",
+      "balance_sek": -412801.98,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-08",
+      "balance_sek": -716935.22,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-09",
+      "balance_sek": -642873.4,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-10",
+      "balance_sek": -742753.04,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-11",
+      "balance_sek": -822012.37,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-12",
+      "balance_sek": -721918.97,
+      "is_actual": true
+    },
+    {
+      "date": "2026-05-13",
+      "balance_sek": -649292.3,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-14",
+      "balance_sek": -660317.63,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-15",
+      "balance_sek": -705190.96,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-16",
+      "balance_sek": -632564.29,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-17",
+      "balance_sek": -559937.62,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-18",
+      "balance_sek": -547310.95,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-19",
+      "balance_sek": -474684.28,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-20",
+      "balance_sek": -402057.61,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-21",
+      "balance_sek": -329430.94,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-22",
+      "balance_sek": -256804.27,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-23",
+      "balance_sek": -187677.6,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-24",
+      "balance_sek": -213050.93,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-25",
+      "balance_sek": -200424.26,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-26",
+      "balance_sek": -626297.59,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-27",
+      "balance_sek": -566670.92,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-28",
+      "balance_sek": -814398.58,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-29",
+      "balance_sek": -741771.91,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-30",
+      "balance_sek": -690789.24,
+      "is_actual": false
+    },
+    {
+      "date": "2026-05-31",
+      "balance_sek": -618162.57,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-01",
+      "balance_sek": -624740.6,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-02",
+      "balance_sek": -554113.93,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-03",
+      "balance_sek": -481487.26,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-04",
+      "balance_sek": -408860.59,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-05",
+      "balance_sek": -365233.92,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-06",
+      "balance_sek": -292607.25,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-07",
+      "balance_sek": -224980.58,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-08",
+      "balance_sek": -152353.91,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-09",
+      "balance_sek": -79727.24,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-10",
+      "balance_sek": -169100.57,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-11",
+      "balance_sek": -96473.9,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-12",
+      "balance_sek": -94588.23,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-13",
+      "balance_sek": -21961.56,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-14",
+      "balance_sek": -69334.89,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-15",
+      "balance_sek": -164208.22,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-16",
+      "balance_sek": -91581.55,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-17",
+      "balance_sek": -18954.88,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-18",
+      "balance_sek": -6328.21,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-19",
+      "balance_sek": 66298.46,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-20",
+      "balance_sek": 138925.13,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-21",
+      "balance_sek": 211551.8,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-22",
+      "balance_sek": 284178.47,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-23",
+      "balance_sek": 353305.14,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-24",
+      "balance_sek": 27931.81,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-25",
+      "balance_sek": 40558.48,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-26",
+      "balance_sek": -385314.85,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-27",
+      "balance_sek": -319588.18,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-28",
+      "balance_sek": -620315.84,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-29",
+      "balance_sek": -547689.17,
+      "is_actual": false
+    },
+    {
+      "date": "2026-06-30",
+      "balance_sek": -561832.5,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-01",
+      "balance_sek": -568410.53,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-02",
+      "balance_sek": -497783.86,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-03",
+      "balance_sek": -425157.19,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-04",
+      "balance_sek": -352530.52,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-05",
+      "balance_sek": -308903.85,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-06",
+      "balance_sek": -236277.18,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-07",
+      "balance_sek": -168650.51,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-08",
+      "balance_sek": -96023.84,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-09",
+      "balance_sek": -23397.17,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-10",
+      "balance_sek": -112770.5,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-11",
+      "balance_sek": -40143.83,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-12",
+      "balance_sek": -38258.16,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-13",
+      "balance_sek": 34368.51,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-14",
+      "balance_sek": -47504.82,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-15",
+      "balance_sek": -42378.15,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-16",
+      "balance_sek": 30248.52,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-17",
+      "balance_sek": 102875.19,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-18",
+      "balance_sek": 115501.86,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-19",
+      "balance_sek": 188128.53,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-20",
+      "balance_sek": 260755.2,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-21",
+      "balance_sek": 333381.87,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-22",
+      "balance_sek": 406008.54,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-23",
+      "balance_sek": 475135.21,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-24",
+      "balance_sek": 149761.88,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-25",
+      "balance_sek": 162388.55,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-26",
+      "balance_sek": -263484.78,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-27",
+      "balance_sek": -197758.11,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-28",
+      "balance_sek": -498485.77,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-29",
+      "balance_sek": -425859.1,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-30",
+      "balance_sek": -573232.43,
+      "is_actual": false
+    },
+    {
+      "date": "2026-07-31",
+      "balance_sek": -550605.76,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-01",
+      "balance_sek": -557183.79,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-02",
+      "balance_sek": -486557.12,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-03",
+      "balance_sek": -413930.45,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-04",
+      "balance_sek": -341303.78,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-05",
+      "balance_sek": -297677.11,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-06",
+      "balance_sek": -225050.44,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-07",
+      "balance_sek": -157423.77,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-08",
+      "balance_sek": -84797.1,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-09",
+      "balance_sek": -12170.43,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-10",
+      "balance_sek": -101543.76,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-11",
+      "balance_sek": -28917.09,
+      "is_actual": false
+    },
+    {
+      "date": "2026-08-12",
+      "balance_sek": 64861.58,
+      "is_actual": false
+    }
+  ],
+  "top_forecast_items": [
+    {
+      "label": "Revenue assumption: 2.6 MSEK/month manual override",
+      "amount_sek": 2600000,
+      "expected_date": "monthly (recurring)",
+      "kind": "assumption",
+      "note": "Manual override set 2026-04-06 (CR-2026-04-06) because Best-Estimate models understated revenue during AdWords-off period (Mar actual 2.64 MSEK vs Best Estimate 2.33 MSEK, -12%). Override stored in business_parameters.cashflow_revenue_override_msek. Resolves to 86,667 SEK/day gross; net-after-COGS run rate 72,627 SEK/day (effective COGS 16.2%)."
+    },
+    {
+      "label": "Skatteverket — MOSS/OSS EU VAT (Q2 quarterly)",
+      "amount_sek": -206000,
+      "expected_date": "2026-07-30",
+      "kind": "quarterly",
+      "note": "Largest single non-monthly outflow in the window. Apr 2026 actual was EUR 18,714 (~206K SEK). Grows with EU revenue. No Swedish VAT on this payment."
+    },
+    {
+      "label": "Henrik Thomé — CEO loan repayment, del 1/2",
+      "amount_sek": -150000,
+      "expected_date": "2026-06-15",
+      "kind": "one_off",
+      "note": "Scheduled CEO loan repayment (first of two tranches)."
+    },
+    {
+      "label": "Henrik Thomé — CEO loan repayment",
+      "amount_sek": -100000,
+      "expected_date": "2026-05-15",
+      "kind": "one_off",
+      "note": "Scheduled CEO loan repayment (next-day from forecast as-of date)."
+    },
+    {
+      "label": "Henrik Thomé — Utlägg 2890 (expense reimbursement, 4 tranches)",
+      "amount_sek": -100000,
+      "expected_date": "2026-06-30 and 2026-07-31",
+      "kind": "one_off",
+      "note": "Two tranches in window: 50K on 2026-06-30 (tranche 1/4) + 50K on 2026-07-31 (tranche 3/4). Total 100K in forecast window of expense-reimbursement series."
+    },
+    {
+      "label": "G&W — Certified Advisor (quarterly fee)",
+      "amount_sek": -34500,
+      "expected_date": "2026-07-14",
+      "kind": "quarterly",
+      "note": "Quarterly Certified Adviser fee for Nasdaq First North listing (G&W Fondkommission)."
+    }
+  ],
+  "_metadata": {
+    "source_api": "http://44.194.218.109:8000/api/v1/cash-flow/forecast",
+    "source_service": "libs/financial_core/services/cash_flow_forecast_service.py (CashFlowForecastService.generate_forecast)",
+    "extraction_datetime_utc": "2026-05-14",
+    "request_payload": {
+      "start_date": "2026-05-01",
+      "forecast_days": 103
+    },
+    "finops_correlation_id": "4c66deee-fe25-4c63-8358-e0058beeaea1",
+    "run_rate_source": "manual_override",
+    "run_rate_model_detail": "Manual override: 2.600000 MSEK/month",
+    "forecast_revenue_summary": {
+      "daily_rate_net_sek": 72626.66946,
+      "days_count": 92,
+      "first_date": "2026-05-13",
+      "last_date": "2026-08-12"
+    },
+    "actual_revenue_summary": {
+      "days_count": 12,
+      "first_date": "2026-05-01",
+      "last_date": "2026-05-12",
+      "total_net_sek": 855524.48
+    },
+    "snapshot_stale_warning": "",
+    "buffer_sek": 200000.0,
+    "notes": [
+      "Daily balance covers 2026-05-01 to 2026-08-12 (104 days). The screenshot Henriks shared shows ~May 1 → end of July; data extends slightly further (Aug 12) so the slide can crop.",
+      "is_actual=true for days through 2026-05-12 (per Finops actual_revenue_summary.last_date). After that, revenue is the manual-override run-rate.",
+      "starting_cash (-755,966.75) is the EOM April 2026 cash position snapshot — already negative, drawing on the 1 MSEK Nordea checkkredit.",
+      "The -650K warning line is a hardcoded UI threshold (portal/templates/analytics/cash_flow.html line 1414), not a backend-configurable value. It represents a comfort buffer above the credit line.",
+      "Two minimum-balance figures provided: (a) minimum_projected_balance_sek -814,398.58 on 2026-05-28 is the lowest point in the FORECAST-only portion (days after 2026-05-12, i.e. forward-looking). (b) minimum_actual_balance_sek -822,012.37 on 2026-05-11 is the lowest point including the actuals-window. Use (a) for the board narrative about future risk. The -852,920 on 2026-05-28 figure in the briefing screenshot was an earlier snapshot — current Finops data shows -814K because subsequent scheduling adjustments (e.g., DBT delayed payment booked, Google offset, etc.) shifted the trough slightly.",
+      "top_forecast_items excludes normal monthly recurring (salaries, monthly SaaS, monthly rent, Google ads ~120K/m, India operations, Mangold, etc.) per task instructions.",
+      "Smaller scheduled items not in top-5: Sonetel India income tax 22,770 SEK on 2026-06-30; DBT Capital April delayed 134,099 SEK already booked 2026-05-11 (in actuals window); India SWIFT 35 KUSD already sent 2026-05-08 (in actuals window).",
+      "Inflow not in top-5: Skatteverket Q2 Input VAT refund ~100,000 SEK expected 2026-08-12 (at very edge of window, may slip out)."
+    ],
+    "gaps": [
+      "Bank CSV import status not verified by this extraction — actual_revenue_summary covers 2026-05-01 to 2026-05-12, suggesting email-metrics-based revenue actuals are current through 2026-05-12 (2 days before as-of date).",
+      "No prior_month_comparison available in API response for this query.",
+      "Note: Henriks briefing referenced min_balance -852,920 SEK and an actuals line through 05-12. Min balance as actually computed by Finops at extraction time is -921,073 (worse). The discrepancy likely reflects subsequent changes to scheduled payments (e.g., the 100K CEO loan repayment on 2026-05-15 may have been added/adjusted after the briefing screenshot was taken)."
+    ]
+  }
+}

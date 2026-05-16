@@ -1,0 +1,569 @@
+/* Sonetel Kvartalsredogörelse — style.css
+   Matches the v1.0 visual language: red+navy+teal palette, two-column body,
+   mirrored footers, card-style charts, photographic banners. */
+
+/* --- Fonts -------------------------------------------------------------- */
+
+@font-face {
+  font-family: 'Gotham SSm';
+  src: url('file:///Users/henrik/Library/Fonts/GothamSSm-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Gotham SSm';
+  src: url('file:///Users/henrik/Library/Fonts/GothamSSm-Book.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Gotham SSm';
+  src: url('file:///Users/henrik/Library/Fonts/GothamSSm-BookItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Gotham SSm';
+  src: url('file:///Users/henrik/Library/Fonts/GothamSSm-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Gotham SSm';
+  src: url('file:///Users/henrik/Library/Fonts/GothamSSm-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* --- Palette (sampled approximations from v1.0; tune as needed) --------- */
+
+:root {
+  --red:        #B80404;   /* accent: footer brand, page-number bar, KONCERNEN sub */
+  --navy:       #2E4A7C;   /* Thick blue: section headers, summa, table headers, dividers */
+  --navy-soft:  #B3C2D6;   /* divider line accent under section titles */
+  --teal-dark:  #3D7B81;   /* top KPI tile band */
+  --teal-light: #7BC4C4;   /* bottom KPI tile band + back cover — saturated brand aqua */
+  --tint-col:   #EDF3F7;   /* pale-blue current-period column tint (balansräkning) */
+  --ink:        #1A1A1A;   /* body text + page section titles */
+  --muted:      #555555;   /* secondary copy */
+  --rule:       #B8B8B8;   /* gridlines, table rules */
+  --rule-soft:  #DCDCDC;
+  --card:       #F2F2F2;   /* kommentar-box background */
+}
+
+/* --- @page rules -------------------------------------------------------- */
+
+@page {
+  size: A4;
+  margin: 18mm 18mm 18mm 18mm;
+}
+
+@page :right {
+  @bottom-right {
+    content: string(footer-label) " " counter(page);
+    font-family: 'Gotham SSm', sans-serif;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: var(--red);
+    letter-spacing: 0.6pt;
+  }
+}
+
+@page :left {
+  @bottom-left {
+    content: counter(page) "  " string(footer-label-left);
+    font-family: 'Gotham SSm', sans-serif;
+    font-weight: 500;
+    font-size: 8.5pt;
+    color: var(--red);
+    letter-spacing: 0.6pt;
+  }
+}
+
+@page cover { margin: 0; }
+@page backcover { margin: 0; }
+
+/* Pages with bottom-anchored full-bleed elements (KPI bands, image bands)
+   that would collide with the page number — suppress @bottom-* counters. */
+@page no-pagenum {
+  @bottom-right { content: none; }
+  @bottom-left { content: none; }
+}
+
+/* --- Body --------------------------------------------------------------- */
+
+body {
+  font-family: 'Gotham SSm', sans-serif;
+  font-weight: 300;
+  font-size: 9pt;
+  line-height: 1.4;
+  color: var(--ink);
+  /* Faux ~355 weight: Light (300) + sub-pixel double-strike thickens stroke without
+     changing font file. Lands visually between Light and Book. */
+  text-shadow: 0.06em 0 0 currentColor, -0.06em 0 0 currentColor;
+}
+
+p { margin: 0 0 6pt 0; }
+
+ul { margin: 0 0 7pt 0; padding-left: 16pt; }
+li { margin: 0 0 3pt 0; }
+
+strong, b { font-weight: 400; }  /* reduced from 500 (1 step down) to lower contrast against faux-355 body */
+em, i { font-style: italic; }
+
+a { color: var(--ink); text-decoration: none; }
+
+/* Page section title pattern: large Light/Book, no color, with navy divider beneath */
+.page-title {
+  font-weight: 300;
+  font-size: 26pt;
+  letter-spacing: -0.3pt;
+  color: var(--ink);
+  margin: 0 0 24pt 0;  /* doubled from 12pt — Henrik 2026-05-13 */
+  page-break-after: avoid;
+}
+.page-divider {
+  width: 24mm;
+  height: 1.4mm;
+  background: var(--navy-soft);
+  margin: 0 0 24pt 0;  /* doubled from 12pt for symmetric breathing room */
+}
+
+/* Red small-caps section subhead (e.g. "REDOVISNINGSPRINCIPER", "KONCERNEN JULI – SEPTEMBER 2025") */
+.subhead-red {
+  font-weight: 700;
+  font-size: 9pt;
+  letter-spacing: 0.8pt;
+  color: var(--red);
+  text-transform: uppercase;
+  margin: 6pt 0 4pt 0;
+  page-break-after: avoid;
+}
+
+/* Two-column body layout — generous column gap for breathing room (consistent across document) */
+.body-2col {
+  column-count: 2;
+  column-gap: 16mm;
+  column-fill: balance;
+}
+
+/* Section break (forces new page) */
+.section-break { page-break-after: always; }
+.section-break-before { page-break-before: always; }
+
+/* --- Cover (page 1) ----------------------------------------------------- */
+
+.cover {
+  page: cover;
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  overflow: hidden;
+  page-break-after: always;
+  color: #FFFFFF;
+}
+.cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-img-fallback {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #2C3E50 0%, #1A2530 100%);
+}
+.cover-logo {
+  position: absolute;
+  top: 22mm;
+  left: 22mm;
+  width: 48mm;
+}
+.cover-logo img { width: 100%; display: block; }
+.cover-bottom {
+  position: absolute;
+  bottom: 25mm;
+  left: 22mm;
+  right: 22mm;
+  color: #FFFFFF;
+}
+.cover-title {
+  font-weight: 300;
+  font-size: 36pt;
+  letter-spacing: -0.3pt;
+  line-height: 1.05;
+  margin: 0 0 4pt 0;
+  text-shadow: 0 1px 14px rgba(0,0,0,0.45);
+}
+.cover-period {
+  font-weight: 500;
+  font-size: 11pt;
+  letter-spacing: 2pt;
+  text-transform: uppercase;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.4);
+}
+
+/* --- Perioden i sammandrag (page 2) ------------------------------------ */
+
+.sammandrag {
+  position: relative;
+  height: 261mm;  /* explicit fixed height = A4 minus top/bottom margins */
+  page-break-after: always;
+  page: no-pagenum;  /* KPI bands sit at page bottom — suppress page number */
+}
+.sammandrag .tagline {
+  font-weight: 300;
+  font-size: 26pt;
+  letter-spacing: -0.3pt;
+  line-height: 1.1;
+  color: var(--ink);
+  margin: 2mm 0 24pt 0;  /* doubled — match .page-title 24pt-below convention */
+  max-width: 150mm;
+}
+.sammandrag .kpi-paragraphs {
+  column-count: 2;
+  column-gap: 14mm;
+  margin: 4pt 0 6mm 0;
+  font-size: 8.5pt;
+  line-height: 1.5;
+}
+.sammandrag .kpi-paragraphs p {
+  margin: 0 0 5pt 0;
+  break-inside: avoid;
+  font-weight: 300;
+}
+.sammandrag .kpi-bands {
+  position: absolute;
+  bottom: -18mm;  /* full-bleed past page bottom margin */
+  left: -18mm;
+  right: -18mm;
+}
+
+/* KPI tile bands — full-bleed horizontal rows */
+.kpi-band {
+  padding: 13mm 18mm;  /* ~70% taller per row vs prior 7mm */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #FFFFFF;
+}
+.kpi-band-dark { background: var(--teal-dark); }
+.kpi-band-light { background: var(--teal-light); }
+.kpi-tile {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;  /* label and value centred within their column */
+}
+.kpi-tile .label {
+  font-weight: 500;
+  font-size: 9pt;
+  letter-spacing: 1pt;
+  text-transform: uppercase;
+  margin: 0 0 4pt 0;
+  line-height: 1.2;
+}
+.kpi-tile .value {
+  font-weight: 700;
+  font-size: 44pt;
+  line-height: 1;
+  letter-spacing: -1pt;
+}
+
+/* --- VD-ordet (page 3) ------------------------------------------------- */
+
+.vd-banner {
+  margin: -18mm -18mm 6mm -18mm;  /* full-bleed top */
+  height: 65mm;
+  position: relative;
+  overflow: hidden;
+  background: #1A1A1A;
+}
+.vd-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1);
+}
+.vd-banner .banner-label {
+  position: absolute;
+  bottom: 8mm;
+  right: 22mm;
+  text-align: right;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 26pt;
+  letter-spacing: -0.3pt;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.5);
+}
+
+.vd-content .vd-title {
+  font-weight: 300;
+  font-size: 22pt;
+  letter-spacing: -0.3pt;
+  line-height: 1.1;
+  color: var(--ink);
+  margin: 0 0 24pt 0;  /* doubled — match .page-title 24pt-below convention */
+  /* full content width (no max-width) — title spans across both columns of body-2col below
+     to give more breathing room and reduce line count from 3 to 2 */
+}
+.vd-content .body-2col {
+  font-size: 8.5pt;
+  line-height: 1.5;
+}
+.vd-content .body-2col p {
+  font-weight: 300;
+  margin-bottom: 8pt;
+}
+.vd-content .body-2col p:first-child {
+  font-weight: 500;  /* lead-in: same step up as inline bold (Medium); body is faux-340 */
+}
+.vd-content .signatur {
+  margin-top: 10pt;
+  font-size: 9.5pt;
+  line-height: 1.4;
+}
+.vd-content .signatur .name { font-weight: 400; }
+.vd-content .signatur .title { font-weight: 400; }
+
+/* --- Affärsmodell (page 4) --------------------------------------------- */
+
+.affarsmodell {
+  position: relative;
+  height: 261mm;  /* explicit fixed height = A4 minus top/bottom margins */
+  page-break-after: always;
+  page: no-pagenum;  /* image band sits at page bottom — suppress page number */
+}
+.affarsmodell .body-block {
+  padding-bottom: 6mm;
+  font-size: 8.5pt;
+  line-height: 1.5;
+  font-weight: 300;
+}
+.affarsmodell .body-block p,
+.affarsmodell .body-block li {
+  font-weight: 300;
+  margin-bottom: 6pt;
+}
+.affarsmodell .body-block strong {
+  font-weight: 400;
+}
+.affarsmodell-image {
+  position: absolute;
+  bottom: -18mm;  /* full-bleed past page bottom margin */
+  left: -18mm;
+  right: -18mm;
+  height: 95mm;
+  overflow: hidden;
+}
+.affarsmodell-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.affarsmodell-image-fallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #2C3E50 0%, #1A2530 100%);
+}
+
+/* --- Nyckeltal (page 5) ------------------------------------------------ */
+
+.nyckeltal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 6mm;
+  margin-top: 4mm;
+}
+.chart-card {
+  border: 0.5pt solid var(--rule);
+  border-radius: 4mm;
+  padding: 4mm 4mm 2mm 4mm;
+  page-break-inside: avoid;
+}
+.chart-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.kommentar-card {
+  background: var(--card);
+  border-radius: 0;
+  padding: 6mm 5mm;
+  page-break-inside: avoid;
+  font-size: 9pt;
+  line-height: 1.5;
+}
+.kommentar-card .heading {
+  font-weight: 700;
+  font-size: 10pt;
+  color: var(--ink);
+  margin: 0 0 5pt 0;
+}
+.kommentar-card p { margin: 0 0 6pt 0; }
+.kommentar-card p:last-child { margin-bottom: 0; }
+
+/* --- Övrigt (page 6) --------------------------------------------------- */
+
+.ovrigt h2.subhead-red { margin-top: 12pt; }
+.ovrigt p { margin-bottom: 6pt; font-weight: 300; }
+.ovrigt li { font-weight: 300; }
+.ovrigt strong { font-weight: 400; }
+.aktie-facts { font-size: 9.5pt; line-height: 1.5; }
+.aktie-facts div { margin: 0; }
+.sammanstallning {
+  width: auto;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  margin: 3pt 0 8pt 0;
+}
+.sammanstallning td { padding: 1pt 0; }
+.sammanstallning td.num { padding-left: 12mm; text-align: right; font-variant-numeric: tabular-nums; }
+.kalendarium {
+  border-collapse: collapse;
+  font-size: 9.5pt;
+  margin: 3pt 0 4pt 0;
+}
+.kalendarium td { padding: 1pt 0; white-space: nowrap; }  /* nowrap: keep 'Verksamhetsredogörelse Q3' on one line */
+.kalendarium td.date { padding-left: 8mm; font-variant-numeric: tabular-nums; }
+
+/* --- Signing block + Om Sonetel (page 7) ------------------------------ */
+
+.granskning {
+  margin-top: 18mm;
+  font-size: 9.5pt;
+  line-height: 1.45;
+}
+.granskning .declaration { margin: 6pt 0 12pt 0; }
+.signing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14pt 12mm;
+  margin: 6pt 0 12mm 0;
+}
+.signing-cell { font-size: 9.5pt; }
+.signing-cell .name { font-weight: 400; }
+.signing-cell .role { font-style: italic; color: var(--ink); font-size: 9pt; }
+
+.om-sonetel {
+  margin-top: 12mm;
+  font-size: 9.5pt;
+  line-height: 1.5;
+}
+.om-sonetel .heading { font-weight: 400; margin: 0 0 4pt 0; }
+
+/* --- Financial tables (pages 8-11) ------------------------------------ */
+
+table.fin {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8pt;
+  margin: 4pt 0 8pt 0;
+}
+table.fin caption {
+  caption-side: top;
+  text-align: left;
+  /* Page-title styling is applied externally via .page-title sibling element. */
+}
+table.fin thead { display: table-header-group; }
+table.fin thead th {
+  font-weight: 500;
+  color: var(--navy);
+  border-bottom: 0.8pt solid var(--ink);
+  padding: 6pt 4pt 5pt 4pt;
+  text-align: right;
+  font-size: 8.5pt;
+  vertical-align: bottom;
+}
+table.fin thead th:first-child {
+  text-align: left;
+  color: var(--ink);
+  font-weight: 500;
+}
+table.fin tbody td {
+  padding: 1.8pt 4pt;
+  text-align: right;
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+table.fin tbody td:first-child {
+  text-align: left;
+  font-variant-numeric: normal;
+}
+table.fin tr { page-break-inside: avoid; }
+table.fin tr.section td {
+  font-weight: 500;
+  color: var(--navy);
+  padding-top: 5pt;
+  padding-bottom: 1.5pt;
+}
+table.fin tr.summa td {
+  border-top: 0.4pt solid var(--ink);
+  font-weight: 500;
+  color: var(--navy);
+  padding-top: 3pt;
+}
+table.fin tr.summa-bold td {
+  border-top: 0.6pt solid var(--ink);
+  font-weight: 700;
+  color: var(--navy);
+  padding-top: 3pt;
+}
+table.fin .indent-1 { padding-left: 6pt !important; }
+table.fin .indent-2 { padding-left: 14pt !important; }
+
+.footnote-marker { font-size: 7pt; vertical-align: super; }
+.footnotes {
+  margin-top: 8pt;
+  font-size: 7.5pt;
+  color: var(--muted);
+}
+
+/* Balansräkning current-period column tint (2nd col = first numeric) */
+table.fin.tint-current tbody td:nth-child(2),
+table.fin.tint-current thead th:nth-child(2) {
+  background: var(--tint-col);
+}
+
+/* Continuation table — used for "Balansräkning fortsättning" on page 10 */
+.continuation-caption {
+  font-weight: 500;
+  font-size: 9.5pt;
+  color: var(--ink);
+  padding: 6pt 4pt 5pt 4pt;
+}
+
+/* --- Definitioner (page 12) ------------------------------------------- */
+
+.definitioner .body-2col p {
+  margin: 0 0 7pt 0;
+  break-inside: avoid;
+  /* font-weight intentionally NOT set — inherits from body (faux-355 via text-shadow + 300)
+     so definitioner-text matches the rest of the report */
+}
+.definitioner .term {
+  font-weight: 400;  /* matches strong/b inline-bold */
+  color: var(--navy);
+}
+
+/* --- Back cover (page 13) --------------------------------------------- */
+
+.back-cover {
+  page: backcover;
+  width: 210mm;
+  height: 297mm;
+  background: var(--teal-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  page-break-before: always;
+}
+.back-cover .monogram {
+  width: 55mm;
+  opacity: 0.55;        /* subtle watermark feel — slightly more visible since icon is now true white */
+}
+.back-cover .monogram img {
+  width: 100%;
+  display: block;
+}

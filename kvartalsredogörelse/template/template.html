@@ -1,0 +1,245 @@
+{# Sonetel Kvartalsredogörelse — Jinja2 template
+   13-page layout matching v1.0 visual language. #}
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <title>{{ meta.report_type }} {{ meta.period_short }} — Sonetel AB (publ)</title>
+  <style>
+    body {
+      string-set: footer-label "SONETEL.COM" footer-label-left "{{ meta.footer_label }}";
+    }
+  </style>
+</head>
+<body>
+
+{# ============================================================== Page 1 — Cover #}
+<section class="cover">
+  {% if assets.cover_image %}
+  <img class="cover-img" src="file://{{ assets.cover_image }}" alt="">
+  {% else %}
+  <div class="cover-img-fallback"></div>
+  {% endif %}
+  <div class="cover-logo">
+    <img src="file://{{ assets.wordmark_white }}" alt="Sonetel">
+  </div>
+  <div class="cover-bottom">
+    <div class="cover-title">{{ meta.report_type }}</div>
+    <div class="cover-period">{{ meta.period_label }}</div>
+  </div>
+</section>
+
+{# =================================================== Page 2 — Perioden i sammandrag #}
+<section class="sammandrag">
+  <div class="tagline">{{ meta.tagline }}</div>
+  <div class="page-divider"></div>
+  <div class="subhead-red">KONCERNEN {{ meta.period_label }}</div>
+
+  <div class="kpi-paragraphs">
+    <p>Återkommande årliga intäkter (ARR) ökade med +{{ fmt_pct(kpis.arr.yoy_pct) }}% till {{ fmt_msek(kpis.arr.current) }} MSEK ({{ fmt_msek(kpis.arr.prior) }}).</p>
+    <p>Nettoomsättningen ökade med +{{ fmt_pct(kpis.nettoomsattning.yoy_pct) }}% till {{ fmt_msek(kpis.nettoomsattning.current) }} ({{ fmt_msek(kpis.nettoomsattning.prior) }}) MSEK.</p>
+    <p>Bruttomarginalen uppgick till {{ fmt_pct(kpis.bruttomarginal_pct.current) }}% ({{ fmt_pct(kpis.bruttomarginal_pct.prior) }}%).</p>
+    <p>EBITDA låg på {{ fmt_pct(kpis.ebitda_pct.current) }}% ({{ fmt_pct(kpis.ebitda_pct.prior) }}%).</p>
+    <p>SaaS 40 index uppgick till {{ fmt_pct(kpis.saas40_pct.current) }}%{% if kpis.saas40_pct.prior is not none %} ({{ fmt_pct(kpis.saas40_pct.prior) }}%){% endif %}.</p>
+    <p>Rörelseresultatet uppgick till {{ fmt_msek(kpis.rorelseresultat.current) }} ({{ fmt_msek(kpis.rorelseresultat.prior) }}) MSEK.</p>
+    <p>Resultat före skatt uppgick till {{ fmt_msek(kpis.resultat_fore_skatt.current) }} ({{ fmt_msek(kpis.resultat_fore_skatt.prior) }}) MSEK.</p>
+    <p>Resultat efter skatt per genomsnittligt antal aktier uppgick till {{ fmt_decimal(kpis.resultat_per_aktie.current, 2) }} ({{ fmt_decimal(kpis.resultat_per_aktie.prior, 2) }}) kr.</p>
+    <p>Kassaflöde från den löpande verksamheten uppgick till {{ fmt_msek(kpis.kassaflode_loepande.current) }} ({{ fmt_msek(kpis.kassaflode_loepande.prior) }}) MSEK.</p>
+    <p>Likvida medel uppgick vid periodens utgång till {{ fmt_msek(kpis.likvida_medel_eom.current) }} ({{ fmt_msek(kpis.likvida_medel_eom.prior) }}) MSEK.</p>
+    <p>Antalet aktiva betalande kunder ökade med +{{ fmt_pct(kpis.aktiva_betalande_kunder.yoy_pct) }}% till {{ fmt_int(kpis.aktiva_betalande_kunder.current) }} ({{ fmt_int(kpis.aktiva_betalande_kunder.prior) }}).</p>
+    <p>Anskaffningskostnad per betalande kund (CAC) uppgick till {{ fmt_pct(kpis.cac_kr.current) }} kr ({{ fmt_pct(kpis.cac_kr.prior) }} kr).</p>
+    <p>Soliditeten uppgick vid periodens utgång till {{ fmt_pct(kpis.soliditet_pct.current) }}% ({{ fmt_pct(kpis.soliditet_pct.prior) }}%).</p>
+    <p>Genomsnittligt antal anställda i koncernen var {{ fmt_pct(kpis.anstallda_snitt.current) }} ({{ fmt_pct(kpis.anstallda_snitt.prior) }}).</p>
+  </div>
+
+  <div class="kpi-bands">
+    <div class="kpi-band kpi-band-dark">
+      {% for tile in kpi_tiles[:3] %}
+      <div class="kpi-tile">
+        <div class="label">{{ tile.label }}</div>
+        <div class="value">{{ tile.value }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="kpi-band kpi-band-light">
+      {% for tile in kpi_tiles[3:] %}
+      <div class="kpi-tile">
+        <div class="label">{{ tile.label }}</div>
+        <div class="value">{{ tile.value }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ======================================================== Page 3 — VD-ordet #}
+<section class="vd-ordet section-break-before">
+  <div class="vd-banner">
+    {% if assets.vd_banner_image %}
+    <img src="file://{{ assets.vd_banner_image }}" alt="">
+    {% endif %}
+    <div class="banner-label">VDs kommentarer</div>
+  </div>
+  <div class="vd-content">
+    <div class="vd-title">{{ narrative.vd_kommentar_rubrik }}</div>
+    <div class="page-divider"></div>
+    <div class="body-2col">
+      {% for p in narrative.vd_kommentar %}<p>{{ p }}</p>{% endfor %}
+      <div class="signatur">
+        <div class="name">{{ governance.vd_namn }}</div>
+        <div class="title">{{ governance.vd_titel }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ==================================================== Page 4 — Affärsmodell #}
+<section class="affarsmodell section-break-before">
+  <div class="body-block">
+    <div class="page-title">Affärsmodell</div>
+    <div class="page-divider"></div>
+    <div class="body-2col">
+      {% for p in narrative.affarsmodell %}<p>{{ p }}</p>{% endfor %}
+      <ul>{% for p in narrative.affarsmodell_prisplaner %}<li>{{ inline_bold_prefix(p) }}</li>{% endfor %}</ul>
+      {% for p in narrative.affarsmodell_avslutning %}<p>{{ p }}</p>{% endfor %}
+    </div>
+  </div>
+  <div class="affarsmodell-image">
+    {% if assets.affarsmodell_image %}
+    <img src="file://{{ assets.affarsmodell_image }}" alt="">
+    {% else %}
+    <div class="affarsmodell-image-fallback"></div>
+    {% endif %}
+  </div>
+</section>
+
+{# ======================================================= Page 5 — Nyckeltal #}
+<section class="nyckeltal section-break-before">
+  <div class="page-title">Nyckeltal</div>
+  <div class="page-divider"></div>
+  <div class="nyckeltal-grid">
+    {% for chart in charts %}
+    <div class="chart-card">
+      <img src="file://{{ chart.path }}" alt="{{ chart.title }}">
+    </div>
+    {% endfor %}
+    <div class="kommentar-card">
+      <div class="heading">Kommentar till grafer</div>
+      {% for p in narrative.kommentar_till_grafer %}<p>{{ p }}</p>{% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ========================================================= Page 6 — Övrigt #}
+<section class="ovrigt section-break-before">
+  <div class="page-title">Övrigt</div>
+  <div class="page-divider"></div>
+  <div class="body-2col">
+
+    <h2 class="subhead-red">REDOVISNINGSPRINCIPER</h2>
+    {% for p in disclosures.redovisningsprinciper %}<p>{{ p }}</p>{% endfor %}
+
+    <h2 class="subhead-red">VÄSENTLIGA RISKER OCH OSÄKERHETSFAKTORER</h2>
+    <p>{{ disclosures.vasentliga_risker }}</p>
+
+    <h2 class="subhead-red">AKTIER OCH TECKNINGSOPTIONER</h2>
+    <p>Fakta om Sonetels aktie.</p>
+    <div class="aktie-facts">
+      <div>Marknadsplats: {{ share_capital.marknadsplats }}</div>
+      <div>Kortnamn: {{ share_capital.kortnamn }}</div>
+      <div>ISIN kod: {{ share_capital.isin }}</div>
+      <div>LEI: {{ share_capital.lei }}</div>
+      <div>Antal aktier: {{ fmt_int(share_capital.antal_aktier) }}</div>
+      <div>Antal röster: {{ fmt_int(share_capital.antal_roster) }}</div>
+      <div>Kvotvärde: {{ fmt_decimal(share_capital.kvotvarde_kr, 2) }} kr.</div>
+    </div>
+    <p style="margin-top: 6pt;">{{ share_capital.bemyndigande_text }}</p>
+
+    <h3 style="font-weight:700; font-size: 9.5pt; margin: 6pt 0 3pt 0;">Sammanställning</h3>
+    <table class="sammanstallning">
+      {% for row in share_capital.sammanstallning %}
+      <tr><td>{{ row.label }}</td><td class="num">{{ fmt_int(row.antal) }}</td></tr>
+      {% endfor %}
+    </table>
+    {% if share_capital.optionsprogram_text %}<p>{{ share_capital.optionsprogram_text }}</p>{% endif %}
+
+    <h2 class="subhead-red">TRANSAKTIONER MED NÄRSTÅENDE</h2>
+    <p>{% if transaktioner_narstaende %}{{ transaktioner_narstaende }}{% else %}Inga transaktioner med närstående under perioden.{% endif %}</p>
+
+    <h2 class="subhead-red">KALENDARIUM</h2>
+    <table class="kalendarium">
+      {% for ev in kalendarium %}
+      <tr><td>{{ ev.event }}</td><td class="date">{{ ev.date }}</td></tr>
+      {% endfor %}
+    </table>
+    <p style="margin-top: 8pt;">Denna {{ meta.report_type|lower }} samt tidigare ekonomiska rapporter och pressmeddelanden finns på bolagets hemsida {{ disclosures.kontakt.hemsida }}</p>
+    <p>För ytterligare information kontakta:<br>
+    {{ disclosures.kontakt.vd_namn }}, {{ disclosures.kontakt.vd_titel }}, telefon {{ disclosures.kontakt.vd_telefon }}, {{ disclosures.kontakt.investor_email }}</p>
+
+  </div>
+</section>
+
+{# =========================== Page 7 — Granskning + signing + Om Sonetel #}
+<section class="granskning-page section-break-before">
+  <div class="granskning">
+    <p>{{ disclosures.granskning_status }}</p>
+    <div class="declaration">
+      Avlämnande av {{ meta.report_type|lower }}<br>
+      {{ governance.vd_signing_location }} den {{ format_signing_date(governance.vd_signing_date) }}
+    </div>
+  </div>
+  <div class="signing-grid">
+    {% for member in governance.board %}
+    <div class="signing-cell">
+      <div class="name">{{ member.namn }}</div>
+      <div class="role">{{ member.roll }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="om-sonetel">
+    <div class="heading">Om Sonetel AB (publ)</div>
+    <p>{{ disclosures.om_bolaget }}</p>
+  </div>
+</section>
+
+{# ============================================== Page 8 — Resultaträkning koncernen #}
+<section class="section-break-before">
+  <div class="page-title">Resultaträkning koncernen</div>
+  <div class="page-divider"></div>
+  {{ render_table(tables.resultatrakning_koncern, header_first_cell="SEK") }}
+</section>
+
+{# ===================================== Pages 9-10 — Balansräkning koncernen + fortsättning #}
+<section class="section-break-before">
+  <div class="page-title">Balansräkning koncernen</div>
+  <div class="page-divider"></div>
+  {{ render_balansrakning(tables.balansrakning_koncern) }}
+</section>
+
+{# ====================================================== Page 11 — Kassaflöde #}
+<section class="section-break-before">
+  <div class="page-title">Kassaflöde i sammandrag för koncernen</div>
+  <div class="page-divider"></div>
+  {{ render_table(tables.kassaflode_koncern, header_first_cell="") }}
+</section>
+
+{# ==================================================== Page 12 — Definitioner #}
+<section class="definitioner section-break-before">
+  <div class="page-title">Definitioner</div>
+  <div class="page-divider"></div>
+  <div class="body-2col">
+    {% for d in definitioner %}
+    <p><span class="term">{{ d.term }}</span> – {{ d.definition }}</p>
+    {% endfor %}
+  </div>
+</section>
+
+{# ===================================================== Page 13 — Back cover #}
+<section class="back-cover">
+  <div class="monogram">
+    <img src="file://{{ assets.icon_white }}" alt="">
+  </div>
+</section>
+
+</body>
+</html>

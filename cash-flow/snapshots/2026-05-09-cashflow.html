@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cash Flow Validation — 2026-05-09</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1500px; margin: 1rem auto; padding: 1rem; color: #212529; }
+  h1 { margin-top: 0; font-size: 1.3rem; }
+  h2 { font-size: 1.1rem; margin-top: 2rem; border-bottom: 2px solid #dee2e6; padding-bottom: 0.25rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th { background: #f1f3f5; padding: 0.4rem 0.6rem; text-align: left; border-bottom: 2px solid #adb5bd; vertical-align: top; }
+  th.num, td.num { text-align: right; }
+  td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #f1f3f5; vertical-align: top; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.basis { color: #495057; font-size: 0.85rem; }
+  td.id { font-family: monospace; color: #6c757d; }
+  tr.subtotal td { font-weight: 600; border-top: 1px solid #adb5bd; padding-top: 0.5rem; background: #f8f9fa; }
+  tr.total td { font-weight: 700; border-top: 2px solid #212529; border-bottom: 2px solid #212529; padding: 0.6rem; background: #f8f9fa; }
+  tr.section td { font-weight: 600; background: #e9ecef; padding: 0.5rem 0.6rem; }
+  tr.recent-change { background: #fffbea; }
+  .neg { color: #dc3545; }
+  .pos { color: #28a745; }
+  .note { color: #6c757d; font-size: 0.85rem; margin: 0.4rem 0 1rem 0; }
+  .change-tag { display: inline-block; padding: 0.05rem 0.35rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600; background: #fff3cd; color: #856404; margin-left: 0.3rem; }
+  .weak-tag { display: inline-block; padding: 0.05rem 0.35rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600; background: #f8d7da; color: #721c24; margin-left: 0.3rem; }
+</style>
+</head>
+<body>
+
+<h1>Cash Flow Validation — 2026-05-09</h1>
+<p class="note">Per-item forecast with justification on every line. Justification source: <code>recurring_payment.description</code> / <code>scheduled_payment.description</code> (the rationale recorded at the time the value was set). 🟡 = changed in last 7 days. 🔴 = weak basis flagged. All amounts in K SEK; outflows negative.</p>
+
+<h2>May 2026</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:3%">id</th>
+      <th style="width:18%">Item</th>
+      <th class="num" style="width:7%">Amount</th>
+      <th style="width:72%">Justification (why this number)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="section"><td colspan="4">Revenue and COGS</td></tr>
+    <tr><td class="id">—</td><td>Revenue (net sales)</td><td class="num pos">+2,600</td><td class="basis"><strong>Manual override</strong> via <code>business_parameters.cashflow_revenue_override_msek = 2.6M</code>. SIE Q1 2026 actuals: Jan 2,516 / Feb 2,350 / Mar 2,587 = avg 2,484K. May override 2,600 = +5% vs Q1 avg, optimistic but consistent with Mar reading. <strong>Has not been re-checked vs Apr SIE (not yet uploaded).</strong></td></tr>
+    <tr><td class="id">—</td><td>COGS (variable telecom)</td><td class="num neg">-567</td><td class="basis">Computed as <code>cogs_factor × revenue</code> where <code>cogs_factor = 1 − effective_cogs_percent/100 = 0.782</code>. Default 21.8% from <code>ForecastParams</code>. <strong>SIE Q1 actual COGS pct:</strong> Jan 20.4% / Feb 19.6% / Mar 29.6% (Mar elevated). 21.8% is mid-range but Mar suggests upward drift — TODO-10 quarterly recalibration.</td></tr>
+    <tr class="subtotal"><td></td><td>Net (Gross profit)</td><td class="num pos">+2,033</td><td class="basis">Revenue − COGS</td></tr>
+
+    <tr class="section"><td colspan="4">Fixed costs — recurring monthly (sorted by absolute amount, descending)</td></tr>
+
+    <tr><td class="id">56</td><td>India Operations T3 (salaries) day 26</td><td class="num neg">-406</td><td class="basis">~53% of monthly per Padma Apr 2026 breakdown (48K USD). Day 26 SEK debit + 3-day SWIFT → ~day 29 arrival, clears 30th India deadline (1-day buffer). Weekend rule: if 30th = Sat/Sun, advance day 26 to prior Friday. <strong>Caveat:</strong> 766K monthly total may be ~13% under documented Padma Apr request of 90 KUSD (~864K SEK).</td></tr>
+    <tr><td class="id">55</td><td>India Operations T2 (statutory TDS+RTDS) day 24</td><td class="num neg">-300</td><td class="basis">~39% of monthly per Padma Apr 2026: TDS 14K USD + RTDS 21.5K USD. Day 24 SEK debit + 3-day SWIFT → day 27 arrival, clears 28-29 India deadline. Replaces 1/3 of disabled id 37.</td></tr>
+    <tr class="recent-change"><td class="id">7</td><td>SEB Kort autogiro (META + OpenAI + Awin + SaaS + travel) day 10 <span class="change-tag">🟡 changed 5/9</span></td><td class="num neg">-140</td><td class="basis">Recalibrated 190K → 140K on 2026-05-09 per CEO directive "most probable, neither conservative nor optimistic." Basis: 3-point recent actuals (Dec 129K, Mar 190K, Apr 121K → mean 147K, median 129K). META declining sustained (Nov 150K → Apr 6K). Bottom-up with current low-META: 117-150K range. 140K weighted toward recent trend continuing. <strong>Weak basis (n=3); pending TODO-15 recalibration after 3 more actuals.</strong></td></tr>
+    <tr class="recent-change"><td class="id">11</td><td>Google Adwords day 14 <span class="change-tag">🟡 day changed 5/6</span></td><td class="num neg">-120</td><td class="basis">Mid-range of observed 80-130K spend. Day 14 = Google bills 1 month in arrears, due ~day 14 of month X+1 (was day 17 — corrected 2026-05-06 against Fortnox invoice 2429 due May 14). For May, scheduled offset s50 captures actual lower amount.</td></tr>
+    <tr><td class="id">12</td><td>Salaries Sweden (HT+KT+SA net) day 24</td><td class="num neg">-98</td><td class="basis">42K HT + 40K KT + 17K SA (net salary). <strong>Note:</strong> this is NET to employees; gross + arbetsgivaravgifter flow through ids 9 (Skatt) and 33 (annual board fee tax). Total Sweden personnel cash &gt; 98K when including those.</td></tr>
+    <tr><td class="id">25</td><td>DBT Lån 1 amortization day 28</td><td class="num neg">-98</td><td class="basis">Loan amortization schedule. Fixed instalment from DBT loan agreement.</td></tr>
+    <tr><td class="id">19</td><td>Tomas André consultancy day 26</td><td class="num neg">-93</td><td class="basis">Consultancy fee excluding VAT. Tier 1 contractor, recurring.</td></tr>
+    <tr class="recent-change"><td class="id">1</td><td>Voxbone (Bandwidth) day 1 <span class="change-tag">🟡 day reverted 5/8</span><span class="weak-tag">🔴 weak basis</span></td><td class="num neg">-79</td><td class="basis">Day 1 = pre-change baseline (REVERTED 5/8 from day 24 attempt). CEO statement: "Voxbone is paid before the 10th. But if I pay on credit card, it can get delayed." <strong>Basis is weak — pending TODO-12 6-month channel-mix audit. Decision rule: if 4+ of 6 months show direct payment day 1-9, keep day 1; if utlägg-deferred dominates (days 28-30), restructure.</strong></td></tr>
+    <tr><td class="id">9</td><td>Skatteverket monthly Skatt day 12</td><td class="num neg">-71</td><td class="basis">15K HT income tax + 10K SA income tax. Empirical Q1 2026: Feb/Mar each ~70K (Jan was 190K spike from Dec board fees — see id 33 annual).</td></tr>
+    <tr><td class="id">54</td><td>India Operations T1 (vendor) day 18</td><td class="num neg">-60</td><td class="basis">~8% of monthly per Padma Apr 2026 breakdown. Replaces 1/3 of disabled id 37. Day 18 = mid-month, no specific Indian deadline. <strong>Pending:</strong> AWS reduction proposal (gate-failed 72/62) awaits clarification of what's in this 60K (all AWS or mixed?).</td></tr>
+    <tr><td class="id">16</td><td>Bambora processing fees day 25</td><td class="num neg">-60</td><td class="basis">Charges for credit card processing (autogiro). <strong>Bank-actual avg from Q1 = 17K → forecast 60K may be high.</strong> No documented recent recalibration. Possibly stale baseline; flag for review.</td></tr>
+    <tr><td class="id">20</td><td>BDO bookkeeping day 28</td><td class="num neg">-53</td><td class="basis">Placeholder — average of historical BDO invoices. May overshoots: scheduled offset s51 (+53K) neutralizes day 28; only s48 May 30 residual 7.6K hits May.</td></tr>
+    <tr class="recent-change"><td class="id">27</td><td>Openrouter (via Tomas utlägg) day 28 <span class="change-tag">🟡 description 5/8</span></td><td class="num neg">-50</td><td class="basis">Openrouter AI tokens. Channel: paid via Tomas personal card, reimbursed via utlägg (days 28-30 typical). Amount appears stable; no recent recalibration. <strong>Basis for 50K specifically not documented in description — assumed historical observation.</strong></td></tr>
+    <tr class="recent-change"><td class="id">53</td><td>PayPal fees (synthetic) day 28 <span class="change-tag">🟡 description 5/8</span></td><td class="num neg">-45</td><td class="basis">PayPal nets fees from settlements before depositing — modeled as synthetic outflow because revenue is recorded GROSS of fees (per sales report Usage_currency-VAT Exclusion). Annual P&amp;L 6572 FY2025 = 542,554 SEK ÷ 12 = 45K/mo. Day 28 = representative timing.</td></tr>
+    <tr><td class="id">24</td><td>DBT Lån 1 interest day 28</td><td class="num neg">-37</td><td class="basis">Interest rate per loan agreement. Floating; varies modestly with rate.</td></tr>
+    <tr class="recent-change"><td class="id">29</td><td>Fluff (Rainbow to the Stars) day 28 <span class="change-tag">🟡 changed 5/6</span></td><td class="num neg">-30</td><td class="basis">Raised 25K → 30K excl VAT on 2026-05-06 after multi-month observations. Apr invoice 38,806 incl VAT + May invoice 33,313 incl VAT → ~30K excl VAT avg.</td></tr>
+    <tr><td class="id">22</td><td>Nordea amortization 1.25M loan day 28</td><td class="num neg">-26</td><td class="basis">Fixed amortization on 1.25 MSEK Nordea loan. <strong>Note:</strong> account_number is 2352 (interest pool) but payment is amortization (BS movement, not cost).</td></tr>
+    <tr><td class="id">5</td><td>Linn Kristensson Adwords mgmt day 5</td><td class="num neg">-22</td><td class="basis">Adwordskontohantering — fixed monthly fee for ad management.</td></tr>
+    <tr><td class="id">26</td><td>DBT Lån 2 interest day 28</td><td class="num neg">-15</td><td class="basis">Interest rate per Lån 2 loan agreement.</td></tr>
+    <tr class="recent-change"><td class="id">52</td><td>Adyen Nordic Bank Filial day 30 <span class="change-tag">🟡 description 5/7</span></td><td class="num neg">-14</td><td class="basis">Adyen PSP processing fees (separately invoiced; not netted from settlements). Average ~1500 USD/month over 12 months (2025-2026 history). Paid ~end of month following service month. SEK approximate at FX ~9.3.</td></tr>
+    <tr class="recent-change"><td class="id">51</td><td>Mangold liquidity guarantee day 15 <span class="change-tag">🟡 description 5/2</span></td><td class="num neg">-13</td><td class="basis">Likviditetsgaranti 12,500 SEK/month excl VAT (Mangold board agreement). <strong>Day 15 is a placeholder — verify against first invoice.</strong> First invoice not yet observed.</td></tr>
+    <tr><td class="id">21</td><td>Nordea credit-line interest day 28</td><td class="num neg">-10</td><td class="basis">Ränta på nyttjande av check-kredit. Floating; varies with credit-line draw.</td></tr>
+    <tr><td class="id">23</td><td>Nordea long-term loan interest day 28</td><td class="num neg">-9</td><td class="basis">Ränta på 1.25 MSEK loan.</td></tr>
+    <tr class="recent-change"><td class="id">4</td><td>Nordea bank fees day 5 <span class="change-tag">🟡 changed 5/8</span></td><td class="num neg">-7</td><td class="basis">Raised 5K → 7K on 2026-05-08 based on CY2025 P&amp;L avg ~7,908/mo and recent 2-month actuals (Apr 6,699 + May 6,290 ≈ 6,495). 7,000 = midpoint, slightly conservative. No VAT.</td></tr>
+    <tr><td class="id">6</td><td>CFO Södra Lund day 7</td><td class="num neg">-5</td><td class="basis">CFO consultancy fee — fixed monthly retainer.</td></tr>
+    <tr><td class="id">10</td><td>Cision IR day 15</td><td class="num neg">-5</td><td class="basis">IR press release service — fixed monthly subscription.</td></tr>
+    <tr><td class="id">17</td><td>Europlanet day 27</td><td class="num neg">-4</td><td class="basis">Commission — fixed monthly.</td></tr>
+    <tr><td class="id">13</td><td>Euroclear day 23</td><td class="num neg">-3</td><td class="basis">Public shares management service — fixed monthly fee.</td></tr>
+    <tr class="recent-change"><td class="id">18</td><td>United Spaces office rent day 27 <span class="change-tag">🟡 changed 5/8</span></td><td class="num neg">-3</td><td class="basis">Reduced 6K → 2.9K on 2026-05-08 per CEO direction "from june" (effective June 2026). Annual savings 37,200 SEK. May supplement (s58 below) captures the 3.1K difference for May only.</td></tr>
+    <tr><td class="id">3</td><td>AWS Sweden day 2</td><td class="num neg">-2</td><td class="basis">Small Sweden-side AWS portion (most AWS hits via SEB Kort or India operations).</td></tr>
+
+    <tr class="section"><td colspan="4">Fixed costs — annual / quarterly recurring hitting May</td></tr>
+    <tr><td class="id">49</td><td>Mazars Forvis slutfaktura (annual May 4)</td><td class="num neg">-36</td><td class="basis">Per invoice 20213987: total audit fee 135,500 SEK = 100K a conto (id 46, fired April) + 35,500 slutfaktura (May 4 due date). Annual; only May.</td></tr>
+    <tr><td class="id">48</td><td>Skatteverket VAT refund (quarterly day 12)</td><td class="num pos">+100</td><td class="basis">Q1 VAT refund (Q1→May, Q2→Aug, Q3→Nov, Q4→Feb). Skatteverket Moms credit posts month after quarter end; bank payout 1-10 days later. <strong>Empirical May 2025: +98.6K. Amount varies 25-170K by quarter due to Corona anstånd offsets — 100K is annual midpoint.</strong> Day changed 5/6 from 30 → 12.</td></tr>
+
+    <tr class="section"><td colspan="4">Fixed costs — May-only scheduled (one-offs created last 7 days)</td></tr>
+    <tr><td class="id">s47</td><td>Fluff (Rainbow Apr Hejdad release) May 8</td><td class="num neg">-39</td><td class="basis">Apr invoice (Fortnox 2087, due 2026-05-01) Hejdad on May 1 — credit-line was at -999,572 with 428 SEK headroom. Tier 1 contractor — release ASAP.</td></tr>
+    <tr><td class="id">s54</td><td>Adyen (April overdue) May 8</td><td class="num neg">-15</td><td class="basis">Adyen Apr invoice (Fortnox 2434, due 2026-05-01) overdue 6 days as of 2026-05-07. 1652.71 USD incl VAT. Pay ASAP.</td></tr>
+    <tr><td class="id">s57</td><td>Tomas André (Hejdad) May 8</td><td class="num neg">-9</td><td class="basis">Auto-held by Nordea May 8 — insufficient credit-line headroom (Täckning saknas). Tier 1 contractor — release ASAP. Likely small partial/utlägg.</td></tr>
+    <tr><td class="id">s55</td><td>DBT Capital (Apr delayed Lån 1) May 11</td><td class="num neg">-134</td><td class="basis">Apr 28 amort + interest delayed to May due to credit-line saturation. Now booked Kommande May 11. Recurring ids 24+25 will fire May 28 for May regular obligations on top.</td></tr>
+    <tr><td class="id">s56</td><td>DBT Capital Lån 2 int (Apr delayed) May 11</td><td class="num neg">-16</td><td class="basis">Same Apr-delayed pattern as s55, for Lån 2 interest (recurring id 26).</td></tr>
+    <tr><td class="id">s50</td><td>Google May offset (inflow) May 14</td><td class="num pos">+36</td><td class="basis">Mar-service Google invoice (Fortnox 2429) is 83,652 vs recurring id 11 of 120K. is_inflow offset of 36,348 captures the actual lower amount for May only. Apr-service invoice 110,265 due Jun 11 (no June offset needed).</td></tr>
+    <tr><td class="id">s38</td><td>Henrik Thome loan repayment May 15</td><td class="num neg">-100</td><td class="basis">Lån återbetalning. First tranche of multi-tranche profile (Jun: 150 + 50; subsequent months continue).</td></tr>
+    <tr><td class="id">s51</td><td>BDO May 28 offset (inflow) May 28</td><td class="num pos">+53</td><td class="basis">BDO main Apr invoice 83,066 already paid 2026-05-05 (in bank CSV history). Recurring id 20 day 28 53K placeholder over-models May. is_inflow offset neutralizes May 28 fire; residual 7,644 captured separately as s48.</td></tr>
+    <tr><td class="id">s48</td><td>BDO Göteborg residual May 30</td><td class="num neg">-8</td><td class="basis">Fortnox 2449, due 2026-05-30. Main Apr BDO 83,066 already paid May 5 via Corporate Access bundle.</td></tr>
+    <tr><td class="id">s58</td><td>United Spaces (May rent supplement) May 27</td><td class="num neg">-3</td><td class="basis">Captures difference between new id 18 baseline 2,900 (effective June) and May 2026 actual rent 6,000. May 27 = 2,900 + 3,100 = 6,000 ✓. Will not recur. <strong>Assumption pending verification:</strong> May 27 payment is for May occupancy. If United Spaces bills in advance (May 27 = June rent), this supplement should be disabled.</td></tr>
+    <tr><td class="id">s53</td><td>Kommissionären för Aktiefrämjandet May 27</td><td class="num neg">-3</td><td class="basis">Fortnox 2445, due 2026-05-27. Not in any recurring entry — small one-off.</td></tr>
+
+    <tr class="subtotal"><td></td><td>Total fixed costs (May)</td><td class="num neg">-2,049</td><td class="basis">Sum of all rows above. Internal-transfer entries (Sonetel India ids 2/8/14/15) excluded — TODO-18 BDO confirmation pending before disabling.</td></tr>
+    <tr class="total"><td></td><td>Net cash flow impact (Net − Fixed)</td><td class="num neg">-16</td><td class="basis">Roughly break-even. Forecast min projected balance May 28: ~-810K (within 1M Nordea credit line).</td></tr>
+  </tbody>
+</table>
+
+<h2>June 2026</h2>
+<p class="note">Same recurring set as May (with id 18 at new lower 2,900 rate). Differences: no Mazars (annual May only); no May offsets/Apr-delayed catch-ups; +G&amp;W quarterly; +Henrik tranches 2-3; +Sonetel India scheduled.</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width:3%">id</th>
+      <th style="width:18%">Item</th>
+      <th class="num" style="width:7%">Amount</th>
+      <th style="width:72%">Justification (why this number)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="section"><td colspan="4">Revenue and COGS</td></tr>
+    <tr><td class="id">—</td><td>Revenue</td><td class="num pos">+2,600</td><td class="basis">Same manual override as May. <strong>No revenue ramp modeled.</strong></td></tr>
+    <tr><td class="id">—</td><td>COGS (variable)</td><td class="num neg">-567</td><td class="basis">cogs_factor 21.8% × revenue — same default.</td></tr>
+    <tr class="subtotal"><td></td><td>Net (Gross profit)</td><td class="num pos">+2,033</td><td class="basis"></td></tr>
+
+    <tr class="section"><td colspan="4">Fixed costs — recurring monthly (same as May with United Spaces at new lower rate)</td></tr>
+    <tr><td class="id">56</td><td>India T3 salaries day 26</td><td class="num neg">-406</td><td class="basis">Same basis as May (Padma Apr breakdown).</td></tr>
+    <tr><td class="id">55</td><td>India T2 statutory day 24</td><td class="num neg">-300</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">7</td><td>SEB Kort autogiro day 10</td><td class="num neg">-140</td><td class="basis">Same recalibrated steady-state (TODO-15 reassess Aug 2026).</td></tr>
+    <tr><td class="id">11</td><td>Google Adwords day 14</td><td class="num neg">-120</td><td class="basis">Same mid-range. No June offset needed (Apr-service invoice 110,265 due Jun 11 is captured by recurring 120 baseline within range).</td></tr>
+    <tr><td class="id">12</td><td>Salaries Sweden day 24</td><td class="num neg">-98</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">25</td><td>DBT Lån 1 amort day 28</td><td class="num neg">-98</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">19</td><td>Tomas André consultancy day 26</td><td class="num neg">-93</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">1</td><td>Voxbone day 1</td><td class="num neg">-79</td><td class="basis">Same weak basis as May — pending TODO-12.</td></tr>
+    <tr><td class="id">9</td><td>Skatteverket monthly Skatt day 12</td><td class="num neg">-71</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">54</td><td>India T1 vendor day 18</td><td class="num neg">-60</td><td class="basis">Same as May. Pending AWS reduction clarification.</td></tr>
+    <tr><td class="id">16</td><td>Bambora day 25</td><td class="num neg">-60</td><td class="basis">Same possibly-stale 60K. Bank actuals suggest lower (~17K Q1 avg) — flag for review.</td></tr>
+    <tr><td class="id">20</td><td>BDO bookkeeping day 28</td><td class="num neg">-53</td><td class="basis">Steady-state placeholder. No June offset (May was the offset month).</td></tr>
+    <tr><td class="id">27</td><td>Openrouter day 28</td><td class="num neg">-50</td><td class="basis">Same as May (basis for 50K not documented — assumed historical).</td></tr>
+    <tr><td class="id">53</td><td>PayPal fees day 28</td><td class="num neg">-45</td><td class="basis">Same FY2025 P&amp;L avg basis.</td></tr>
+    <tr><td class="id">24</td><td>DBT Lån 1 int day 28</td><td class="num neg">-37</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">29</td><td>Fluff day 28</td><td class="num neg">-30</td><td class="basis">Same recalibrated 30K.</td></tr>
+    <tr><td class="id">22</td><td>Nordea amort 1.25M day 28</td><td class="num neg">-26</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">5</td><td>Linn Kristensson day 5</td><td class="num neg">-22</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">26</td><td>DBT Lån 2 int day 28</td><td class="num neg">-15</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">52</td><td>Adyen day 30</td><td class="num neg">-14</td><td class="basis">Same as May (no June Apr-overdue scheduled).</td></tr>
+    <tr><td class="id">51</td><td>Mangold day 15</td><td class="num neg">-13</td><td class="basis">Same placeholder day.</td></tr>
+    <tr><td class="id">21</td><td>Nordea credit-line int day 28</td><td class="num neg">-10</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">23</td><td>Nordea long-term int day 28</td><td class="num neg">-9</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">4</td><td>Nordea bank fees day 5</td><td class="num neg">-7</td><td class="basis">Same recalibrated 7K.</td></tr>
+    <tr><td class="id">6</td><td>CFO day 7</td><td class="num neg">-5</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">10</td><td>Cision day 15</td><td class="num neg">-5</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">17</td><td>Europlanet day 27</td><td class="num neg">-4</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">13</td><td>Euroclear day 23</td><td class="num neg">-3</td><td class="basis">Same as May.</td></tr>
+    <tr><td class="id">18</td><td>United Spaces day 27 (NEW LOWER RATE)</td><td class="num neg">-3</td><td class="basis">First month at reduced rate per CEO direction "from june". Annual savings 37,200 SEK.</td></tr>
+    <tr><td class="id">3</td><td>AWS Sweden day 2</td><td class="num neg">-2</td><td class="basis">Same as May.</td></tr>
+
+    <tr class="section"><td colspan="4">Fixed costs — quarterly hitting June</td></tr>
+    <tr><td class="id">31</td><td>G&amp;W (quarterly day 14)</td><td class="num neg">-35</td><td class="basis">Certified advisor fee — quarterly (March/June/Sept/Dec).</td></tr>
+
+    <tr class="section"><td colspan="4">Fixed costs — June-only scheduled</td></tr>
+    <tr><td class="id">s39</td><td>Henrik Thome loan repayment Jun 15</td><td class="num neg">-150</td><td class="basis">Lån återbetalning del 1/2. Multi-tranche profile (May 100, Jun 150 + 50, etc).</td></tr>
+    <tr><td class="id">s42</td><td>Henrik Thome utlägg Jun 30</td><td class="num neg">-50</td><td class="basis">Utlägg 2890 tranche 1/4. Henrik utlägg-anchored repayment.</td></tr>
+    <tr><td class="id">s18</td><td>Sonetel India income tax Jun 30</td><td class="num neg">-23</td><td class="basis">Income tax to India subsidiary (one-off scheduled, not part of monthly tranches T1/T2/T3).</td></tr>
+
+    <tr class="subtotal"><td></td><td>Total fixed costs (June)</td><td class="num neg">-2,133</td><td class="basis">Higher than May despite no Apr-delayed catch-ups: Henrik tranches (200K) + Sonetel India (23K) + G&amp;W (35K) push total up vs May's net adjustments.</td></tr>
+    <tr class="total"><td></td><td>Net cash flow impact (Net − Fixed)</td><td class="num neg">-100</td><td class="basis">Henrik loan + India scheduled drag June. Min balance still within 1M Nordea credit line.</td></tr>
+  </tbody>
+</table>
+
+<p class="note">🟡 = recurring item changed (or description updated) in last 7 days. 🔴 = weak basis flagged. The "Justification" column quotes or summarises <code>recurring_payment.description</code>; full text in DB or via portal <code>/analytics/cash-flow</code>. <strong>Items needing investigation:</strong> Bambora 60K (bank avg ~17K), Voxbone day 1 (weak basis pending TODO-12), Openrouter 50K (basis not documented).</p>
+
+</body>
+</html>

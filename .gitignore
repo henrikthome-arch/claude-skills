@@ -1,0 +1,30 @@
+# Credentials / secrets (never commit)
+.env
+.env.*
+*.key
+*.pem
+*-credentials.json
+secrets/
+
+# macOS metadata
+.DS_Store
+
+# Python cache (if any skill uses python helpers)
+__pycache__/
+*.pyc
+*.pyo
+
+# Node (if any skill uses JS tooling)
+node_modules/
+package-lock.json
+
+# Editor / OS
+*.swp
+*~
+.idea/
+.vscode/
+
+# Build / cache artifacts
+*.log
+*.tmp
+.cache/

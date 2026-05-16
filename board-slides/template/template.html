@@ -1,0 +1,403 @@
+{# Sonetel Board Meeting deck — Jinja2 template
+   16:9 landscape, one logical slide per page. #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ meeting.title }} — {{ meeting.company }}</title>
+</head>
+<body>
+
+{% for s in slides %}
+
+{% if s.type == "cover" %}
+<section class="slide slide-cover">
+  <div class="cover-band">
+    <img class="cover-logo" src="file://{{ assets_dir }}/sonetel-wordmark-white.svg" alt="Sonetel">
+  </div>
+  <div class="cover-body">
+    <div class="cover-heading">{{ s.heading }}</div>
+    <div class="cover-meta">
+      {% if s.subtitle %}<span>{{ s.subtitle }}</span>{% endif %}
+      {% if s.subtitle and s.date_label %}<span class="cover-meta-sep">·</span>{% endif %}
+      {% if s.date_label %}<span>{{ s.date_label }}</span>{% endif %}
+    </div>
+  </div>
+</section>
+
+{% elif s.type == "agenda" %}
+<section class="slide slide-agenda">
+  <h1 class="slide-title">{{ s.title }}</h1>
+  <table class="agenda-table">
+    <thead>
+      <tr>
+        <th class="col-num">#</th>
+        <th class="col-title">Item</th>
+        <th class="col-presenter">Presenter</th>
+        {% if s.show_time %}<th class="col-time">Time</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in s.agenda_items %}
+      <tr{% if item.subitems %} class="parent-row"{% endif %}>
+        <td class="col-num">{{ item.number }}</td>
+        <td class="col-title">{{ item.title }}</td>
+        <td class="col-presenter">{{ item.presenter or "" }}</td>
+        {% if s.show_time %}<td class="col-time">{% if item.duration_minutes %}{{ item.duration_minutes }} min{% endif %}</td>{% endif %}
+      </tr>
+      {% for sub in item.subitems %}
+      <tr class="sub-row">
+        <td class="col-num"></td>
+        <td class="col-title sub-title">{{ sub.title }}</td>
+        <td class="col-presenter">{{ sub.presenter or "" }}</td>
+        {% if s.show_time %}<td class="col-time">{% if sub.duration_minutes %}{{ sub.duration_minutes }} min{% endif %}</td>{% endif %}
+      </tr>
+      {% endfor %}
+      {% endfor %}
+      {% if s.total_minutes %}
+      <tr class="total-row">
+        <td></td>
+        <td><strong>Total</strong></td>
+        <td></td>
+        {% if s.show_time %}<td><strong>~{{ s.total_minutes }} min</strong></td>{% endif %}
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</section>
+
+{% elif s.type == "section" %}
+<section class="slide slide-section">
+  <div class="section-number">{{ "%02d"|format(s.number) }}</div>
+  <h1 class="section-title">{{ s.title }}</h1>
+  {% if s.subitems %}
+  <ul class="section-subitems">
+    {% for sub in s.subitems %}
+    <li>
+      <span class="sub-title">{{ sub.title }}</span>
+      {% if sub.presenter %}<span class="sub-presenter">{{ sub.presenter }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% elif s.presenter or s.duration_minutes %}
+  <div class="section-meta">
+    {% if s.presenter %}<span class="section-presenter">{{ s.presenter }}</span>{% endif %}
+    {% if s.presenter and s.duration_minutes %}<span class="section-sep">·</span>{% endif %}
+    {% if s.duration_minutes %}<span class="section-duration">{{ s.duration_minutes }} min</span>{% endif %}
+  </div>
+  {% endif %}
+</section>
+
+{% elif s.type == "bullets" %}
+<section class="slide slide-content">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  {% if s.bullets %}
+  <ul class="slide-bullets">
+    {% for b in s.bullets %}<li>{{ b }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "numbered_two_col" %}
+{% set entries = s.entries or [] %}
+{% set half = ((entries|length + 1) // 2) %}
+<section class="slide slide-content slide-numbered">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="numbered-cols">
+    <div class="numbered-col">
+      {% for entry in entries[:half] %}
+      <div class="numbered-item">
+        <span class="num">{{ "%02d"|format(loop.index) }}</span>
+        <span class="text">{{ entry.text }}</span>
+        {% if entry.badge %}<span class="badge badge-{{ entry.badge_tone or 'neutral' }}">{{ entry.badge }}</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="numbered-col">
+      {% for entry in entries[half:] %}
+      <div class="numbered-item">
+        <span class="num">{{ "%02d"|format(loop.index + half) }}</span>
+        <span class="text">{{ entry.text }}</span>
+        {% if entry.badge %}<span class="badge badge-{{ entry.badge_tone or 'neutral' }}">{{ entry.badge }}</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% elif s.type == "two_column" %}
+<section class="slide slide-content slide-two-col">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="two-col">
+    <ul class="slide-bullets col-left">
+      {% for b in s.left or [] %}<li>{{ b }}</li>{% endfor %}
+    </ul>
+    <ul class="slide-bullets col-right">
+      {% for b in s.right or [] %}<li>{{ b }}</li>{% endfor %}
+    </ul>
+  </div>
+</section>
+
+{% elif s.type == "quote" %}
+<section class="slide slide-content slide-quote">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  <blockquote>
+    {{ s.quote }}
+    {% if s.attribution %}<footer>— {{ s.attribution }}</footer>{% endif %}
+  </blockquote>
+</section>
+
+{% elif s.type == "pnl_table" %}
+<section class="slide slide-content slide-pnl">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <table class="pnl-table">
+    <thead>
+      <tr>
+        <th class="col-label">Line item</th>
+        {% for c in s.pnl_columns or ["Actual", "Budget", "Variance"] %}
+        <th class="col-num">{{ c }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in s.pnl_rows or [] %}
+        {% if r.section_header %}
+        <tr class="section-header-row"><td colspan="{{ (s.pnl_columns|length if s.pnl_columns else 3) + 1 }}">{{ r.label }}</td></tr>
+        {% else %}
+        <tr class="{% if r.summa %}summa-row{% endif %}">
+          <td class="col-label">{{ r.label }}</td>
+          <td class="col-num">{% if r.actual is not none %}{{ "{:,.0f}".format(r.actual).replace(",", " ") }}{% else %}—{% endif %}</td>
+          <td class="col-num">{% if r.budget is not none %}{{ "{:,.0f}".format(r.budget).replace(",", " ") }}{% else %}—{% endif %}</td>
+          <td class="col-num{% if r.variance_pct and r.variance_pct < 0 %} variance-negative{% elif r.variance_pct and r.variance_pct > 0 %} variance-positive{% endif %}">
+            {% if r.variance_pct is not none %}{{ "{:+.1f}".format(r.variance_pct) }}%{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "kpi_grid" %}
+{% set top = (s.kpis or [])[:3] %}
+{% set bot = (s.kpis or [])[3:] %}
+<section class="slide slide-content slide-kpi">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="kpi-rows">
+    <div class="kpi-row kpi-row-dark">
+      {% for k in top %}
+      <div class="kpi-card">
+        <div class="kpi-label">{{ k.label }}</div>
+        <div class="kpi-value">{{ k.value }}</div>
+        {% for line in k.lines or [] %}<div class="kpi-line{% if 'behind' in line %} budget-behind{% endif %}">{{ line }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="kpi-row kpi-row-light">
+      {% for k in bot %}
+      <div class="kpi-card">
+        <div class="kpi-label">{{ k.label }}</div>
+        <div class="kpi-value">{{ k.value }}</div>
+        {% for line in k.lines or [] %}<div class="kpi-line{% if 'behind' in line %} budget-behind{% endif %}">{{ line }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% elif s.type == "breakeven" %}
+<section class="slide slide-content slide-breakeven">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="breakeven-grid">
+    {% for b in s.breakeven_boxes or [] %}
+    <div class="breakeven-box status-{{ b.status }}">
+      <div class="be-label">
+        {% if b.status == "ok" %}✓{% elif b.status == "warn" %}⚠{% elif b.status == "critical" %}✗{% endif %}
+        {{ b.label }}
+      </div>
+      <div class="be-row"><span>Target</span><strong>{{ "{:.1f}".format(b.target_msek) }} MSEK</strong></div>
+      <div class="be-row"><span>Actual</span><strong>{{ "{:.1f}".format(b.actual_msek) }} MSEK</strong></div>
+      <div class="be-row gap"><span>Gap</span><strong>{{ "{:+.1f}".format(b.gap_msek) }} MSEK ({{ "{:+.0f}".format(b.gap_pct) }}%)</strong></div>
+    </div>
+    {% endfor %}
+  </div>
+  {% if s.breakeven_note %}<p class="slide-notes">{{ s.breakeven_note }}</p>{% endif %}
+</section>
+
+{% elif s.type == "cash_position" %}
+<section class="slide slide-content slide-cash">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="cash-grid">
+    <div class="cash-chart-card">
+      {% if s.cash_trend and s.cash_trend.image_path %}
+      <img src="file://{{ s.cash_trend.image_path }}" alt="">
+      {% endif %}
+    </div>
+    {% if s.cash_drivers %}
+    <div class="cash-drivers-card">
+      <div class="cash-drivers-title">{{ s.drivers_title or "Drivers outside run-rate" }}</div>
+      <table class="cash-drivers-table">
+        {% for d in s.cash_drivers %}
+        <tbody class="cash-driver">
+          <tr class="cash-driver-row">
+            <td class="cash-driver-label">{{ d.label }}</td>
+            <td class="cash-driver-amount {% if d.amount_sek < 0 %}negative{% else %}positive{% endif %}">
+              {% if d.amount_sek < 0 %}−{% else %}+{% endif %}{{ "{:,.0f}".format(d.amount_sek|abs).replace(",", " ") }} SEK
+            </td>
+          </tr>
+          {% if d.note %}
+          <tr class="cash-driver-note-row">
+            <td class="cash-driver-note" colspan="2">{{ d.note }}</td>
+          </tr>
+          {% endif %}
+        </tbody>
+        {% endfor %}
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% elif s.type == "trends_grid" %}
+<section class="slide slide-content slide-trends">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="trends-grid">
+    {% for t in s.trends or [] %}
+    <div class="trend-card">
+      <div class="trend-title">{{ t.title }}</div>
+      {% if t.image_path %}<img src="file://{{ t.image_path }}" alt="{{ t.title }}">{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% elif s.type == "cash_flow_forecast" %}
+<section class="slide slide-content slide-cashflow">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.cashflow_summary %}
+  <p class="cashflow-summary">
+    Assumed revenue
+    <strong>{{ "{:.1f}".format(s.cashflow_summary.assumed_revenue_msek_month or 0) }} MSEK/month</strong>
+    {% if s.cashflow_summary.actuals_through_date %}· Revenue actuals through {{ s.cashflow_summary.actuals_through_date }}{% endif %}
+  </p>
+  {% if s.cashflow_summary.revenue_assumption_rationale %}
+  <p class="cashflow-rationale"><strong>Revenue assumption rationale:</strong> {{ s.cashflow_summary.revenue_assumption_rationale }}</p>
+  {% endif %}
+  {% endif %}
+  <div class="cashflow-body">
+    <div class="cashflow-chart-card">
+      {% if s.cashflow_chart_path %}
+      <img src="file://{{ s.cashflow_chart_path }}" alt="Daily cash balance projection">
+      {% endif %}
+    </div>
+    {% if s.cashflow_top_items %}
+    <div class="cashflow-items-side">
+      <div class="cashflow-items-title">Top items impacting forecast</div>
+      {% for item in s.cashflow_top_items[:4] %}
+      <div class="cashflow-item-row">
+        <div class="cashflow-item-row-main">
+          <div class="cashflow-item-label">{{ item.label }}</div>
+          <div class="cashflow-item-meta">
+            {% if item.expected_date and item.kind != 'assumption' %}{{ item.expected_date }} · {% endif %}{{ (item.kind or "")|replace("_", " ") }}
+          </div>
+        </div>
+        <div class="cashflow-item-amount {% if item.kind == 'assumption' %}is-assumption{% elif (item.amount_sek or 0) < 0 %}is-negative{% else %}is-positive{% endif %}">
+          {% if item.kind == "assumption" %}
+            {{ "{:,.1f}".format((item.amount_sek or 0)/1_000_000).replace(",", " ") }} MSEK/mo
+          {% else %}
+            {% if (item.amount_sek or 0) < 0 %}−{% else %}+{% endif %}{{ "{:,.0f}".format((item.amount_sek or 0)|abs).replace(",", " ") }}
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% elif s.type == "ir_calendar" %}
+<section class="slide slide-content slide-ircal">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="ircal-grid">
+    {% for col in s.ir_columns or [] %}
+    <div class="ircal-col">
+      {% for grp in col %}
+      <div class="ircal-month-group">
+        <div class="ircal-month">{{ grp.label }}</div>
+        {% for ev in grp.events %}
+        <div class="ircal-item ircal-{{ ev.kind or 'other' }}{% if ev.is_financial %} ircal-financial{% endif %}">
+          <span class="ircal-date">{{ ev.date_short }}</span>
+          <span class="ircal-title{% if ev.is_flag %} ircal-flag{% endif %}{% if ev.is_internal %} ircal-internal{% endif %}">{{ ev.title }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "closing" %}
+<section class="slide slide-closing">
+  <div class="closing-message">{{ s.message }}</div>
+  <div class="closing-company">{{ s.company }}</div>
+</section>
+
+{% else %}
+<section class="slide slide-content">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  <h1 class="slide-title">{{ s.title or "(untyped slide)" }}</h1>
+  <p class="slide-notes">Unknown slide type: <code>{{ s.type }}</code></p>
+</section>
+{% endif %}
+
+{% endfor %}
+
+</body>
+</html>

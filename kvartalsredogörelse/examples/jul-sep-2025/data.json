@@ -1,0 +1,1109 @@
+{
+  "meta": {
+    "period_label": "JULI – SEPTEMBER 2025",
+    "period_short": "jul-sep 2025",
+    "period_short_compare": "jul-sep 2024",
+    "fiscal_year": "FY24-25 (förlängt jul 2024 – dec 2025)",
+    "report_type": "Kvartalsredogörelse",
+    "footer_label": "KVARTALSREDOGÖRELSE",
+    "currency": "MSEK",
+    "exchange_rate_sek_usd": 9.21,
+    "exchange_rate_date": "2025-09-30",
+    "publication_date": "2025-11-25",
+    "tagline": "Ökad försäljning, ARR, kassaflöde och kundanskaffning"
+  },
+  "kpis": {
+    "arr": {
+      "current": 26.8,
+      "prior": 20.4,
+      "unit": "MSEK",
+      "yoy_pct": 32
+    },
+    "nettoomsattning": {
+      "current": 8.2,
+      "prior": 6.5,
+      "unit": "MSEK",
+      "yoy_pct": 25
+    },
+    "bruttomarginal_pct": {
+      "current": 79,
+      "prior": 81
+    },
+    "ebitda_pct": {
+      "current": 28,
+      "prior": 34
+    },
+    "saas40_pct": {
+      "current": 60,
+      "prior": 34
+    },
+    "rorelseresultat": {
+      "current": 0.3,
+      "prior": 0.2
+    },
+    "resultat_fore_skatt": {
+      "current": 0.1,
+      "prior": -0.3
+    },
+    "resultat_per_aktie": {
+      "current": 0.0,
+      "prior": -0.06
+    },
+    "kassaflode_loepande": {
+      "current": 2.1,
+      "prior": -0.9
+    },
+    "likvida_medel_eom": {
+      "current": 0.9,
+      "prior": 1.8
+    },
+    "aktiva_betalande_kunder": {
+      "current": 32736,
+      "prior": 20265,
+      "yoy_pct": 62
+    },
+    "cac_kr": {
+      "current": 94,
+      "prior": 164
+    },
+    "soliditet_pct": {
+      "current": 71,
+      "prior": 73
+    },
+    "anstallda_snitt": {
+      "current": 39,
+      "prior": 39
+    }
+  },
+  "kpi_tiles": [
+    {
+      "value": "+32%",
+      "label": "ARR"
+    },
+    {
+      "value": "+25%",
+      "label": "NETTOOMSÄTTNING"
+    },
+    {
+      "value": "79%",
+      "label": "BRUTTOMARGINAL"
+    },
+    {
+      "value": "28%",
+      "label": "EBITDA"
+    },
+    {
+      "value": "60%",
+      "label": "SaaS40"
+    },
+    {
+      "value": "+62%",
+      "label": "ABONNEMANGSKUNDER"
+    }
+  ],
+  "narrative": {
+    "vd_kommentar_rubrik": "Ökad försäljning, ARR, kassaflöde och kundanskaffning",
+    "vd_kommentar": [
+      "Vi levererade ännu ett starkt kvartal – med fortsatt tillväxt, förbättrade finanser och en snabb omställning där AI är navet. Efter vågen i spåren av Skypes avveckling har vi byggt en skalbar sälj‑ och marknadsföringsmotor som gör att inflödet står sig även när ”Skype‑effekten” klingar av. Vårt SaaS Rule of 40 uppgår nu till 60% – ett tydligt kvitto på att tillväxt och lönsamhet i snabb takt utvecklas åt rätt håll.",
+      "Under kvartalet fortsatte vi att optimera vår marknadsföring: bättre Google Ads, skalad Meta‑annonsering och en SEO‑motor som löpande producerar relevant innehåll på tio språk. Vi breddar samtidigt våra kanaler och testar nya sätt att nå fler målgrupper. Kundresan har stramats upp med tydligare onboarding och AI‑stödd support som nu hanterar en majoritet av alla ärenden, vilket frigör tid för aktiv försäljning och hjälper fler nya kunder att snabbt komma igång. Resultatet är högre konvertering och lägre kostnad per förvärvad kund.",
+      "På produktsidan har vi fortsatt att åtgärda teknikskuld och höja stabiliteten i plattformen. Den viktigaste leveransen framåt är våra nya mobilappar – med möjlighet att ta emot samtal och skicka SMS direkt i appen. Det gör erbjudandet självklart för våra kunder och adresserar de höga kostnader som vidarekoppling kan innebära i Europa. Tillsammans med AI‑genererade samtalssammanfattningar och en snabbare webbupplevelse väntar vi oss lägre churn och högre kundnöjdhet.",
+      "AI är verktyget i vår interna omställning. Vi har automatiserat centrala finansprocesser och etablerat AI‑first‑arbetssätt i utveckling och kvalitetssäkring. Efter periodens utgång har vi dessutom förstärkt organisationen med seniora ledare för AI‑driven mjukvaruutveckling. Våra interna experiment visar att upp till 5× produktivitetslyft är möjligt där det lämpar sig – vilket kortar ledtider och minskar risk.",
+      "Med positivt kassaflöde, en moderniserad organisation och ett långsiktigt, engagerat ägande står Sonetel väl positionerat för fortsatt tillväxt.",
+      "Telefonnummer är fortfarande den enda globala röststandarden som når i princip alla – och vår marknadsandel är ännu försumbar i en enorm marknad. Vägen framåt är tydlig: förfina kärnupplevelsen, stärka konverteringen, sänka churn och höja intäkten per kund genom relevanta mervärden. Vi bygger en uthålligt lönsam tillväxtmaskin – med AI i maskinrummet."
+    ],
+    "vd_signatur": "Henrik Thomé\nVD och grundare",
+    "affarsmodell": [
+      "Sonetel erbjuder SaaS-tjänster i form av virtuella telefonnummer med AI-tilläggstjänster, till småföretag i över 170 länder.",
+      "Kunderna är framförallt e-handelsföretag, konsulter och mjukvaruföretag med upp till 10 anställda.",
+      "Genom att publicera ett telefonnummer på hemsidan – ökar de sin tillgänglighet och försäljning.",
+      "Sonetels kunder skaffar lokala telefonnummer i det egna landet samt i länder där de vill bli tillgängliga för fler kunder.",
+      "Sonetel har idag över 34 000 betalande kunder. De största marknaderna är Nordamerika och Europa.",
+      "Tjänsterna är förskottsbetalda, vilket har en positiv påverkan på Sonetels kassaflöde och kreditexponering.",
+      "Sonetel erbjuder tre prisplaner;"
+    ],
+    "affarsmodell_prisplaner": [
+      "Basic. Kunden betalar bara för telefonnummer och samtal. Priserna startar från 17 kr per månad.",
+      "Premium eller Business. Från 99 kr per månad och användare inklusive nummer, samtal och AI-tjänster."
+    ],
+    "affarsmodell_avslutning": [
+      "Ca 85% av kunderna har i dagsläget Basic-planen. En kund på Premium ger Sonetel ca 4 ggr mer intäkter. Att få fler kunder att övergå till Premium eller Business är därmed ett av flera verktyg för att driva tillväxt.",
+      "AI-tjänsterna som ingår i Premium och Business inkluderar för närvarande bl.a. transkribering av samtal, samtalssammanfattningar samt analys och feedback på kundsamtal – på ett stort antal språk.",
+      "Bruttomarginalen på samtliga tjänster är runt 80%."
+    ],
+    "kommentar_till_grafer": [
+      "Perioden jul-sep hade fler kunder och abonnemang än perioden apr-jun, men något lägre intäkter.",
+      "Detta beror på att kundinflödet samt medföljande högre förstabetalningar från nya kunder, i samband med Skypes nedläggning i maj, gav en tillfällig ökning i inbetalningarna."
+    ]
+  },
+  "tables": {
+    "resultatrakning_koncern": {
+      "currency_unit": "SEK",
+      "columns": [
+        "202507-202509",
+        "202407-202409",
+        "202407-202506",
+        "202307-202406"
+      ],
+      "rows": [
+        {
+          "label": "Rörelsens intäkter",
+          "section_header": true
+        },
+        {
+          "label": "Nettoomsättning",
+          "values": [
+            8200933,
+            6198993,
+            27912721,
+            23382467
+          ]
+        },
+        {
+          "label": "Övriga rörelseintäkter",
+          "values": [
+            null,
+            346703,
+            71679,
+            202522
+          ]
+        },
+        {
+          "label": "Summa intäkter",
+          "summa": true,
+          "values": [
+            8200933,
+            6545696,
+            27984400,
+            23584989
+          ]
+        },
+        {
+          "label": "Rörelsens kostnader",
+          "section_header": true
+        },
+        {
+          "label": "Direkta kostnader sålda tjänster",
+          "values": [
+            -1723046,
+            -1174394,
+            -5831990,
+            -5888529
+          ]
+        },
+        {
+          "label": "Övriga externa kostnader",
+          "values": [
+            -2198140,
+            -934071,
+            -3427841,
+            -1550395
+          ]
+        },
+        {
+          "label": "Personalkostnader",
+          "values": [
+            -1943226,
+            -2346262,
+            -9706240,
+            -8641035
+          ]
+        },
+        {
+          "label": "Avskrivningar av materiella och immateriella tillgångar",
+          "values": [
+            -1970504,
+            -1842176,
+            -7757058,
+            -7278764
+          ]
+        },
+        {
+          "label": "Övriga rörelsekostnader",
+          "values": [
+            -25201,
+            null,
+            -104802,
+            null
+          ]
+        },
+        {
+          "label": "Summa rörelsens kostnader",
+          "summa": true,
+          "values": [
+            -7860117,
+            -6296903,
+            -26827931,
+            -23358723
+          ]
+        },
+        {
+          "label": "Rörelseresultat",
+          "summa": true,
+          "bold": true,
+          "values": [
+            340816,
+            248793,
+            1156469,
+            226266
+          ]
+        },
+        {
+          "label": "Resultat från finansiella investeringar",
+          "section_header": true
+        },
+        {
+          "label": "Finansiella intäkter",
+          "values": [
+            -69495,
+            -84705,
+            -243559,
+            -226671
+          ]
+        },
+        {
+          "label": "Finansiella kostnader",
+          "values": [
+            -170803,
+            -422482,
+            -1018768,
+            -1765009
+          ]
+        },
+        {
+          "label": "Resultat efter finansiella poster",
+          "summa": true,
+          "values": [
+            100518,
+            -258394,
+            -105858,
+            -1765414
+          ]
+        },
+        {
+          "label": "Skatt på årets resultat/uppskjuten skatt",
+          "values": [
+            -124061,
+            -132480,
+            -447214,
+            -438439
+          ]
+        },
+        {
+          "label": "Periodens resultat",
+          "summa": true,
+          "bold": true,
+          "values": [
+            -23543,
+            -390874,
+            -553072,
+            -2203853
+          ]
+        },
+        {
+          "label": "Hänförligt till Moderföretagets aktieägare",
+          "values": [
+            -23834,
+            -391100,
+            -554505,
+            -2205159
+          ]
+        },
+        {
+          "label": "Innehav utan bestämmande inflytande",
+          "values": [
+            291,
+            226,
+            1433,
+            1306
+          ]
+        },
+        {
+          "label": "Genomsnittligt antal aktier",
+          "section_header": true
+        },
+        {
+          "label": "Genomsnittligt antal aktier före utspädning",
+          "values": [
+            7571381,
+            6551457,
+            7316400,
+            4668144
+          ]
+        },
+        {
+          "label": "Genomsnittligt antal aktier efter utspädning",
+          "footnote_marker": "*",
+          "values": [
+            7571381,
+            6551457,
+            7316400,
+            4668144
+          ]
+        },
+        {
+          "label": "Resultat per aktie, före utspädning",
+          "values": [
+            0.0,
+            -0.06,
+            -0.08,
+            -0.47
+          ],
+          "format": "decimal2"
+        },
+        {
+          "label": "Resultat per aktie, efter utspädning",
+          "footnote_marker": "*",
+          "values": [
+            0.0,
+            -0.06,
+            -0.08,
+            -0.47
+          ],
+          "format": "decimal2"
+        }
+      ],
+      "footnotes": {
+        "*": "Resultatet per aktie efter utspädning räknas baserat på de aktier som löses in via lockup-programmet."
+      }
+    },
+    "balansrakning_koncern": {
+      "currency_unit": "SEK",
+      "columns": [
+        "2025-09-30",
+        "2024-09-30",
+        "2024-06-30"
+      ],
+      "rows": [
+        {
+          "label": "Tillgångar",
+          "section_header": true
+        },
+        {
+          "label": "Anläggningstillgångar",
+          "section_header": true
+        },
+        {
+          "label": "Immateriella anläggningstillgångar",
+          "indent": 1
+        },
+        {
+          "label": "Balanserade utgifter för utvecklingsarbeten och liknande arbeten",
+          "indent": 2,
+          "values": [
+            38967970,
+            37815464,
+            37765978
+          ]
+        },
+        {
+          "label": "Koncessioner, patent, licenser, varumärken och liknande rättigheter",
+          "indent": 2,
+          "values": [
+            99887,
+            53142,
+            60607
+          ]
+        },
+        {
+          "label": "Materiella anläggningstillgångar",
+          "indent": 1
+        },
+        {
+          "label": "Inventarier, verktyg och installationer",
+          "indent": 2,
+          "values": [
+            124215,
+            46180,
+            50140
+          ]
+        },
+        {
+          "label": "Finansiella anläggningstillgångar",
+          "indent": 1
+        },
+        {
+          "label": "Uppskjuten skattefordran",
+          "indent": 2,
+          "values": [
+            1336428,
+            1284244,
+            1288358
+          ]
+        },
+        {
+          "label": "Andra långfristiga fordringar",
+          "indent": 2,
+          "values": [
+            20746,
+            20795,
+            22802
+          ]
+        },
+        {
+          "label": "Summa anläggningstillgångar",
+          "summa": true,
+          "values": [
+            40549246,
+            39219825,
+            39187885
+          ]
+        },
+        {
+          "label": "Omsättningstillgångar",
+          "section_header": true
+        },
+        {
+          "label": "Kortfristiga fordringar",
+          "indent": 1
+        },
+        {
+          "label": "Övriga fordringar",
+          "indent": 2,
+          "values": [
+            1181614,
+            1374057,
+            630266
+          ]
+        },
+        {
+          "label": "Förutbetalda kostnader och upplupna intäkter",
+          "indent": 2,
+          "values": [
+            615543,
+            501778,
+            503284
+          ]
+        },
+        {
+          "label": "Likvida medel",
+          "indent": 2,
+          "values": [
+            948907,
+            1830197,
+            267799
+          ]
+        },
+        {
+          "label": "Summa omsättningstillgångar",
+          "summa": true,
+          "values": [
+            2746064,
+            3706032,
+            1401349
+          ]
+        },
+        {
+          "label": "Summa tillgångar",
+          "summa": true,
+          "bold": true,
+          "values": [
+            43295310,
+            42925857,
+            40589234
+          ]
+        },
+        {
+          "label": "Eget kapital och skulder",
+          "section_header": true,
+          "continuation_break": true
+        },
+        {
+          "label": "Eget kapital",
+          "section_header": true
+        },
+        {
+          "label": "Aktiekapital",
+          "indent": 1,
+          "values": [
+            1892845,
+            1892845,
+            1211500
+          ]
+        },
+        {
+          "label": "Övrigt tillskjutet kapital",
+          "indent": 1,
+          "values": [
+            62957874,
+            62957874,
+            52385398
+          ]
+        },
+        {
+          "label": "Annat eget kapital inklusive årets resultat",
+          "indent": 1,
+          "values": [
+            -34310695,
+            -33584042,
+            -32836980
+          ]
+        },
+        {
+          "label": "Eget kapital hänförligt till moderföretagets aktieägare",
+          "indent": 1,
+          "values": [
+            30540024,
+            31266677,
+            20759918
+          ]
+        },
+        {
+          "label": "Innehav utan bestämmande inflytande",
+          "indent": 1,
+          "values": [
+            3546,
+            4265,
+            8008
+          ]
+        },
+        {
+          "label": "Summa Eget kapital",
+          "summa": true,
+          "values": [
+            30543270,
+            31270942,
+            20767926
+          ]
+        },
+        {
+          "label": "Avsättningar",
+          "section_header": true
+        },
+        {
+          "label": "Övriga avsättningar",
+          "indent": 1,
+          "values": [
+            824382,
+            929091,
+            981774
+          ]
+        },
+        {
+          "label": "Summa avsättningar",
+          "summa": true,
+          "values": [
+            824382,
+            929091,
+            981774
+          ]
+        },
+        {
+          "label": "Långfristiga skulder",
+          "section_header": true
+        },
+        {
+          "label": "Erhållna lån",
+          "indent": 1,
+          "values": [
+            4307040,
+            615181,
+            3737188
+          ]
+        },
+        {
+          "label": "Övriga långfristiga skulder",
+          "indent": 1,
+          "values": [
+            null,
+            null,
+            1825000
+          ]
+        },
+        {
+          "label": "Summa långfristiga skulder",
+          "summa": true,
+          "values": [
+            4307040,
+            615181,
+            5562188
+          ]
+        },
+        {
+          "label": "Kortfristiga skulder",
+          "section_header": true
+        },
+        {
+          "label": "Checkräkningskredit",
+          "indent": 1,
+          "values": [
+            998345,
+            null,
+            976031
+          ]
+        },
+        {
+          "label": "Leverantörsskulder",
+          "indent": 1,
+          "values": [
+            1368277,
+            871681,
+            1566291
+          ]
+        },
+        {
+          "label": "Erhållna lån",
+          "indent": 1,
+          "values": [
+            1512504,
+            5758834,
+            2945852
+          ]
+        },
+        {
+          "label": "Skatteskulder",
+          "indent": 1,
+          "values": [
+            155244,
+            54598,
+            392666
+          ]
+        },
+        {
+          "label": "Övriga kortfristiga skulder",
+          "indent": 1,
+          "values": [
+            987919,
+            1112981,
+            4874991
+          ]
+        },
+        {
+          "label": "Upplupna kostnader och förutbetalda intäkter",
+          "indent": 1,
+          "values": [
+            2598029,
+            2312549,
+            2521515
+          ]
+        },
+        {
+          "label": "Summa kortfristiga skulder",
+          "summa": true,
+          "values": [
+            7620318,
+            10110643,
+            13277346
+          ]
+        },
+        {
+          "label": "Summa skulder och eget kapital",
+          "summa": true,
+          "bold": true,
+          "values": [
+            43295310,
+            42925857,
+            40589234
+          ]
+        },
+        {
+          "label": "Soliditet",
+          "format": "percent",
+          "values": [
+            71,
+            73,
+            51
+          ]
+        }
+      ]
+    },
+    "kassaflode_koncern": {
+      "currency_unit": "SEK",
+      "columns": [
+        "202507-202509",
+        "202407-202409",
+        "202407-202506",
+        "202307-202406"
+      ],
+      "rows": [
+        {
+          "label": "Den löpande verksamheten",
+          "section_header": true
+        },
+        {
+          "label": "Rörelseresultat före finansiella poster",
+          "values": [
+            340816,
+            248793,
+            1156469,
+            226266
+          ]
+        },
+        {
+          "label": "Ej likvidpåverkande poster",
+          "values": [
+            1818340,
+            1432209,
+            6857844,
+            6774197
+          ]
+        },
+        {
+          "label": "Finansnetto",
+          "values": [
+            -240298,
+            -507187,
+            -1262327,
+            -1991680
+          ]
+        },
+        {
+          "label": "Betald inkomstskatt",
+          "values": [
+            2753,
+            -466434,
+            -859520,
+            -238692
+          ]
+        },
+        {
+          "label": "Kassaflöde från den löpande verksamheten innan förändringar från rörelsekapitalet",
+          "summa": true,
+          "values": [
+            1921611,
+            707381,
+            5892466,
+            4770091
+          ]
+        },
+        {
+          "label": "Ökning/minskning omsättningstillgångar",
+          "values": [
+            -37452,
+            -742285,
+            -626155,
+            -271132
+          ]
+        },
+        {
+          "label": "Ökning/minskning rörelseskulder",
+          "values": [
+            227456,
+            -860586,
+            -376028,
+            948715
+          ]
+        },
+        {
+          "label": "Kassaflöde från den löpande verksamheten",
+          "summa": true,
+          "bold": true,
+          "values": [
+            2111615,
+            -895490,
+            4890283,
+            5447674
+          ]
+        },
+        {
+          "label": "Investeringsverksamheten",
+          "section_header": true
+        },
+        {
+          "label": "Investeringar i immateriella tillgångar",
+          "values": [
+            -2080162,
+            -1882884,
+            -8865619,
+            -7707801
+          ]
+        },
+        {
+          "label": "Investering i materiella tillgångar",
+          "values": [
+            -24461,
+            null,
+            -84116,
+            null
+          ]
+        },
+        {
+          "label": "Avyttring av materiella tillgångar",
+          "values": [
+            null,
+            null,
+            3872,
+            null
+          ]
+        },
+        {
+          "label": "Förändring långfristiga fordringar",
+          "values": [
+            -1443,
+            2007,
+            3499,
+            565
+          ]
+        },
+        {
+          "label": "Kassaflöde från investeringsverksamheten",
+          "summa": true,
+          "values": [
+            -2106066,
+            -1880877,
+            -8942364,
+            -7707236
+          ]
+        },
+        {
+          "label": "Finansieringsverksamheten",
+          "section_header": true
+        },
+        {
+          "label": "Nyemissioner",
+          "values": [
+            null,
+            11253821,
+            11253822,
+            1584568
+          ]
+        },
+        {
+          "label": "Amortering",
+          "values": [
+            -274204,
+            -6002025,
+            -12524292,
+            -5533279
+          ]
+        },
+        {
+          "label": "Upptagna lån",
+          "values": [
+            null,
+            63000,
+            6250000,
+            5780286
+          ]
+        },
+        {
+          "label": "Checkräkningskredit",
+          "values": [
+            19687,
+            -976031,
+            2627,
+            -19039
+          ]
+        },
+        {
+          "label": "Kassaflöde från finansieringsverksamheten",
+          "summa": true,
+          "values": [
+            -254517,
+            4338765,
+            4982157,
+            1812536
+          ]
+        },
+        {
+          "label": "Periodens kassaflöde",
+          "summa": true,
+          "bold": true,
+          "values": [
+            -248968,
+            1562398,
+            930076,
+            -447026
+          ]
+        },
+        {
+          "label": "Likvida medel vid periodens början",
+          "values": [
+            1197875,
+            267799,
+            267799,
+            714825
+          ]
+        },
+        {
+          "label": "Likvida medel vid periodens slut",
+          "summa": true,
+          "bold": true,
+          "values": [
+            948907,
+            1830197,
+            1197875,
+            267799
+          ]
+        }
+      ]
+    }
+  },
+  "share_capital": {
+    "marknadsplats": "First North Growth Market vid Nasdaq Stockholm",
+    "kortnamn": "SONE",
+    "isin": "SE0009580517",
+    "lei": "549300FQP3866QXORK43",
+    "antal_aktier": 7571381,
+    "antal_roster": 7571381,
+    "kvotvarde_kr": 0.25,
+    "bemyndigande_text": "Sonetels årsstämma har därtill den 18 december 2024 enhälligt beslutat att bemyndiga styrelsen att, vid ett eller flera tillfällen under tiden fram till nästkommande årsstämma, med eller utan avvikelse från aktieägarnas företrädesrätt, besluta om nyemission av aktier i Bolaget motsvarande högst tjugo (20) procent av det totala antalet utestående aktier vid tidpunkten för årsstämman.",
+    "sammanstallning": [
+      {
+        "label": "Befintliga aktier",
+        "antal": 7571381
+      },
+      {
+        "label": "Outnyttjat bemyndigande",
+        "antal": 1514276
+      }
+    ],
+    "optionsprogram_text": "Bolaget har inga utestående teckningsoptioner eller konvertibla lån."
+  },
+  "governance": {
+    "board": [
+      {
+        "namn": "Sebastian Ahlskog",
+        "roll": "Styrelseordförande"
+      },
+      {
+        "namn": "Annika Lidne",
+        "roll": "Styrelseledamot"
+      },
+      {
+        "namn": "Jenny Karlsson",
+        "roll": "Styrelseledamot"
+      },
+      {
+        "namn": "Tim Hansen",
+        "roll": "Vice styrelseordförande"
+      },
+      {
+        "namn": "Henrik Thomé",
+        "roll": "Styrelseledamot"
+      },
+      {
+        "namn": "Martin Jönsson",
+        "roll": "Styrelseledamot"
+      }
+    ],
+    "vd_namn": "Henrik Thomé",
+    "vd_titel": "VD och grundare",
+    "vd_signing_location": "Stockholm",
+    "vd_signing_date": "2025-11-25"
+  },
+  "disclosures": {
+    "om_bolaget": "Sonetel erbjuder en global AI-baserad kommunikationslösning. Bolaget tillhandahåller tjänster som hjälper entreprenörer och småföretagare att effektivisera verksamheten och öka försäljningen. Sonetel har betalande kunder i över 170 länder. Bolagets aktie (SONE) är föremål för handel på Nasdaq First North Growth Market Stockholm med G&W Fondkommission som Certified Adviser.",
+    "certified_adviser": "G&W Fondkommission",
+    "dotterbolag": [
+      "Sonetel Services pvt Ltd, Indien"
+    ],
+    "redovisningsprinciper": [
+      "Sonetel AB (publ) har tidigare tillämpat ett brutet räkenskapsår. Vid en extra stämma den 22 maj 2025 bestämdes att bolaget skulle övergå till kalenderår samt att nuvarande räkenskapsår skulle förlängas till att omfatta perioden juli 2024 till december 2025.",
+      "Årsredovisningar upprättas i enlighet med årsredovisningslagen och Bokföringsnämndens allmänna råd BFNAR 2012:1 Årsredovisning och koncernredovisning (K3).",
+      "Koncernen består av moderbolaget Sonetel AB (publ) och dotterbolaget Sonetel Services pvt Ltd, Indien.",
+      "Redovisningsprinciper som tillämpats för moderbolaget överensstämmer, om inget annat anges nedan, med de redovisningsprinciper som användes vid upprättandet av den senaste årsredovisningen."
+    ],
+    "vasentliga_risker": "Bolaget är genom sin verksamhet exponerat för risker och osäkerhetsfaktorer. Information om risker och osäkerhetsfaktorer finns utförligt beskrivet i Bolagsbeskrivningen som finns tillgänglig för nedladdning på www.sonetel.com/sv/investerare/",
+    "kontakt": {
+      "vd_namn": "Henrik Thomé",
+      "vd_titel": "VD",
+      "vd_telefon": "08-52506011",
+      "investor_email": "investors@sonetel.com",
+      "hemsida": "www.sonetel.com/sv/"
+    },
+    "granskning_status": "Denna kvartalsredogörelse har inte granskats av bolagets revisorer."
+  },
+  "transaktioner_narstaende": "Bolaget har under perioden juli - september 2025 köpt tjänster från dotterbolaget Sonetel Services pvt ltd i Indien.",
+  "kalendarium": [
+    {
+      "event": "Kvartalsredogörelse jul-sep",
+      "date": "2025-11-25"
+    },
+    {
+      "event": "Bokslutskommuniké",
+      "date": "2026-02-25"
+    },
+    {
+      "event": "Årsredovisning",
+      "date": "2026-03-26"
+    },
+    {
+      "event": "Årsstämma",
+      "date": "2026-04-23"
+    }
+  ],
+  "definitioner": [
+    {
+      "term": "AI",
+      "definition": "artificiell intelligens, machine learning. Funktioner utförda av datorer som normalt kräver mänsklig intelligens. Avser i Sonetels sammanhang specifikt LLM (large language models)."
+    },
+    {
+      "term": "Affiliates",
+      "definition": "Företag och privatpersoner som mottar provision om de marknadsför Sonetels tjänster till tredje part som därefter blir betalande kunder hos Sonetel."
+    },
+    {
+      "term": "Aktiva kunder",
+      "definition": "Betalande kunder som under månaden haft ett abonnemang och som vid periodens utgång bibehållit ett positivt saldo på sitt konto, och därmed möjlighet att använda tjänsterna."
+    },
+    {
+      "term": "API",
+      "definition": "Application programming interface, eller applikationsprogrammeringsgränssnitt. Ett API tillgängliggör en applikations funktionalitet eller data för andra applikationer."
+    },
+    {
+      "term": "CAC",
+      "definition": "Customer Acquisition Cost. Kundanskaffningskostnad."
+    },
+    {
+      "term": "EBITDA",
+      "definition": "Resultat före finansiella kostnader, avskrivningar och skatter."
+    },
+    {
+      "term": "Finansnetto",
+      "definition": "Netto av finansiella intäkter och finansiella kostnader."
+    },
+    {
+      "term": "Freemium",
+      "definition": "en gratis bastjänst som mot ersättning kan uppgraderas för att få tillgång till ytterligare tjänster."
+    },
+    {
+      "term": "MRR",
+      "definition": "Monthly Recurring Revenue. Det månatliga värdet av aktiva kundabonnemang. Det inkluderar förnyelsevärdet av månadsavgifter samt månadsvärdet av årliga abonnemang."
+    },
+    {
+      "term": "Premium",
+      "definition": "En tilläggstjänst som Sonetel erbjuder kunderna."
+    },
+    {
+      "term": "Resultat efter skatt",
+      "definition": "För del av räkenskapsår beräknas denna med en schablonskattesats om 20,6%."
+    },
+    {
+      "term": "Resultat efter skatt per genomsnittligt antal aktie",
+      "definition": "Resultat efter skatt i förhållande till genomsnittligt antal utestående aktier under perioden."
+    },
+    {
+      "term": "ROI",
+      "definition": "Return on Investment. Antalet månader det tar innan intäkterna från en ny kund betalat av kundanskaffningskostnaden."
+    },
+    {
+      "term": "SaaS",
+      "definition": "Software as a service, en typ av molntjänst där mjukvaran levereras som tjänst över Internet, som t.ex. Salesforce eller Slack."
+    },
+    {
+      "term": "Soliditet",
+      "definition": "Eget kapital i förhållande till summa tillgångar."
+    },
+    {
+      "term": "Virtuella nummer",
+      "definition": "Lokala telefonnummer som inte är anslutna till en fysisk telefonledning eller till ett SIM-kort. Inkommande samtal kan dirigeras till valfri befintlig telefon i världen, eller besvaras direkt i Sonetels appar."
+    }
+  ],
+  "boilerplate": {
+    "version_stamp": "2025-11",
+    "source_dropbox_folder": "https://www.dropbox.com/sh/93h08ggt6fkbubn/AAA4JOxcRM90kjJg9lK6zskDa"
+  },
+  "assets": {
+    "cover_image": "/Users/henrik/.claude/skills/kvartalsredogörelse/examples/jul-sep-2025/cover.webp",
+    "affarsmodell_image": "/Users/henrik/.claude/skills/kvartalsredogörelse/examples/jul-sep-2025/affarsmodell.webp"
+  },
+  "units": {
+    "tables_currency": "SEK",
+    "tables_scale": "raw",
+    "kpi_scale": "MSEK",
+    "format": {
+      "thousands_separator": " ",
+      "decimal_separator": ",",
+      "negative_style": "minus-prefix"
+    }
+  }
+}

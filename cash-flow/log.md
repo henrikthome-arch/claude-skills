@@ -1134,3 +1134,88 @@ Result:
 ### Lesson
 
 The eager-adjust rule continues to work: CEO refined targets mid-session, agent ran clean 5-step within ~15 minutes from request to commit. The compounding append-only description audit trail (PLAN-L on top of pre-existing, PLAN-L2 on top of PLAN-L) preserves full provenance.
+
+---
+
+## 2026-05-20 (sent natten) — PLAN-M: VAT-symmetri (EU VAT inflow + Swedish supplier rows INCL VAT)
+
+### Trigger
+
+CEO 2026-05-20: "Om revenue (2.6 MSEK) räknas exklusive VAT, men MOSS redovisas därefter som 200 KSEK ut varje kvartal, så har vi bara utbetalning men inte inbetalning."
+
+Identifierad asymmetri: model showed id 47 MOSS outflow (206K/quarter) without modeling the offsetting EU VAT inflow from EU customers. Created systematic pessimism of ~206K/quarter.
+
+### CEO confirmations 2026-05-20
+
+1. Add EU VAT inflow: ~68,667 SEK/månad (206K ÷ 3)
+2. Swedish supplier rows → INCL VAT (full bank-reality)
+
+### Changes (13 UPDATEs + 1 INSERT, single transaction)
+
+**Part 2: 13 Swedish supplier rows → INCL VAT (×1.25)**:
+| id | Recipient | excl → incl |
+|---|---|---|
+| 5 | Linn Kristensson | 22,000 → 27,500 |
+| 6 | CFO (Södra lund) | 5,000 → 6,250 |
+| 10 | Cision | 5,000 → 6,250 |
+| 13 | Euroclear | 3,500 → 4,375 |
+| 18 | United Spaces | 2,900 → 3,625 |
+| 19 | Tomas André | 92,500 → 115,625 |
+| 20 | BDO | 53,000 → 66,250 |
+| 29 | Fluff | 30,000 → 37,500 |
+| 30 | Nasdaq (annual) | 152,000 → 190,000 |
+| 31 | G&W (quarterly) | 34,500 → 43,125 |
+| 46 | Forvis Mazars (annual) | 100,000 → 125,000 |
+| 49 | Mazar Forvis (annual) | 35,500 → 44,375 |
+| 50 | Schibsted (annual) | 7,600 → 9,500 |
+
+**Part 1: New EU VAT inflow**: id 60, recipient "EU VAT collected (held for MOSS remittance)", -68,667 SEK/månad day 1 (max float per Reviewer B), account NULL.
+
+**Skipped** (with documented reasons):
+- id 16 Bambora: already incl VAT (SKILL.md L644)
+- id 51 Mangold: placeholder day, no empirical invoice yet (Reviewer A)
+- id 7 SEB Kort: mixed bundle
+- id 52 Adyen: broken supplier_id mapping
+- Foreign vendors (Voxbone, AWS, Google, Openrouter): reverse charge
+- Loans, salaries, tax, insurance: no VAT
+
+### Net forecast impact (verified)
+
+- **May 28 trough**: -869K → **-862,731 SEK** (+6K improvement, NOT +25K as plan claimed — intra-month VAT supplements on days 4/5/7/27 partially offset day-1 EU VAT relief)
+- **EOM May**: -666K (vs prior -672K = +6K relief)
+- **EU VAT cycle Q2 verified**: May 1 + Jun 1 + Jul 1 (3 × +68,667 = +206,001) → Jul 30 MOSS -206,000 → nets to +1 SEK ≈ 0 ✓
+- **cogs_factor unchanged**: effective 16.2% (no 4xxx accounts touched) ✓
+
+### Process
+
+5-step:
+1. PLAN at `/tmp/PLAN-M-spec.md` (now `docs/plans/PLAN-M-spec.md`)
+2. Reviewer A 78/100 PASS, Reviewer B 78/100 PASS (avg 78). Both required 2 revisions: drop id 51 Mangold + change EU VAT day 28→1. Incorporated.
+3. SQL executed in single transaction. All 14 row ops verified.
+4. Auditor A 96/100 PASS (13/13 row checks + descriptions + reversibility). Auditor B 72/100 PASS (structural correctness + cycle netting + cogs unchanged). Avg 84.
+
+### Lessons learned (now in SKILL.md)
+
+1. **VAT-symmetri principle**: if revenue is excl VAT, you MUST model the VAT inflow side too. Otherwise you only model outflows (MOSS) → artificial pessimism.
+
+2. **MOSS quarter timing** (verified during PLAN-M):
+   - id 47 fires Jan 30 (Q4 prior), Apr 30 (Q1), Jul 30 (Q2), Oct 30 (Q3)
+   - Each remits the 3 months PRECEDING the firing month
+
+3. **id 48 actual timing** (corrected): day 12 of months 2,5,8,11 — NOT day 30 q-months 1,4,7,10 as SKILL.md L836 erroneously stated
+
+4. **Swedish VAT classification rules**: only apply ×1.25 when (a) origin='sweden' AND (b) NOT financial service / loan / tax / insurance / VAT itself / foreign reverse charge. Documented in SKILL.md new "VAT classification rules" section.
+
+5. **Bambora is already incl VAT** in model — don't double-multiply.
+
+6. **SKILL.md L843 internal contradiction**: lists "Bambora/Euroclear/Nasdaq" as no-VAT, contradicted by empirical bank evidence elsewhere in same file. Followup cleanup needed.
+
+7. **Magnitude estimation in plan**: when claiming "+X SEK relief at trough" pre-execution, account for ALL intra-month outflow supplements, not just the one big inflow. PLAN-M plan claimed +25K trough relief; actual was +6K because 5 intra-month days also got VAT supplements.
+
+### Open follow-ups
+
+- **id 16 Bambora verification**: confirm "already incl VAT" assumption with bank actual on next Bambora invoice.
+- **id 51 Mangold**: when first invoice arrives, classify (likely VAT-applicable) and ×1.25 it.
+- **id 52 Adyen**: fix broken supplier_id mapping (currently points to "Nasdaq First North" — wrong), then reclassify.
+- **id 7 SEB Kort split**: requires SEB invoice details to identify Swedish vs foreign components; partial reclassification possible.
+- **SKILL.md L843 cleanup**: rewrite contradictory paragraph to align with empirical evidence.

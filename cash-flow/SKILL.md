@@ -379,6 +379,69 @@ Skipping this step caused a wrong PLAN-E proposal on 2026-05-12 (claimed +237K J
 
 ---
 
+## VAT classification rules (learned during PLAN-M 2026-05-20)
+
+When adjusting recurring_payment amounts to incl-vs-excl VAT, apply these rules:
+
+### Apply Swedish 25% VAT (amount × 1.25 → INCL)
+
+- **Swedish supplier** (suppliers.origin='sweden') AND
+- Activity NOT in the exempt list below
+
+Examples: BDO, Linn KB, Cision, Euroclear, Tomas/Dolutions AB, Fluff/Rainbow to the stars AB, United Spaces, Nasdaq First North listing fees, Forvis Mazars audit, Schibsted advertising, Södra lund Ekonomi (CFO), G&W (advisory mix, empirically validated)
+
+### Skip (no VAT cash impact)
+
+| Category | Examples | Why |
+|---|---|---|
+| EU reverse charge | Voxbone Belgium (id 1), Europlanet, Openrouter, Google Ireland (id 11), Adyen NL | EU B2B → customer self-accounts, no VAT on invoice |
+| Outside EU | AWS (id 3), India (ids 35/54/55/56), foreign SaaS | No EU VAT obligation |
+| Financial services exempt | Bank fees (Nordea id 4), insurance (Trygg Hansa id 38), pure asset management | Skatteverket ML 3:9 financial-services exemption |
+| Loans | DBT (ids 24/25/26), Nordea amort/ränta (ids 21/22/23), Henrik repayments | Loan principal/interest not VAT-bearing |
+| Salaries / tax / gov | Salaries (id 12), Skatteverket (ids 9/33/47/48), Board fees (id 32) | Payroll/tax flows, not VAT-bearing |
+| VAT itself | id 47 MOSS, id 48 refund | Don't VAT the VAT |
+| Already incl VAT | Bambora id 16 (60K already incl per historical convention) | Would double-count if multiplied |
+| Mixed bundles | id 7 SEB Kort (META + SaaS + AWS + travel mixed) | Cannot cleanly classify without SEB invoice detail |
+| Broken supplier mapping | Adyen id 52 (supplier_id points to wrong supplier "Nasdaq First North") | Fix data quality first, then revisit |
+| Insufficient evidence | Mangold id 51 (placeholder day, no actual invoice) | Wait for empirical bank data |
+
+### MOSS / EU VAT cycle (verified 2026-05-20)
+
+```
+id 47 MOSS quarter_months 1,4,7,10 day 30 fires:
+- Jan 30 → Q4 PRIOR YEAR (Oct-Nov-Dec collected)
+- Apr 30 → Q1 (Jan-Feb-Mar collected)
+- Jul 30 → Q2 (Apr-May-Jun collected)
+- Oct 30 → Q3 (Jul-Aug-Sep collected)
+
+id 60 EU VAT inflow monthly day 1 ~-68,667 each:
+- Jan 1, Feb 1, Mar 1: collect VAT (3 × 68.667 = 206K)
+- Apr 30: MOSS drains 206K (Q1 remit)
+- Quarter nets to 0; intra-quarter ~206K float on our Nordea
+```
+
+### id 48 Swedish input VAT refund (corrected 2026-05-20)
+
+- Frequency: quarterly, quarter_months='2,5,8,11', day=12
+- Amount: -100,000 SEK (midpoint; varies 25-170K)
+- Fires: Feb 12, May 12, Aug 12, Nov 12
+- Represents NET Swedish refund (input VAT we paid on Swedish supplier invoices MINUS output VAT collected on domestic Swedish sales)
+
+### What's still asymmetric
+
+Even after PLAN-M, the model is slightly asymmetric on Swedish output VAT:
+- **Modeled**: Swedish input VAT on supplier rows (×1.25 incl)
+- **NOT modeled**: Swedish output VAT collected on domestic sales (gets netted into id 48's empirically-derived refund amount)
+- Net effect: model is ~32K/month more pessimistic on Swedish VAT cash than pre-PLAN-M (because gross input VAT now visible while net refund unchanged)
+
+If a future agent wants full symmetry: model Swedish output VAT inflow on the small domestic sales portion. Low priority — Sonetel's domestic revenue share is small.
+
+### TODO: SKILL.md L843 contradiction
+
+Old SKILL.md line 843 listed "Bambora (financial service), Euroclear, Nasdaq" as NO VAT — contradicted by L638, L644, L976, L988 which show empirical bank actuals incl VAT. PLAN-M followed empirical evidence. A future cleanup CR should rewrite L843 to align.
+
+---
+
 ## COGS taxonomy + how cogs_factor avoids double-count
 
 **Per CEO 2026-05-10**: `full_cogs_percent` (default 21.8%) is calibrated from accounting (total 4xxx ÷ revenue), where ALL COGS — paid via PayPal, SEB Kort, AMEX, or Nordea — are accounted for.
@@ -555,10 +618,14 @@ This section is the single source of truth for what the cash flow forecast repre
 
 1. **Revenue is GROSS.** The forecast revenue figure (2.6 MSEK/month) is gross of payment processor fees. Bank reality is that PayPal nets fees from settlements before depositing — so bank cash inflow is ~3-5% lower than forecast revenue inflow. This systematic gap is currently modeled as a synthetic recurring outflow (id 53 PayPal fees 45K/month) until CR-2026-05-08 ships a continuous-deduction fix.
 
-2. **Budget is EXCL VAT, bank is INCL VAT.** All recurring/scheduled budgets are entered as net-of-VAT amounts (the cost to the company). For Swedish suppliers, bank actually pays incl VAT (× 1.25). The model handles this asymmetry by:
-   - Counting MOSS as a quarterly outflow (id 47, ~206K) — captures the VAT collected from EU customers that's flushed out
-   - Counting input VAT refund as quarterly inflow (id 48, -100K) — captures the SEK supplier VAT that's reclaimed
-   - Net quarterly VAT outflow ~80-150K depending on Corona offset
+2. **VAT treatment — POST-PLAN-M (2026-05-20)**:
+   - **Swedish supplier rows are stored INCL VAT** (×1.25) for 13 vendors with clear Swedish VAT applicability (Linn, CFO, Cision, Euroclear, United Spaces, Tomas/Dolutions, BDO, Fluff, Nasdaq, G&W, Forvis Mazars annual a conto + slut, Schibsted). Bank reality: Nordea debits incl VAT on each invoice payment.
+   - **EU VAT collected modeled as monthly inflow** (id 60, -68,667 SEK day 1, ~206K/3): mirrors quarterly MOSS outflow (id 47). Sonetel collects destination VAT from EU customers (held in Nordea until remittance). Day 1 chosen for max within-month float.
+   - **MOSS id 47** = 206K outflow quarter_months 1,4,7,10 day 30. Fires Jan 30 (Q4 prior year remit), Apr 30 (Q1 Jan-Mar), Jul 30 (Q2 Apr-Jun), Oct 30 (Q3 Jul-Sep). VAT inflow side now modeled via id 60 → Q-cycle nets to 0.
+   - **id 48 Skatteverket refund** = -100K quarterly inflow on quarter_months 2,5,8,11 day **12** (NOT day 30 q-months 1,4,7,10 as old SKILL.md erroneously stated; verified 2026-05-20). Captures NET Swedish refund (input VAT we paid minus output VAT collected on domestic sales).
+   - **Bambora id 16** kept at 60K — **already entered incl VAT** per historical convention; would double-count if multiplied.
+   - **Mangold id 51** kept at 12,500 excl VAT — placeholder pending first invoice empirical evidence (Reviewer A 2026-05-20 PLAN-M).
+   - **Skipped rows** (foreign reverse charge, financial exempt, loans, salaries, tax): see PLAN-M-spec.md for full classification.
 
 3. **Two complementary tables overlay**: `recurring_payment` is the **baseline** (what happens every month/quarter/year by default). `scheduled_payment` is for **one-offs and corrections**. Pattern when reality deviates from recurring for a single month: keep the recurring untouched, add a scheduled offset (positive or negative) for that month.
 

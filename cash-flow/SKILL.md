@@ -388,7 +388,7 @@ When adjusting recurring_payment amounts to incl-vs-excl VAT, apply these rules:
 - **Swedish supplier** (suppliers.origin='sweden') AND
 - Activity NOT in the exempt list below
 
-Examples: BDO, Linn KB, Cision, Euroclear, Tomas/Dolutions AB, Fluff/Rainbow to the stars AB, United Spaces, Nasdaq First North listing fees, Forvis Mazars audit, Schibsted advertising, Södra lund Ekonomi (CFO), G&W (advisory mix, empirically validated)
+Examples: BDO, Linn KB, Cision, Euroclear, **Tomas/Dolutions AB** (CEO-confirmed 2026-05-20: momsregistrerad), Fluff/Rainbow to the stars AB, United Spaces, Nasdaq First North listing fees, Forvis Mazars audit, Schibsted advertising, Södra lund Ekonomi (CFO), G&W (advisory mix, empirically validated)
 
 ### Skip (no VAT cash impact)
 

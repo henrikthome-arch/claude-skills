@@ -1007,3 +1007,68 @@ CEO 2026-05-20 reviewing Seasonal Cost Distribution chart (`/analytics/cash-flow
 - `~/.claude/skills/cash-flow/log.md` — this entry
 - `docs/changelogs/2026-05.md` — addendum to PLAN-J entry
 - `docs/plans/PLAN-K-spec.md` — execution spec (committed for audit)
+
+---
+
+## 2026-05-20 (later) — PLAN-L: Henrik repayment reshape
+
+### Trigger
+
+CEO 2026-05-20: "We need to slow down the repayments to me. Maybe 50 KSEK in May, 100 KSEK in June, 50 SKEK in July, 200 KSEK in August?"
+
+Cash flow context (critical): pre-PLAN-L Jul 30 trough was **-1,010K SEK — already 10K below the 1M credit line ceiling**. PLAN-L provides exactly the relief needed to bring the trough back under the limit.
+
+### CEO confirmations (clarifying questions, 2026-05-20)
+
+1. Targets represent **combined** Henrik category total per month (loan + utlägg).
+2. Deferred 107K → **shifted to later months (Sep onwards)**, not cancelled. Total Henrik commitment preserved.
+
+### Changes (3 UPDATEs + 2 INSERTs in single transaction)
+
+- **s38** May 15: 100K → **50K** (defer 50K)
+- **s39** Jun 15: 150K → **50K** (defer 100K)
+- **s45** Jul 15: **disabled** (was 50K; defer all)
+- **s81 NEW** Aug 15: **93K** loan repayment (catch-up tranche 1) — PROVISIONAL
+- **s82 NEW** Oct 15: **107K** loan repayment (catch-up tranche 2) — PROVISIONAL
+
+Utlägg entries (s42/s43/s44/s46) untouched.
+
+### Net effect
+
+Per-month combined Henrik totals match CEO target:
+| Month | Loan | Utlägg | Combined |
+|---|---:|---:|---:|
+| May | 50 (s38) | 0 | **50** |
+| Jun | 50 (s39) | 50 (s42) | **100** |
+| Jul | 0 (s45 disabled) | 50 (s43) | **50** |
+| Aug | 93 (s81 new) | 107 (s44) | **200** |
+| Sep | 0 | 100 (s46) | **100** |
+| Oct | 107 (s82 new) | 0 | **107** |
+
+**Total May-Oct preserved at 607K** (loan 300 + utlägg 307).
+
+### Cash flow improvement
+
+| Date | Pre-PLAN-L | Post-PLAN-L | Δ |
+|---|---:|---:|---:|
+| Jul 30 (was min) | -1,010K | ~-810K | +200K relief — under credit line |
+| Aug 1 | -994K | ~-794K | +200K relief |
+| Aug 15 | -291K | -185K (+93K new) | net +107K |
+| Oct 15 | TBD | TBD (-107K new) | net 0 cumulative by year-end |
+
+The 200K cumulative savings May-Jul lift the entire summer trajectory off the credit line ceiling.
+
+### Process
+
+5-step:
+1. PLAN at `/tmp/PLAN-L-spec.md` (also saved in repo `docs/plans/PLAN-L-spec.md`)
+2. Reviewer A 84/100 PASS, Reviewer B 78/100 PASS (avg 81, gate cleared). Reviewer B flagged August trough concern → verified via forecast that Aug stays comfortably above -1M.
+3. SQL executed in single transaction. Verification SELECTs confirmed all 5 row operations correct.
+4. Auditors next.
+
+### Open follow-ups
+
+- **PROVISIONAL re-confirmation**: s81 (pending 2026-08-01) and s82 (pending 2026-10-01). Future agents should flag to CEO before these dates.
+- **Henrik supplier alias**: no `suppliers` row for "Henrik Thome", no `supplier_aliases` entry. Bank reconciliation matcher will not auto-match. Manual reconciliation needed when Aug 15/Oct 15 SEK debits land. Worth a future CR to add Henrik as supplier with aliases.
+- **Account number consistency**: s42/s43/s44/s46 (utlägg) have account_number=NULL while s38/s39/s81/s82 (loan) have 2890. Inconsistency; not blocking but worth aligning.
+- **Henrik utlägg next tranches**: per s43 description "tranche 3/4" and s46 "tranche 2/4" — suggests 4 total tranches. s42 was "tranche 1/4", s44 was "tranche 3/3 final". Internal numbering inconsistencies in descriptions. Worth a cleanup pass.

@@ -1072,3 +1072,65 @@ The 200K cumulative savings May-Jul lift the entire summer trajectory off the cr
 - **Henrik supplier alias**: no `suppliers` row for "Henrik Thome", no `supplier_aliases` entry. Bank reconciliation matcher will not auto-match. Manual reconciliation needed when Aug 15/Oct 15 SEK debits land. Worth a future CR to add Henrik as supplier with aliases.
 - **Account number consistency**: s42/s43/s44/s46 (utlägg) have account_number=NULL while s38/s39/s81/s82 (loan) have 2890. Inconsistency; not blocking but worth aligning.
 - **Henrik utlägg next tranches**: per s43 description "tranche 3/4" and s46 "tranche 2/4" — suggests 4 total tranches. s42 was "tranche 1/4", s44 was "tranche 3/3 final". Internal numbering inconsistencies in descriptions. Worth a cleanup pass.
+
+---
+
+## 2026-05-20 (end of evening) — PLAN-L2: Further slowdown of Henrik repayments
+
+### Trigger
+
+CEO 2026-05-20: "I think we need to slow it even further. 100 to 50 in June, 50 to 0 in July, 200 to 300 in August."
+
+PLAN-L just executed minutes earlier; this is a same-session refinement.
+
+### Changes (3 UPDATEs in single transaction)
+
+- **s39** Jun 15: 50K loan → **disabled** (defer entire 50K to Aug)
+- **s43** Jul 31: 50K utlägg → **disabled** (defer entire 50K to Aug)
+- **s81** Aug 15: 93K → **193K** (absorbs both deferrals + strengthened re-confirmation marker per Reviewer B)
+
+### Post-PLAN-L2 per-month combined Henrik
+
+| Month | Loan | Utlägg | Combined |
+|---|---:|---:|---:|
+| May | 50 | 0 | **50** |
+| Jun | 0 | 50 (s42) | **50** |
+| Jul | 0 | 0 | **0** |
+| Aug | 193 (s81) | 107 (s44) | **300** |
+| Sep | 0 | 100 (s46) | **100** |
+| Oct | 107 (s82) | 0 | **107** |
+
+**Total May-Oct: 607K preserved** ✓
+
+### Forecast impact
+
+Cumulative effect on running balance (vs post-PLAN-L baseline):
+- Before Jun 15: 0 change
+- Jun 15+: +50K (s39 outflow removed)
+- Jul 31+: +100K (s43 outflow also removed)
+- Aug 15+: 0K (s81 +100K cancels)
+
+Result:
+- Jul 30 trough: -810K → ~-760K (additional 50K relief)
+- Aug 1: -794K → ~-694K (additional 100K relief)
+- Aug 15: -185K → ~-285K (193K outflow concentration)
+- Aug 29 cluster: ~-823K (new late-Aug trough, 50K below May absolute trough)
+- **May 28 absolute trough: -869K unchanged** (PLAN-L2 doesn't touch May)
+
+### Process
+
+5-step:
+1. PLAN at `/tmp/PLAN-L2-spec.md`
+2. Reviewer A 88/100 PASS, Reviewer B 78/100 PASS (avg 83, gate cleared). Reviewer B's "amount-confirmation note" incorporated into s81 description.
+3. SQL executed in single transaction. Verification SELECT confirmed all 3 row ops.
+4. Auditors next.
+
+### Reviewer/Auditor observations carried forward
+
+- **Semantic mixing**: s43 utlägg deferred consolidated into s81 loan. Per CEO "combined target" framing. Future cleanup CR could renormalise utlägg tranche numbering (s42 1/4, s44 3/3, s46 2/4 already inconsistent).
+- **Aug 1 re-confirmation gate now load-bearing**: s81 grew from 93K → 193K (+108%). Description explicitly notes Aug 1 must ratify NEW 193K, not original 93K.
+- **Rapid iteration**: same-session PLAN-L → PLAN-L2. Normal CEO refinement on a live forecast — audit trail in `description` is the safety net. Watch for PLAN-L3.
+
+### Lesson
+
+The eager-adjust rule continues to work: CEO refined targets mid-session, agent ran clean 5-step within ~15 minutes from request to commit. The compounding append-only description audit trail (PLAN-L on top of pre-existing, PLAN-L2 on top of PLAN-L) preserves full provenance.

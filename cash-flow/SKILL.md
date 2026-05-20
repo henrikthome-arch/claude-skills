@@ -116,6 +116,27 @@ When opening the *next* log entry, START by reading the most recent post-mortem'
 
 The portal `/analytics/cash-flow` shows the daily-balance projection chart but **does not surface payment-level detail** on that page (which entries make up the projection, vendor / day / amount). The new `/analytics/payment-schedule` page (CR-2026-05-09 v2, SHIPPED 2026-05-10) closes that gap by listing every payment with day, recipient, amount, currency, frequency, and id_ref — flagging internal transfers (yellow) and inflows (green) and excluding internal transfers from the cash-outflow total. Use it as the canonical view for the user; use the JSON endpoint as the canonical data source for the snapshot.
 
+### Multi-month grid view (CR-2026-05-20 series, SHIPPED 2026-05-20)
+
+For visual audit across line items × months, the portal has a **payment-schedule-grid** view:
+
+- **HTML page**: `http://44.194.218.109:8000/analytics/payment-schedule-grid` (default: 12 months from current). Query params `?start=YYYY-MM&months=N`.
+- **JSON endpoint**: `http://44.194.218.109:8000/analytics/payment-schedule-grid.json?start=YYYY-MM&months=N`.
+- **Service**: `libs/financial_core/services/payment_schedule_service.py` → `PaymentScheduleService.get_grid(start_month, num_months)` reshapes per-month schedules into rows (one per line item, one column per month) using the same forecast code path as `get_cash_flow_forecast` (no hand-aggregation drift). Recurring payments compute SEK at each pay-date FX via `_convert_to_sek()`; scheduled payments same. Internal transfers (yellow rows) and inflows (green rows) are styled distinctly.
+- **Category subtotals** at the bottom: India (all), Henrik (loan + utlägg), Loan principal (external), Loan interest, PSP fees, Marketing, SaaS / Cloud tools, Salaries + Skatt Sweden, Uncategorized. Driven by the `GRID_CATEGORIES` predicate list in `payment_schedule_service.py` (CR-2026-05-20b + CR-2026-05-20d refinements).
+- **Repeated month header** above the category subtotal section (CR-2026-05-20c) so columns are scannable even when scrolled past the main header.
+
+**When to use**:
+- Visual cross-check before proposing a forecast change ("does this line already exist?"). Faster than running multiple `get_cash_flow_recurring` + `get_cash_flow_forecast` calls.
+- Verifying multi-month patterns: India category total per month, Henrik repayments cluster, Loan principal/interest separation.
+- Post-execution audit: confirm a new scheduled entry shows up where expected, and that net-zero cancellation pairs (e.g. T1/T2/T3 INR fire vs INR cancellation offset) really net to zero per day.
+
+**When NOT to use**:
+- Detailed per-day chronological view for a single month → use `/analytics/payment-schedule` instead (more granular, shows day-level detail).
+- Daily balance trajectory → use `/analytics/cash-flow` chart.
+
+**Category predicate ownership**: When adding a new category or changing predicates, edit `GRID_CATEGORIES` in `payment_schedule_service.py` and ship as a CR (code change, not a forecast-data change). Predicates should be account_number + recipient-based, NOT id_ref-based (id_refs are brittle PKs).
+
 Operating principles still apply:
 
 1. **Always present full context BEFORE asking the user to make a decision about a specific entry.** Don't ask "is X all of Y, or partial?" — the user may not remember Y exists in the model. Instead: pull from `payment-schedule.json` (or paste the relevant table from the snapshot) and ask the question with that context visible.
@@ -219,34 +240,142 @@ Reference: see `~/.claude/skills/cash-flow/snapshots/2026-05-09-cashflow.html` f
 
 ---
 
-## India intercompany — known data duplication
+## MANDATORY rule — adjust forecast eagerly when user provides new payment data (CEO 2026-05-12)
 
-In `recurring_payment` there are TWO sets of India entries that conceptually overlap:
+**When the user provides information about future payments (e.g. India monthly cash requirements from Padma, vendor invoice schedules, payment plans, deferred dates, supplier-confirmed amounts), and the current forecast model differs from that information, the skill MUST automatically propose and execute adjustments to make the forecast reflect the user's stated future plan.**
 
-**Cash side (counts in forecast)**: `is_internal_transfer=false`
-- id 54 India Operations T1 vendor 60K day 18
-- id 55 India Operations T2 statutory 300K day 24
-- id 56 India Operations T3 salaries 406K day 26
-- = **766K total cash leaving Sweden to India each month**
+**The agent should NOT wait for the user to ask "is the forecast adjusted?"** That question should never need to be asked. Default action: adjust through the 5-step process. Bias toward ENSURING the forecast reflects all known data.
 
-**Intercompany book-entry side (filtered from forecast)**: `is_internal_transfer=true`
-- id 2 Sonetel India 125K day 5
-- id 8 Sonetel India 112K day 10
-- id 14 Sonetel India 503K day 27 ("Monthly cost in India")
-- id 15 Sonetel India 20K day 27 (dividend tax)
-- = **760K total**, all filtered out of forecast cash burn
+**If in doubt about specifics** (e.g. which recurring to cancel, exact timing, whether amounts are pre-VAT or post-VAT, how a SWIFT date maps to a SEK debit date), **ask the user** — but only on the specific point of doubt. Do not ask "should I adjust?" — that answer is always yes.
 
-These represent the OLD intercompany accounting model. id 37's description (now disabled, replaced by 54-56) said "replaces internal transfers" — but ids 2, 8, 14, 15 were never disabled.
+**Source quote**: CEO 2026-05-12 — *"The skill here should eagerly want to ensure that the forecast reflects the future based on all known data. I should not need to remind/ask about this. If I give info about payments and there is a difference then it is absolutely mandatory for the skill to ensure that the forecast is adjusted to reflect the future based on current data. If in doubt, ask the user."*
 
-**Implications**:
-- Forecast cash burn is correctly only counting 766K (cash side)
-- But sum of all India recurring entries in DB = ~1.5M SEK, which can confuse anyone reading the recurring table
-- Possible cleanup: disable ids 2, 8, 14, 15 since id 37 explicitly stated it replaced them. Pending confirmation with Jennifer/BDO that they're safe to disable (they may be referenced elsewhere for accounting/reporting purposes outside cash flow).
+**Application examples**:
+- Padma forwards India monthly cash requirement table → if forecast totals or timing differ, run 5-step to add scheduled entries reflecting the table; cancel superseded recurring firings via inflow offsets.
+- Vendor sends invoice with specific due date → if that date differs from the modeled day_of_month, add a scheduled outflow on the real date + offset the recurring firing for that month.
+- User mentions "we paid X already" → capture as scheduled outflow on the actual date.
+- User mentions a planned future deferral → add a scheduled entry + offset the recurring firing for the affected month.
 
-When showing India payments in any user-facing summary, always:
-- Show cash side as the primary numbers
-- Show intercompany side separately, flagged as "internal — excluded from cash burn"
-- Explicitly state "TOTAL CASH IMPACT" (the cash-side sum, currently 766K)
+**The trigger is "user shared payment info that the forecast doesn't already reflect."** When in doubt, err on the side of running the 5-step.
+
+---
+
+## India — ALL entries (canonical reference, check FIRST before any India-related work)
+
+**Before proposing any India-related forecast change, query the FULL set of India entries below. Don't reason from partial knowledge.**
+
+### FX rule — query the DB, never hardcode
+
+**India entries are stored in native currency (INR for India internal costs, USD for Padma SWIFTs). Forecast service auto-converts via `_convert_to_sek()` → `CurrencyService.convert()` → `currency_rates_daily` table.**
+
+To check the current SEK equivalent, query Riksbanken:
+```sql
+SELECT date, rate FROM currency_rates_daily
+WHERE quote_currency='INR' AND date >= CURRENT_DATE - 7
+ORDER BY date DESC LIMIT 3;
+```
+
+**NEVER hardcode FX assumptions in calculations** — this caused a ~967K SEK over-statement in PLAN-H (used 0.112 SEK/INR instead of Riksbanken 0.0969). Lesson: every "should I just multiply by ~0.1?" instinct must be replaced with "query `currency_rates_daily`".
+
+### Complete India entries (post-PLAN-J 2026-05-20, all in native currency)
+
+**Monthly cash operations recurring** (`is_internal_transfer=false`, account 6561, currency=INR — auto-FX):
+| id | Description | Amount | Day | Notes |
+|---|---|---:|---|---|
+| 54 | T1 vendor + ad-hoc | **630,000 INR** | 18 | 8% of Padma April pattern |
+| 55 | T2 statutory TDS+RTDS | **3,085,000 INR** | 24 | 39%, SWIFT 3-day lag |
+| 56 | T3 salaries | **4,195,000 INR** | 26 | 53%, SWIFT 3-day lag pre-month-end |
+| **Monthly cash total** | | **7,910,000 INR** | | ≈ 766K SEK at SEK/INR=0.0969 (Riksbanken 2026-05-20) |
+
+**Annual events**:
+| id | Description | Amount | annual_month / day | Status |
+|---|---|---:|---|---|
+| **35** | **Diwali annual bonus** | **4,000,000 INR (~388K SEK)** | **11 / 4** | **ACTIVE (re-enabled 2026-05-20 PLAN-K, is_internal_transfer=false, supplier_id=92). Fires every Nov 4 going forward. [STILL PROVISIONAL] until Padma-confirmed.** |
+| 39 | Advance tax Q4 | 1,100,000 INR | 1 | DISABLED (covered by Padma SWIFTs) |
+| 40 | Advance tax Q1 | 800,000 INR | 6 | DISABLED |
+| 41 | Advance tax Q2 | 1,600,000 INR | 9 | DISABLED |
+| 42 | Advance tax Q3 | 1,600,000 INR | 12 | DISABLED |
+| 43 | GST refund (offset) | -1,900,000 INR | 9 | DISABLED |
+| 36 | Annual health insurance | 1,652,000 INR | 11 | DISABLED (covered by Padma SWIFTs) |
+
+**Intercompany book-entry side** (`is_internal_transfer=true` — DISABLED 2026-05-20 PLAN-I):
+| id | Description | Amount | Day | Status |
+|---|---|---:|---|---|
+| 2 | Sonetel India intercompany | 125K SEK | 5 | DISABLED |
+| 8 | Sonetel India intercompany | 112K SEK | 10 | DISABLED |
+| 14 | Sonetel India "Monthly cost" | 503K SEK | 27 | DISABLED |
+| 15 | Sonetel India dividend tax | 20K SEK | 27 | DISABLED |
+
+**Padma SWIFT scheduled entries May-Jun 2026 (PLAN-G v2, currency=USD post-PLAN-J)**:
+| id | Pay date | Amount | supplier_id | Note |
+|---|---|---:|---:|---|
+| 60 | 2026-05-08 | 35,000 USD | 92 | Already sent |
+| 62 | 2026-05-13 | 7,224 USD | 92 | Immediate |
+| 63 | 2026-05-25 | 50,000 USD | 92 | Pre-May 28 |
+| 66 | 2026-06-01 | 14,000 USD | 92 | Pre-Jun 4 |
+| 67 | 2026-06-10 | 16,000 USD | 92 | Pre-Jun 14 |
+| 68 | 2026-06-17 | 17,000 USD | 92 | Pre-Jun 20 |
+| 69 | 2026-06-25 | 61,044 USD | 92 | June closure (all needs) |
+
+**Cancellation offsets for T1/T2/T3 fires May-Jun** (is_inflow=true, currency=INR matching T1/T2/T3):
+| id | Pay date | Cancels | Amount | Net effect |
+|---|---|---|---:|---|
+| 61 | 2026-05-24 | T2 May | 3,085,000 INR | net 0 day 24 |
+| 64 | 2026-05-18 | T1 May | 630,000 INR | net 0 day 18 |
+| 65 | 2026-05-26 | T3 May | 4,195,000 INR | net 0 day 26 |
+| 70 | 2026-06-18 | T1 Jun | 630,000 INR | net 0 day 18 |
+| 71 | 2026-06-24 | T2 Jun | 3,085,000 INR | net 0 day 24 |
+| 72 | 2026-06-26 | T3 Jun | 4,195,000 INR | net 0 day 26 |
+
+**PLAN-H scheduled entries Jul-Dec 2026** (currency=INR, variance plugs on top of T1/T2/T3 base — STILL PROVISIONAL pending Padma's real plan):
+| id | Pay date | Variance INR | Note |
+|---|---|---:|---|
+| 74 | 2026-07-26 | 1,115,000 | Jul: R6 9,025K - 7,910K base - $0 savings |
+| 75 | 2026-08-26 | 487,000 | Aug: R6 8,881K - 7,910K - $5K savings |
+| 76 | 2026-09-26 | 137,000 | Sep: R6 9,015K - 7,910K - $10K savings |
+| 77 | 2026-10-26 | 3,122,000 | Oct ex-bonus: 12,000K - 7,910K - $10K |
+| ~~78~~ | 2026-11-04 | 4,000,000 | DISABLED 2026-05-20 PLAN-K — replaced by recurring annual id 35 |
+| 79 | 2026-11-26 | 2,802,000 | Nov: 11,680K - 7,910K - $10K |
+| 80 | 2026-12-26 | 944,000 | Dec: 9,822K - 7,910K - $10K |
+
+### Per-month India cash impact (post-PLAN-J, at Riksbanken 2026-05-20 FX)
+
+| Month | Base T1+T2+T3 | Cancellations | Padma USD | PLAN-H INR | Total SEK |
+|---|---:|---:|---:|---:|---:|
+| May | -766K | +766K | -865K | n/a | **-865K** |
+| Jun | -766K | +766K | -1,013K | n/a | **-1,013K** |
+| Jul | -766K | 0 | n/a | -108K | **-874K** |
+| Aug | -766K | 0 | n/a | -47K | **-813K** |
+| Sep | -766K | 0 | n/a | -13K | **-779K** |
+| Oct | -766K | 0 | n/a | -302K | **-1,068K** |
+| Nov | -766K | 0 | n/a | -271 + -388 (bonus) | **-1,425K** |
+| Dec | -766K | 0 | n/a | -91K | **-857K** |
+
+### Display rules for user-facing summaries
+
+- Show **monthly cash side** (T1+T2+T3 = 766K SEK at current FX) as primary base
+- Show **scheduled USD (Padma) or INR (variance) overlays** separately
+- Explicitly state "TOTAL CASH IMPACT" per month at current FX
+- When FX moves materially (>2%), re-state the SEK values
+
+### MANDATORY October bonus-review prompt
+
+If the current session date is between **2026-10-01 and 2026-10-25** (and equivalent windows in future years), proactively flag to the user: "Diwali bonus id 35 fires 2026-11-04 at 4M INR (~388K SEK). Confirm bonus amount with Padma before Nov 4. To revise: update id 35 amount." The 4M INR value is from budget ver 16.48, not Padma-confirmed.
+
+### Known bank-rec matcher limitation
+
+Multiple recurring rows now share `supplier_id=92` (Sonetel Software services pvt ltd): ids 35 (annual bonus), 54 (T1 vendor), 55 (T2 statutory), 56 (T3 salaries). When the matcher (`_match_outflows`) sees a Plusgiro SWIFT, it picks the FIRST recurring row matching an alias — nondeterministic across Python dict iterations. The bonus SWIFT may bind to id 54/55/56 instead of id 35. Post-event manual reconciliation is the safest path until matcher gets amount-tolerance disambiguation.
+
+### CRITICAL rule — enumerate before changing
+
+**Before proposing any forecast change related to India (or any other topic):**
+1. Query ALL existing `recurring_payment` entries with `account_number = '6561'` (or matching vendor pattern)
+2. Query ALL `scheduled_payment` entries with the same account_number
+3. Cross-check against this table — if any entry isn't accounted for, you have incomplete knowledge
+4. **Always include currency column** in queries — values may be INR, USD, or SEK
+5. Same principle applies to SEB Kort (look up id 7 + ids 57/58/59), Voxbone, etc.
+
+Skipping this step caused a wrong PLAN-E proposal on 2026-05-12 (claimed +237K June under-modeling without checking id 40 advance tax). Lesson: trust the data, not the mental model. **And query the FX rate** — don't hardcode.
 
 ---
 
@@ -1131,7 +1260,7 @@ The forecast assumes -125K VAT refund inflow on Apr 30. **Reality: the refund wi
 
 India sends a "Cash Requirements" email each month (from Padma Karanam, cc Prashant Pant). Typical total: ~90 KUSD (~945K SEK). This falls within the existing India recurring budget (~1.5M SEK/month ≈ ~143K USD), so it's not extra cost — but the transfer timing is critical since India's bank runs near zero.
 
-**India advance tax payments** are scheduled as annual recurring payments (ids 39-42) in INR. These are included in the monthly cash requirement email — do NOT double-count by adding them as separate scheduled payments.
+**India advance tax payments** are scheduled as annual recurring payments (ids 39-42) in INR. These are included in the monthly cash requirement email — do NOT double-count by adding them as separate scheduled payments. **See canonical table in [`## India — ALL entries`](#india--all-entries-canonical-reference-check-first-before-any-india-related-work) above for the full per-month expectation.**
 
 **India transfer mechanics (USD account 214 72 33-7):**
 - Recipient: SONETEL SOFTWARE SERVICES PVT LTD (account 920020074299969 AXIS USD NEW)

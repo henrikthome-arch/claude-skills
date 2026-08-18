@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 0 av 42 svenska rader verifierade. 0 av 12 India-rader.**
+**Status: 0 av 42 svenska rader verifierade. India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 ### Omgång 1 — 18 rader, 1 241 511 SEK/mån (52,9 % av modellen)
 Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 mån, 12 där historiken räcker), avvikelse, förslag. Batchgodkännande av Henrik.
@@ -29,9 +29,10 @@ Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 m�
 
 ### India — eget spår, 12 rader, 874 068 SEK/mån (37 %)
 
-- [ ] **SPÄRR FÖRST:** skillens India-tabell (SKILL.md rad 305–330) stämmer inte med databasen på sex rader — 36/39/40/41/42/43 står DISABLED men är aktiva; id 35 säger 4 000 000 INR/november/dag 4 mot databasens 4 024 356/oktober/dag 30; id 56 säger 4 195 000 mot 4 004 810; ids 63/64 saknas helt. Gå rad för rad mot `SELECT id, amount, annual_month, day_of_month, enabled FROM recurring_payment WHERE currency='INR'` och skriv in utfallet. **SKILL.md:388 har en oktoberpåminnelse som citerar fel belopp och fel månad — rätta i samma pass.** ~20 min.
+- [x] ~~**SPÄRR FÖRST:** skillens India-tabell stämde inte med databasen på sex rader.~~ **Löst 2026-08-18 (CR-2026-08-18-monthly-india-confirmation).** Tabellen är borta — 74 rader hårdkodad DB-state ersatta av de två frågor som återskapar dem. Driften var värre än sex rader: PLAN-H 74–80 visades som aktiva fast alla sex är avstängda, och månadstabellen för Indiens kassaflöde var räknad ur just de avstängda raderna, alltså fel i varje rad. Oktoberpåminnelsen citerade 4M INR den 4 nov mot radens 4 024 356 den 30 okt och hade slagit till om ~6 veckor; den frågar nu databasen i stället.
 - [ ] **Cirkulariteten:** de sex raderna märkta "covered by Padma SWIFTs" kan bara avgöras av Padmas SWIFT-historik, vilket är det brevet frågar om. Lös 39 (jan) och 40 (jun) mot Nordeas USD-konto på totalnivå; 36/41/42/43 ligger i sep/nov/dec utanför bankdatans fönster (jan–jul) och går som öppna frågor i brevet i stället.
-- [ ] **Skicka brevet** till Padma Karanam, kopia Prashant Pant. Engelska, tabell i brödtexten, svar inom 10 arbetsdagar, Riksbankens INR-kurs utskriven. Innehåll finns i `docs/plans/CR-2026-08-18-multichannel-validation-sweep.md` (övergiven som CR, men tabellen och brevinnehållet är verifierade och korrekta).
+- [x] **Skickat till Prashant 2026-08-18** (CEO skickade själv; ej via Padma som planerat). Listan kom ur databasen: månadsbas 7 719 810 INR, effektivt 7 910 000 t.o.m. november, årsnetto 8 513 356 INR. Innehållet nedan står kvar som mall för nästa omgång — den går nu automatiskt via monthly-intake steg 4d.
+  ~~Till Padma Karanam, kopia Prashant Pant.~~ Engelska, tabell i brödtexten, svar inom 10 arbetsdagar, Riksbankens INR-kurs utskriven. Innehåll finns i `docs/plans/CR-2026-08-18-multichannel-validation-sweep.md` (övergiven som CR, men tabellen och brevinnehållet är verifierade och korrekta).
   - Alla tolv raderna med **belopp, frekvens OCH datum**
   - ids 41 och 43 som EN parad rad — båda 30 sep, +1 600 000 mot −1 900 000, netto −300 000
   - De tre inflödesraderna (43, 63, 64) formulerade som "när kommer den och står beloppet sig", inte "bekräfta att ni betalar"

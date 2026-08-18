@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 3 av 44 rader klara. India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 3 av 44 rader klara (+1 ny rad tillagd). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -57,8 +57,19 @@ Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 m�
   Henriks Nordea-uppslag. Ingen catch-up-rad: en leverantör som ligger permanent en månad efter påverkar
   inte kassaflödet framåt. Ta upp igen bara om Tomas betalas ikapp.
 
-- [ ] **id 18 United Spaces — 2,6x-gap.** Betalt 9 563 den 25 juni mot modellens 3 625/mån. Upptäckt som
-  sidofynd i buntraden ovan. Tas när raden kommer upp i storleksordningen.
+- [x] **NY RAD: United Spaces styrelsemötesrum, 4 200 SEK/kvartal** (2026-08-18). Kostnaden har funnits i
+  minst ett år och låg INTE i prognosen alls. Konto 5011 ligger platt på 5 060 exkl moms och hoppar till
+  8 420 i period 202512 och 202603 — överskottet är exakt 3 360 exkl = 4 200 inkl, och det finns en
+  bankbetalning på exakt 4 200,00 den 2026-01-08. Möten hålls dec/feb/jun/sep; KASSAN kommer ~en månad
+  senare, alltså quarter_months 1,3,7,10 dag 8. **Oktoberutfallet ligger i bottenmånaden.** Godkänt: *"4200 ok"*.
+
+- [ ] **id 18 United Spaces månadsrad — VÄNTAR PÅ HENRIK.** Raden står på 3 625 inkl moms (2 900 exkl).
+  Konto 5011 visar basen 5 060 exkl = **6 325 inkl**, konsekvent över fem perioder, bekräftat av en exakt
+  bankbetalning på 6 325 den 2026-01-22. Gap: **2 700/mån ≈ 32 400/år**. Henrik säger att en platsminskning
+  sänkt kostnaden och att 2 900 + moms ska ligga kvar. Det går ihop BARA om minskningen fick effekt efter
+  maj 2026 (där bokföringen slutar) — men enda junipunkten är en betalning på 9 563, alltså HÖGRE, inte
+  lägre. **Fråga: vilket datum fick platsminskningen effekt?** Rör inte raden innan svaret finns; att sätta
+  Henriks namn på 3 625 när senaste evidensen pekar åt andra hållet vore en falsk verifiering.
 
 - [ ] **STRUKTURELLT — bankvalideringens blinda fläck.** 63 % av allt utflödesvärde saknar mottagarnamn.
   Per konto: nordea_main 66 rader / 4,0 MSEK utan namn (44 % av kontots värde), nordea_usd 154 / 16,3 MSEK

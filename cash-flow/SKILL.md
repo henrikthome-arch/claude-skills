@@ -575,23 +575,39 @@ CEO på frågan om varje ändring ska bära ett namn på vem som godkänt: *"Ja 
 
 ### Mall för ändring via dbshell — använd exakt denna
 
-```sql
+**Skicka SQL:en som en heredoc på stdin. Använd ALDRIG dollar-citering.** `dbshell` är ett skalskript som
+expanderar `$` en gång till innan psql ser texten, så `$$...$$` och `$b$...$b$` äts upp. Felet ser ut som ett
+syntaxfel där motiveringens första ord saknas. Detta small på svepets allra första rad 2026-08-18.
+
+```sh
+ssh -i github-actions-deploy ubuntu@44.194.218.109 "dbshell" <<'SQL'
 \set ON_ERROR_STOP on
 BEGIN;
-SELECT set_config('app.change_basis', $$Basis 2026-08-18: <källa, siffror, datum>. Godkänt av Henrik: "<hans ord ordagrant>".$$, true),
-       set_config('app.change_actor', $$claude/cash-flow-session$$, true),
-       set_config('app.change_approved_by', $$Henrik Thome$$, true);
-UPDATE recurring_payment SET amount = 20000 WHERE id = 27 AND amount = 50000;
+SELECT set_config('app.change_basis',
+'Basis 2026-08-18: <källa, siffror, datum>. Godkänt av Henrik 2026-08-18: "<hans ord ordagrant>".',
+true),
+set_config('app.change_actor', 'claude/cash-flow-session', true),
+set_config('app.change_approved_by', 'Henrik Thome', true);
+UPDATE recurring_payment SET amount = 110000, updated_at = NOW() WHERE id = 11 AND amount = 120000;
 COMMIT;
+SQL
 ```
 
 Utelämna `app.change_approved_by` för rena beskrivningsändringar — då slipper de kravet.
 
-Tre detaljer som är nödvändiga, inte kosmetiska:
+Fyra detaljer som är nödvändiga, inte kosmetiska:
 
-- **`\set ON_ERROR_STOP on`** — utan den rullar psql tillbaka vid fel och **returnerar ändå exit-kod 0**. Eftersom varje glömd eller för kort motivering nu avbryter transaktionen är tysta no-ops en realistisk risk. **Kontrollera alltid att utdata innehåller `COMMIT` och inte `ROLLBACK`.**
-- **Dollar-citering `$$...$$`** runt motiveringen — svenska motiveringar innehåller apostrofer ("Jennifers underlag", "Henrik's AMEX") och enkla citattecken ger syntaxfel.
-- **Enradsändringar kan köras som `dbshell "sats1; sats2"`** — `psql -c` kör flera satser som en enda implicit transaktion, så `BEGIN`/`COMMIT` behövs inte där.
+- **Citerad heredoc-avgränsare (`<<'SQL'`)** — stoppar det lokala skalets expansion. Utan apostroferna kring
+  `SQL` expanderas `$` och `` ` `` innan raden ens lämnar din maskin.
+- **`\set ON_ERROR_STOP on`** — utan den rullar psql tillbaka vid fel och **returnerar ändå exit-kod 0**.
+  Eftersom varje glömd eller för kort motivering nu avbryter transaktionen är tysta no-ops en realistisk risk.
+  **Kontrollera alltid att utdata innehåller `COMMIT` och inte `ROLLBACK`.**
+- **Apostrofer i motiveringen** — svenska motiveringar innehåller dem ("Jennifers underlag", "Henriks AMEX").
+  Lös det med **dubbla citattecken inuti den enkelciterade SQL-strängen**, eller genom att dubbla apostrofen
+  (`''`). Dollar-citering var den gamla lösningen och den fungerar inte genom `dbshell`.
+- **Villkora alltid UPDATE med `AND amount = <gamla värdet>`** — om raden hunnit ändras av någon annan träffar
+  satsen 0 rader i stället för att tyst skriva över. Kontrollera efteråt med
+  `SELECT ... FROM forecast_row_history WHERE row_id = <id>`.
 
 ### Motiveringen ÄR planens "Why/source"-rad
 
@@ -619,36 +635,87 @@ Både portalen och `dbshell` kopplar upp som RDS-masteranvändaren som äger tab
 
 **Some rows have no channel and must say so.** The PayPal fee (id 53) is never invoiced — it is netted from settlements. The VAT rows are computed. India's T1/T2/T3 is a distribution model, not a payment plan. For these the verification is *"derived from X"*, and the basis names the derivation. Pretending everything can be matched builds in false confidence.
 
-### How to record a verification — no new machinery
+### The bookkeeping runs AHEAD of the bank — use it to predict the next payment
 
-A verification is a description touch on the row. The change-log trigger records it automatically with the basis, the actor and the approver:
+`sie_monthly_balances` is usually treated as a lagging cross-check. For any vendor whose cost lands in one
+identifiable account it is the opposite: **the newest booked period is an invoice that has not been paid yet.**
 
-```sql
+Google (id 11) proved it — account 5990 matches every bank line to the öre at a constant two-period offset
+(202511 = the 20 Jan payment, 202601 = the 30 Mar payment, 202604 = the 11 Jun payment). So the newest period,
+202606 = 111,338, *is* the August payment, known before it leaves the account.
+
+Test the offset before trusting it: line the two series up and check the amounts match exactly, not
+approximately. When they do, you can state the next firing as fact rather than forecast.
+
+### How to record it
+
+**Amount changes** → an ordinary UPDATE with basis, actor and approver. **Amount stands** → a description touch,
+because a no-op UPDATE writes nothing (the trigger returns early when no field differs — verified 2026-08-18).
+
+**Quoting: pipe a heredoc into `dbshell`. Never use dollar-quoting.** `dbshell` re-expands `$`, so `$$...$$` and
+`$b$...$b$` are eaten before psql sees them; the failure looks like a syntax error with the opening words of your
+basis missing. This bit on the first row of the sweep.
+
+```sh
+ssh -i github-actions-deploy ubuntu@44.194.218.109 "dbshell" <<'SQL'
+\set ON_ERROR_STOP on
 BEGIN;
-SELECT set_config('app.change_basis', $$Verified 2026-08-18 against card lines May-Jul: 12,984/mo vs model 13,000. Approved by Henrik: "<his words>".$$, true),
-       set_config('app.change_actor', $$claude/cash-flow-session$$, true),
-       set_config('app.change_approved_by', $$Henrik Thome$$, true);
-UPDATE recurring_payment
-   SET description = description || ' [verified 2026-08-18 vs card]'
- WHERE id = 57;
+SELECT set_config('app.change_basis',
+'Validated 2026-08-18, sweep row 1 of 44. Model 120,000 -> 110,000 SEK/month. Channel: bank ... Approved by Henrik 2026-08-18: "OK, change to 110 KSEK".',
+true),
+set_config('app.change_actor', 'claude/cash-flow-session', true),
+set_config('app.change_approved_by', 'Henrik Thome', true);
+UPDATE recurring_payment SET amount = 110000, updated_at = NOW() WHERE id = 11 AND amount = 120000;
 COMMIT;
+SQL
 ```
 
-Then `SELECT * FROM forecast_row_history WHERE row_id = 57` answers both "what is this built on" and "when did we last look". Set `app.change_approved_by` even though a description change does not require it — the point is that Henrik owns the number.
+Quoted heredoc delimiter (`<<'SQL'`) stops local expansion; plain single-quoted SQL literals, with double quotes
+around his words inside them. **Guard every UPDATE with `AND amount = <old value>`** so an unexpected current
+value updates 0 rows instead of silently overwriting someone else's change. Verify with
+`SELECT ... FROM forecast_row_history WHERE row_id = <id>` — `till_belopp` should show the new figure.
 
-**Check a row's history before touching it.** id 27 carried 50,000 SEK/month for months because nobody saw the figure had never had a basis.
+**Check a row's history before touching it.** id 27 carried 50,000 SEK/month for months because nobody saw the
+figure had never had a basis.
 
-### The sweep — two rounds, largest first
+### The sweep — ONE ROW AT A TIME (CEO 2026-08-18)
 
-- **Round 1: the 18 SEK rows with an absolute monthly equivalent ≥ 25,000 — 1,241,511 SEK = 52.9 % of the model.** Absolute basis on both sides, so the large VAT inflow rows (47, 48, 60) do not fall out unremarked.
-- **Round 2:** the remaining 24 SEK rows confirmed as a group in one approval, with the reason stated.
-- Present each row with the model amount, the channel outcome (3 months, and 12 where the channel has that much history — the bank has only 7), the deviation in SEK, and a recommendation.
-- Henrik approves the round or names exceptions. **Any amount change that falls out needs his approval anyway** (migration 102).
-- Run these as step 0 of the next two monthly calibration passes, not as a parallel process. Track the remaining count in `todos.md` P0 — a stall then shows as a number that does not move.
+> *"I want to verify all monthly, quarterly and annual recurring charges for cash flow with you. One by one.
+> You take one at a time. Investigate if it makes sense, and then propose action/confirmation to me. We discuss.
+> You add the update to the system so that we log the rationale for keeping/adjusting/deleting the value."*
+
+**This supersedes the earlier two-round batch plan** (18 large rows, then 24 confirmed as a group). Do not
+batch. Do not present a table of ten rows for one approval. One row, investigated properly, discussed, logged —
+then the next. 56 enabled rows: 44 Swedish/other, 12 India (parked while India confirms them separately).
+
+Work largest first by **monthly SEK equivalent** — monthly = amount, quarterly = amount/3, annual = amount/12,
+converted at `currency_rates_daily`. Order by the *absolute* value so large inflow rows (47, 48, 60, 43) do not
+fall out unremarked.
+
+**The format that worked on row 1:**
+
+1. **Row heading** — id, name, current amount, frequency, day, account.
+2. **Channel** — which one, and *why* that channel is the right one for this vendor.
+3. **The evidence as a table**, month by month. Raw figures, not a summary.
+4. **Cross-check** against a second channel where one exists, and say whether it agrees.
+5. **Read** — one paragraph on what the numbers mean. Distinguish *stale* (was right once) from *wrong*.
+6. **Proposal**, with the direction of its cash effect stated plainly — especially when the change *improves*
+   the forecast, since that is the direction Henrik has learned to distrust.
+7. **The question the data cannot answer**, asked explicitly.
+8. Anything noticed but deliberately not chased, named so it is not lost.
+
+**Always ask the forward-looking question.** The channels say what *was* paid. They cannot say whether a decline
+is policy or a pause. On row 1 the ad spend had fallen from 350K to 110K — the data cannot distinguish "we cut
+marketing" from "we paused before a relaunch", and those imply different forecast numbers. Ask; do not infer.
+
+Track the remaining count in `todos.md`. A stall then shows as a number that does not move.
 
 ### India is a separate track — 12 rows, 37 % of the model
 
-Those rows leave Sweden as one USD lump sum and are distributed in India. **No Swedish channel can validate them.** See `todos.md` for the letter content and the blocker that must be cleared first — the skill's own India table below disagrees with the database on six rows, and asking India to confirm before that is resolved risks locking in a double count.
+Those rows leave Sweden as one USD lump sum and are distributed in India. **No Swedish channel can validate
+them.** The list goes to India for confirmation every month via `monthly-intake` Step 4d; the first went to
+Prashant on 2026-08-18. Do not validate these against Swedish channels — wait for India's answer, then record it
+against each row.
 
 ## Månatlig kalibreringsgenomgång — körs vid månadsstängning (CEO 2026-08-17)
 

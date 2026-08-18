@@ -19,13 +19,27 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 0 av 42 svenska rader verifierade. India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 1 av 44 rader klara. India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+
+56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
+
+**Metoden är EN RAD I TAGET** (CEO 2026-08-18: *"One by one. You take one at a time."*). Det ersätter den
+tidigare tvåomgångsplanen med batchgodkännande nedan. Format och lärdomar: se SKILL.md, "The sweep — ONE ROW AT
+A TIME".
+
+Klara:
+- [x] **id 11 Google, 120 000 -> 110 000 SEK/mån** (2026-08-18). Bank: Google Ireland, en betalning/mån, sju
+  månader 2026 (jan 353K fallande till ~110K från april). Bokföringen 5990 matchar varje bankrad på öret med
+  två perioders förskjutning, och period 202606 = 111 338 ÄR augustibetalningen. Godkänt: *"OK, change to 110
+  KSEK"*. Öppen följdfråga: konto 5991 (andra annonskontot) föll från 150-213K/mån 2025 till 30-50K — reds ut
+  mot id 7 SEB Kort.
 
 ### Omgång 1 — 18 rader, 1 241 511 SEK/mån (52,9 % av modellen)
 Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 mån, 12 där historiken räcker), avvikelse, förslag. Batchgodkännande av Henrik.
 
-- [ ] Kör omgång 1 (18 rader, |månadsekvivalent| ≥ 25 000, SEK)
-- [ ] Omgång 2 (återstående 24 SEK-rader, ett samlat ja)
+- [ ] ~~Omgång 1 / omgång 2 med batchgodkännande~~ **ERSATT 2026-08-18 av en-rad-i-taget.** Ordningen (störst
+  månadsekvivalent först) står kvar; batchandet gör det inte.
+- [ ] Nästa rad: **id 7 SEB Kort - kortköp exkl COGS, 117 000 SEK/mån** (och ta konto 5991-frågan där).
 
 ### India — eget spår, 12 rader, 874 068 SEK/mån (37 %)
 

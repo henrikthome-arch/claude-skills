@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 8 av 44 rader klara (+2 nya rader). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 10 av 44 rader klara (+2 nya rader). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -99,6 +99,17 @@ Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 m�
   inte dubblerat, alltså ingen effekt framåt.
   - [ ] **RISK ATT KONTROLLERA ~1 sep:** om augusti ändå tog TVÅ Lån 1-betalningar (~264 K) blir augusti
     bottenmånad (~−1 098 K) i stället för oktober. Syns i augustis bankdata.
+
+### Löneklustret
+
+- [x] **id 12 nettolöner 98 000 + id 9 arbetsgivaravgifter 70 741 — BÅDA VERIFIERADE OFÖRÄNDRADE**
+  (2026-08-18). Fyra lönebuntar om exakt TRE betalningar (99 911 / 101 711 / 95 347 / 101 711), snitt
+  99 670; två skattebetalningar 69 659 och 69 653, snitt 69 656. **Klustret: 169 326 observerat mot
+  168 741 modellerat = 585 kr/mån, 0,35 %.** Raderna slår åt var sitt håll och tar ut varandra.
+  Bokföringen stämmer: brutto 110 250 (7210 + 7220), sociala avgifter 45 478 (7510 + 7519).
+  **Evidensstyrka:** bara 4 av 7 löne- och 2 av 7 skattebetalningar syns — resten i namnlösa buntar.
+- [ ] **ÖPPET, tas vid id 32/33:** bokföringen visar ~197 600/mån i total lönekostnad mot ~190 400
+  modellerat över alla fyra lönerader. Gapet ~7 200/mån hör till styrelsearvodesraderna.
 
 - [ ] Nordea-lånen (id 22 26 041,67 + id 23 9 375) — ej påbörjade.
 

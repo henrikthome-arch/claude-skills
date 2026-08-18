@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 4 av 44 rader klara (+2 nya rader). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 6 av 44 rader klara (+2 nya rader). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -76,6 +76,29 @@ Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 m�
     visar en MÅNATLIG bas på 5 060 exkl t.o.m. period 202605, så det är en färsk ändring.
     **TEST ~2026-09-25:** faktura ska utfärdas ~26 aug och betalas ~25 sep för okt–dec. Kommer i stället
     månadsbetalningar tillbaka — ställ om raden till monthly igen.
+
+### Lånklustret — DBT + Nordea, 236 940 SEK/mån
+
+- [x] **id 26 + id 61 DBT Lån 2 (16 425,44 + 50 000) — VERIFIERADE OFÖRÄNDRADE** (2026-08-18). Fem
+  räntebetalningar jan–jun i snitt 16 440,88 mot modellens 16 425,44 (15 kr fel). Första fulla betalningen
+  66 425,44 den 2026-07-31 = exakt 50 000 + 16 425,44. Konto 2399 rör sig exakt 50 000/mån. CEO: *"Loan 2
+  had no amortizations until recently when they started."* **Modellen bar 50 000/mån amortering jan–jun då
+  ingen betalades — ca 300 000 övermodellerat.** Ej bakåtkorrigerat; prognosen är framåtblickande och raden
+  är rätt från juli.
+- [x] **Namn och kontokoder harmoniserade på alla fyra DBT-rader** (2026-08-18). Räntor låg på skuldkonto
+  2352, Lån 1:s amortering pekade på Lån 2:s konto 2399. Nu: ränta → 8410, Lån 1 amortering → 2352, Lån 2
+  amortering → 2399. Belopp orörda.
+
+- [ ] **id 24 DBT Lån 1 ränta — VÄNTAR PÅ HENRIK.** Modellen 37 098,33 fast; faktiskt fallande ~893/mån
+  (jan 39 169 → jun 33 812). Implicerar 10,9 % årsränta och ~3,72 MSEK kvar, vilket stämmer mot 5 MSEK
+  minus 13 månaders amortering = 3,73 MSEK. Prognos aug/sep/okt/nov = 32 919 / 32 026 / 31 133 / 30 240.
+  **Förslag: 31 500** (snitt aug–nov), med kvartalsvis omprövning. Förbättrar prognosen ~5 600/mån.
+- [ ] **id 25 DBT Lån 1 amortering — VÄNTAR PÅ HENRIK.** Beloppet stämmer (konto 2352 = 26 042 Nordea +
+  98 039,22 denna; modellen har 98 000, 39 kr fel). **Öppen fråga: julibetalningen sköts till augusti —
+  betalas EN eller TVÅ omgångar i augusti?** Två = engångspost ~132 K i augusti som saknas i prognosen.
+  En = hela schemat förskjutet en månad, ingen effekt framåt (samma logik som Tomas id 19).
+
+- [ ] Nordea-lånen (id 22 26 041,67 + id 23 9 375) — ej påbörjade.
 
 - [ ] **STRUKTURELLT — bankvalideringens blinda fläck.** 63 % av allt utflödesvärde saknar mottagarnamn.
   Per konto: nordea_main 66 rader / 4,0 MSEK utan namn (44 % av kontots värde), nordea_usd 154 / 16,3 MSEK

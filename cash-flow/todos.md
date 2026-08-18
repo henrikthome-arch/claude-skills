@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 1 av 44 rader klara. India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 2 av 44 rader klara. India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -39,7 +39,18 @@ Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 m�
 
 - [ ] ~~Omgång 1 / omgång 2 med batchgodkännande~~ **ERSATT 2026-08-18 av en-rad-i-taget.** Ordningen (störst
   månadsekvivalent först) står kvar; batchandet gör det inte.
-- [ ] Nästa rad: **id 7 SEB Kort - kortköp exkl COGS, 117 000 SEK/mån** (och ta konto 5991-frågan där).
+- [x] **id 7 SEB Kort icke-COGS, 117 000 -> 126 000 SEK/mån** (2026-08-18). Kortblocket (7/57/58/59) stämde
+  redan på 442 SEK/mån mot utfallet — ändringen drevs av SAMMANSÄTTNINGEN: META har rampat 30 425 (apr) ->
+  63 065 (jul) medan övrig SaaS fallit lika mycket. CEO: *"Expect META to stay at current level"*. 5991 är
+  META (matchar kortbatchen på kronan, noll förskjutning) — ingen dold annonskostnad utanför modellen.
+- [x] **Salesforce brutet ur id 7 till egen rad, id 67** (2026-08-18). 4 570,08 USD/kvartal, kvartalsmånader
+  3,6,9,12 dag 10, och id 7 ned till 111 500. Ligger i USD eftersom varje betalning är exakt samma
+  USD-belopp. **Kassamånaderna är INTE inköpsmånaderna** — kortfakturan betalas ~dag 9-14 månaden EFTER
+  batchen (tre exakta batch-mot-bank-matchningar: 2025-12 = 129 219 betald 2026-01-09; 2026-05 = 190 864,21
+  betald 2026-06-10; 2026-06 = 136 583,53 betald 2026-07-14). Faller i september, inte oktober.
+- [ ] **FÖLJDKONTROLL ~1 sep 2026:** augustibatchen ska visa Salesforce ~25 aug. Gapet dec-2025 till feb-2026
+  var 56 dagar, inte 90, så kadensen är inte helt ren. Syns den inte — ta upp id 67 igen.
+- [ ] Nästa rad: **id 19 Tomas André, 115 625 SEK/mån**.
 
 ### India — eget spår, 12 rader, 874 068 SEK/mån (37 %)
 

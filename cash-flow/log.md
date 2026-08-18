@@ -4,6 +4,30 @@ Running log of findings, budget corrections, and patterns discovered during cash
 
 ---
 
+## 2026-08-17: Bank import fixed (had no trigger since April) + three wrong findings, one root cause
+
+**What changed in the system**: `bank_outflow_transaction` had no trigger at all — the import ran only when an admin clicked "Parse Bank Statements", and last ran 2026-04-06. Feb and Apr–Jul 2026 were empty while the CSVs sat readable on disk (BUG-20260817-001). Fixed by CR-2026-08-17: `bank-outflow-import.timer`, daily 05:00 UTC, 3 most recent completed months, idempotent. All seven 2026 months backfilled (81/79/88/89/87/83/88 outflows). A `bank_data_stale_warning` now rides the forecast payload into the page and MCP.
+
+**Consequence for this skill**: forecast-vs-actual was working from the ledger, not from payments, between April and August. Any conclusion drawn in that window about whether a modelled payment actually left the bank was unsupported.
+
+**Three findings I reported to the CEO. All three were wrong.**
+
+1. *"DBT Lån 1 shows 66,425 against a modelled 98,000"* — the 66,425.44 is Lån 2 (50,000 amortering + 16,425.44 ränta), exactly. Not Lån 1 at all.
+2. *"Lån 1 looks repaid"* — it was skipped in July for lack of funds and paid in August. The loan runs for years.
+3. *"India transfers match an annual health-insurance refund row"* — true but meaningless; nothing health-insurance happened in July.
+
+Root cause of all three: **treating derived data as fact.** The matcher (`auto_match_outflows`) picks the first alias-matching recurring row with no due-month filter and no amount check, so `matched_payment_id` is a hint, not an attribution — all 13 DBT lines bound to id 25 regardless of amount. And absence of a payment was read as a conclusion about the loan instead of as a question for the CEO.
+
+**Rules added**: Key Rules 22 (human approval for every forecast value change), 23 (unpaid-at-EOM check), 24 (absence supports one statement only). Step 3 gained the **Unpaid-at-EOM rule** — at month close, for every payment due in M that never left the bank, verify a catch-up one-off exists in M+1 linked via `deferred_recurring_id`/`deferred_from_month`, and propose one if not. Skipped payments otherwise vanish: the recurring row fires once next month, so the money drops out of the plan and returns as an unexplained squeeze.
+
+**Also found — sweeps pollute every outflow total.** `Ny DEPOSIT VALUTA` rows are the nightly sweep of the dedicated EUR/USD accounts, but the classifier does not recognise them, so they store as real `untracked` outflows: 40–62% of recorded monthly outflow (July: 4.19M of 7.17M). Exclude `recipient_raw ILIKE '%DEPOSIT VALUTA%'` before quoting any total. This is also most of the "~80% untracked" figure.
+
+**Scope limit worth remembering**: the import covers the three Nordea Plusgiro accounts only. SEB SEK and SEB EUR+USD are in the cash position but are never parsed — a payment from SEB is invisible and must not be reported as "didn't happen".
+
+**Not done, awaiting CEO decision**: sweep classification fix, and matcher due-month/amount disambiguation. Both change what the reconciliation reports.
+
+---
+
 ## 2026-05-06: Mid-month validation against EOM Apr snapshot — Hejdad detection, payment priority tiering, VAT day-12 model
 
 **Position (May 6 mid-day, from CSVs):**
@@ -1219,3 +1243,609 @@ Identifierad asymmetri: model showed id 47 MOSS outflow (206K/quarter) without m
 - **id 52 Adyen**: fix broken supplier_id mapping (currently points to "Nasdaq First North" — wrong), then reclassify.
 - **id 7 SEB Kort split**: requires SEB invoice details to identify Swedish vs foreign components; partial reclassification possible.
 - **SKILL.md L843 cleanup**: rewrite contradictory paragraph to align with empirical evidence.
+
+---
+
+## 2026-05-21 — India markup vs operating-cash audit (board slide verification)
+
+### Trigger
+
+CEO challenged board slide bullet "India costs increased ~165 KSEK/month after alignment with the Jan budget" — found it hard to believe. Follow-up question: "Verify that India costs now in cash flow forecast are EXCLUDING intercompany markup, and only include actual cash out in India operations (EBITDA + investments?)"
+
+### Findings (both questions answered)
+
+**Q1 — Is the +165 KSEK/mo claim real?** YES, real, and actually understated. Actual increase vs early-April baseline (T1+T2+T3 = 766K SEK/mo, the only India entry pre-May 8):
+- May–Dec avg: +196 KSEK/mo
+- Jul–Dec avg: +203 KSEK/mo
+- Slide's 165 figure was authored before PLAN-J FX correction and PLAN-K Diwali re-enable (same day 2026-05-20); matches PLAN-H plugs alone at old wrong FX (0.112), excluding Diwali.
+
+**Q2 — Does forecast exclude markup?** NO. Forecast aligned to R6 "Total revenues" = parent intercompany invoice = R54 × 1.20 (20% cost-plus transfer-pricing markup, hardcoded across all 12 months of 2025 and 2026 in Jan budget ver 16.48). Forecast Jul–Dec avg = 970 KSEK/mo, vs true operating cash need (R54+invest+tax) = 915 KSEK/mo. **+55 KSEK/mo markup overstatement** on average.
+
+### Verification
+
+Spawned 2 independent agents in parallel. Both reproduced Excel R6/R54/markup numbers exactly, both reproduced DB-derived forecast to within 1K SEK/mo, both scored **9/10**.
+
+Key cross-checks:
+- R6 = R54 × 1.20 exactly every month 2026 (and 2025) — confirmed by both agents
+- Forecast Jul–Dec SEK avg: 969,546 (Agent 1) vs claimed ~970,000 (within rounding)
+- 6-month forecast SEK sum 5,817 vs R6 SEK sum 6,239 — gap = $10K/mo savings deduction PLAN-H applied (empirically lands ~$7K/mo at current FX)
+
+### Agent flags worth noting for future work
+
+1. **20% cost-plus is OECD/Indian Safe Harbour compliance** (Rule 10D / Rule 10TA-10TG range 15-20% for IT-enabled services). NOT discretionary — can't unilaterally lower without retroactive Indian tax assessment risk.
+2. **Retained markup pools as India-sub equity** (R71 Net cash climbs 5.5M → 12.3M INR Jul→Dec). Parent could recapture via dividend (DDT/WHT cost), advance against future invoices, or absorb on consolidation. Forecast doesn't model recapture.
+3. **Sep R67 = +222K INR (GST refund)** — use signed value not abs in "true cash need" formula. (My computation already does — the formula is `R54 + |R66| + signed(R67)`.)
+4. **Oct R6 anomaly** (16M vs 9M baseline) driven by R47 staff line — likely bonus accrual; budget assumes Oct, forecast places it Nov 4 via id 35 → timing mismatch within 6-mo window, nets out on average.
+5. **Standalone advance-tax recurring rows (ids 41/42/43)** are `enabled=false` — variance plugs absorb them implicitly via R6 inclusion. Consider re-enabling with `is_internal_transfer=false` for cleaner audit trail (TODO).
+6. **PLAN-H "$10K/mo savings"** empirically lands at ~$7K/mo at current FX. Worth tracking actual realization Jul/Aug post-hoc.
+
+### Audit trail document
+
+Full per-month numbers + verification methodology archived at:
+`/Users/henrik/Library/CloudStorage/Dropbox/Sonetel/Board/Board meetings/2026/2026 05 21 Board meeting (7)/content/india-cash-flow-markup-audit.md`
+
+This is the canonical reference for future questions about "is the India forecast markup-inclusive or operating-cash-only?" Answer: markup-inclusive (R6-aligned), and that is consistent with the parent's actual SWIFT obligation under Indian transfer-pricing rules.
+
+### Open follow-ups (added to todos)
+
+- [ ] Consider whether to model India dividend back to parent (markup recapture path) in cash-flow forecast
+- [ ] Track empirical savings realization Jul/Aug 2026 vs PLAN-H $10K/mo assumption
+- [ ] Re-enable advance-tax ids 41/42/43 with `is_internal_transfer=false` for audit clarity, with corresponding plug reduction (optional cleanup)
+- [ ] Decide whether to update May 21 board slide bullet from "165" to "≈200" to reflect actual increase (or leave + flag in CEO talk track)
+
+---
+
+## 2026-06-03 — Fix May EOM cash position + verify June forecast
+
+**Scope:** User (CEO) provided Padma's India Axis Bank balance email (31-May-2026 = INR 4,65,921.63) and asked to (a) fix cash at EOM for May, (b) verify the June cash flow forecast. Analysis + actuals data-entry only on `cash_position_snapshot` (NOT a forecast-assumption change → outside the 5-step process, which governs recurring_payment/scheduled_payment/business_parameters).
+
+**Root finding:** No May 31 snapshot existed. The June forecast was seeding `starting_cash` from the **April 30** snapshot total (-755,966.75). Confirmed by summing April rows = -755,966.75 = exact starting_cash. So June was a month stale; fixing May EOM is precisely what validates June.
+
+**May 31 snapshot built** (10 rows, FX from currency_rates_daily latest ≤ May 31: USD 9.25112 [May 29], EUR 10.77200 [May 29], INR 0.09724 [May 26]):
+
+| Account | Foreign | SEK | Source |
+|---|---:|---:|---|
+| Nordea 91 55 78-9 SEK | -927,748.24 | -927,748.24 | CSV (May 29 close, carries Sat/Sun weekend) |
+| Nordea 91 55 78-9 EUR | 0.20 | 2.15 | CSV |
+| Nordea 91 55 78-9 USD | 240.84 | 2,228.04 | CSV |
+| Nordea 214 72 32-9 EUR | 0.00 | 0 | CSV (swept) |
+| Nordea 214 72 33-7 USD | 0.00 | 0 | CSV (swept) |
+| PayPal SEK | 1,212.71 | 1,212.71 | Download.CSV ending bal |
+| PayPal USD | 8,297.51 | 76,761.26 | Download.CSV ending bal |
+| PayPal EUR | 6,424.78 | 69,207.73 | Download.CSV ending bal |
+| Utopia USD | 7,800.00 | 72,158.74 | carry-forward from April (CEO-confirmed unverified) |
+| Sonetel India (INR) | 465,921.63 | 45,306.22 | Padma email 31-May (Axis acct 909020044317340) |
+| **TOTAL** | | **-660,871.39** | |
+
+Movements vs April 30: Nordea SEK improved +71,823 (-999,572 → -927,748); India INR dropped -282,078 (748,000 → 465,922); PayPal USD rebuilt (4,809 → 8,298). Net total improved +95,095 (-755,967 → -660,871).
+
+**June forecast verification (re-run after snapshot saved):**
+- `starting_cash` now -660,871.39 ✓ (was -755,966.75). `snapshot_stale_warning` cleared.
+- **Min balance -739,109 on June 28** (was -834,204) — shifted up exactly +95,095, trajectory shape unchanged. Recovers to -657,162 by June 30.
+- June 1-2 use actual revenue (132,578 net). Rest at manual override 2.6 MSEK/mo (72,973/day net).
+- EOM cluster (the stress window): Jun 25 India closure SWIFT 567,260 + Jun 28 EOM block 394,104 (BDO 66K, DBT L1 amort 98K + int 37K, DBT L2 int 15K, Fluff 37.5K, Nordea amort/int/credit-int 45.4K, Openrouter 50K, PayPal fees 45K). Peak before cluster: +138,639 on Jun 23.
+
+**⚠️ SEK-saldo caveat (binding constraint):** Forecast running_balance is TOTAL group cash. The 1 MSEK credit line constrains the Nordea SEK account ONLY. Non-SEK / non-same-day balances in starting cash = 266,877 SEK (PayPal 147,182 [T+3, 5K floor locked] + Utopia 72,159 + India INR 45,306 [subsidiary money, NOT available to Sweden] + Nordea foreign 2,230). So SEK-account saldo ≈ running_balance − 266,877. **June 28 total trough -739,109 ⇒ implied Nordea SEK saldo ≈ -1,006,000 — marginally past the 1M credit limit and well below the -950K operational floor.** This is the standard total-vs-SEK gap (skill Section 5b); June 28 is a genuine EOM squeeze. Hejdad risk on the Jun 28 cluster + any Jul-1 day-1 payments (Voxbone, EU-VAT). Tier-1 (salaries Jun 24, India statutory) protected; Tier-2 (BDO, SEB) deferrable if the cluster bites.
+
+### Post-mortem vs previous run (2026-05-06)
+
+**May 6 verdict was:** *"EOM May ~-570K to -670K SEK total cash position, ~150-200K improvement over EOM Apr. Tight but no liquidity crisis if Fluff Apr invoice releases by May 8."*
+
+**Actual May 31 total = -660,871** → lands inside the predicted -570K/-670K band, at the pessimistic end. **May 6 forecast was accurate.** The +95K vs the April-seeded June run is the real-cash improvement that had not yet been captured because no May snapshot was ever saved.
+
+| Driver | SEK | Anticipated May 6? |
+|---|---:|---|
+| Nordea SEK saldo recovery Apr→May | +71,823 | Yes (predicted ~150-200K improvement on total; partial) |
+| India INR drawn down 748K→466K | -282,078 INR (≈ -27K SEK swing on snapshot) | Partial — expected India spend, exact unknown |
+| PayPal USD rebuild | +~32K SEK | Yes (settlement rebuild pattern) |
+
+**Process gaps to close (carry to next run):**
+- [ ] **Snapshot was never saved month-to-month** — the forecast silently ran on April's seed for all of May+June. Future: save the EOM snapshot as part of every month-end close (the monthly-intake skill now pushes the CSVs; cash-position auto-populate should be run + saved each month). Without it, the forecast is perpetually one month stale.
+- [ ] Utopia USD (72K) is a carry-forward guess — get an actual May 31 figure when convenient.
+- [ ] India INR FX uses May 26 rate (no Riksbanken INR quote May 27-31); immaterial (~0.3%).
+- [ ] Consider surfacing the total-vs-SEK gap explicitly on the forecast page so the -739K total isn't misread as credit-line headroom.
+
+**No forecast-data (recurring/scheduled/business_parameters) changes this session.** Snapshot is actuals data-entry only.
+
+---
+
+## 2026-06-03 (later) — Revenue run-rate override 2.6 → 2.52 MSEK (5-step PASS) + new SKILL rule
+
+**Trigger:** CEO: "run-rate is hardcoded to 2.6 MSEK; maybe adjust to actual May run-rate in SEK which is lower." Plus two follow-ups: (a) "the skill should ask the user if any hardcoded revenue level should be kept/removed/changed", (b) "using prior months level as a base is usually a good idea."
+
+**Finding (authoritative source = `customer_monthly_revenue.net_revenue_usd`, same source the auto run-rate model's prior-month-actual uses):**
+| Month | Net USD | ≈ MSEK @9.25 |
+|---|---:|---:|
+| May 2026 | 272,213 | 2.52 |
+| Apr | 282,426 | 2.61 |
+| Mar | 277,773 | 2.57 |
+| Feb | 261,312 | 2.42 |
+| Jan | 276,919 | 2.56 |
+| Dec 2025 | 262,933 | 2.43 |
+| Nov | 271,921 | 2.52 |
+- 7-month avg = 272,214 USD ≈ 2.52 MSEK. Override 2.6 was at TOP of the 2.42–2.61 range (~3% high).
+- `service_revenue_cogs` reads ~2.1 MSEK but that's usage-only (excludes subscriptions) — NOT the right top-line basis. Confirmed the override basis is the broader `customer_monthly_revenue` net.
+
+**5-STEP (business_parameters cashflow_* change):**
+1. PLAN: lower override 2.6 → 2.5 (most-probable, no bias).
+2. REVIEW: 2 agents PASS **78 + 84**. Both flagged: (i) literal most-probable = **2.52** not 2.5 (rounding down adds slight pessimism); (ii) `effective_cogs_percent` moves with run-rate (tracked% = tracked/(run_rate×30)) so impact deltas are approximate; (iii) FX-blindness residual risk; (iv) unit risk (must be MSEK 2.52, not raw SEK).
+3. GATE: both ≥70 ✓. Refined value 2.5 → **2.52** per reviewer recommendation + CEO "prior-month base" guidance (May = 2.52).
+4. IMPLEMENT: `UPDATE business_parameters SET parameter_value='2.52' WHERE parameter_name='cashflow_revenue_override_msek'` (was 2.600000). UPDATE 1. VERIFY: param=2.520000; forecast run_rate_daily=84,000 (=2.52M/30), source=manual_override, detail "2.520000 MSEK/month"; starting_cash unchanged -660,871.39; effective_cogs 15.8→15.6 (tracked 5.6→5.8, expected); net inflow 70,896/day; all other cashflow_* params unchanged.
+5. AUDIT: 2 agents PASS **94 + 95**. Confirmed single-row change, no collateral, arithmetic consistent, no double-count, snapshot untouched, reversible (set back to 2.6).
+
+**June forecast after change:** starting -660,871; **min -792,805 on Jun 28** (was -739,109 at 2.6); EOM Jun30 -715,013. Full 93-day horizon min -835,616. SEK-saldo-equivalent trough at Jun 28 ≈ -1.06M (running_balance − 266,877 non-SEK offset) — deeper projected breach; reinforces EOM-cluster caution.
+
+**SKILL.md change (not a forecast-data change):** Added new MANDATORY rule "surface the revenue run-rate override EVERY session" — query `cashflow_revenue_override_msek` at session start, present prior-month actual alongside, ask keep/change/remove, default base = prior-month `customer_monthly_revenue` net × USD/SEK, flag FX-blindness, note COGS interaction. Inserted after the "adjust eagerly" rule.
+
+**Rollback:** `UPDATE business_parameters SET parameter_value='2.6' WHERE parameter_name='cashflow_revenue_override_msek'`.
+
+---
+
+## 2026-06-08 — PLAN-L3: Henrik loan repayment Aug→Oct deferral (5-step PASS) + STRUCTURAL H2 funding-gap finding
+
+**Trigger:** CEO: "lower the loan repay amount in August to me with 100 KSEK." Chose (AskUserQuestion) to defer the 100K to October.
+
+**Change (5-step, scheduled_payment):**
+- s81 (Aug 15, Henrik loan repayment, account 2890): 193,000 → **93,000**
+- s82 (Oct 15, Henrik loan repayment): 107,000 → **207,000**
+- Total loan May–Oct preserved 300K; total Henrik (loan+utlägg) preserved 607K. s44 (Aug 29 utlägg 107K) untouched.
+
+**Process:**
+1. PLAN v1 → REVIEW: 86 PASS + **58 FAIL** (gate failed). Reviewer B: amounts-only is unsafe — s81's description carried "2026-08-01 gate: ratify 193K NOT 93K", which the new 93K would contradict; and the Aug combined-Henrik 300K→200K drop must be acknowledged.
+2. PLAN v2 (added description supersession + banners + single-txn + amount-guard + Oct-breach precondition) → RE-REVIEW: **84 + 76 PASS** (gate cleared).
+3. IMPLEMENT: single transaction, both UPDATEs id-keyed + amount-guarded (`WHERE id=81 AND amount=193000` etc.) → UPDATE 1 / UPDATE 1 / COMMIT. Descriptions updated with top banner + inline `[SUPERSEDED]` marker + PLAN-L3 footer.
+4. VERIFY: s81=93,000, s82=207,000, sum=300,000, s44=107,000 untouched, is_inflow/enabled/pay_date/account all unchanged.
+5. AUDIT: **96 + 82 PASS**. Auditor verified DB state exact, atomic (identical updated_at µs), guard sound, supersession clean (no live "ratify 193K" string remains).
+
+**Rollback:** `UPDATE scheduled_payment SET amount=193000 WHERE id=81; UPDATE scheduled_payment SET amount=107000 WHERE id=82;`
+
+### ⚠️ STRUCTURAL FINDING (surfaced by the Oct-breach precondition) — Oct–Jan funding gap
+
+Continuous forecast June 1 2026 → Feb 1 2027 (anchored May 31 snapshot + actuals through Jun 7; run-rate 2.52 MSEK; implied Nordea-SEK = total − 267K static non-SEK offset):
+
+| Month | Total trough | Date | Implied SEK | Days >1M (SEK / total) |
+|---|---:|---|---:|---|
+| Jun | -814,008 | Jun 28 | -1,080,885 | 4 / 0 |
+| Jul | -854,560 | Jul 30 | -1,121,437 | 3 / 0 |
+| Aug | -756,820 | Aug 29 | -1,023,697 | 1 / 0 |
+| Sep | -568,669 | Sep 1 | -835,546 | 0 / 0 |
+| **Oct** | **-1,023,651** | Oct 30 | -1,290,528 | 4 / 1 |
+| **Nov** | **-1,402,770** | Nov 28 | **-1,669,647** | 16 / 7 |
+| **Dec** | -1,395,361 | Dec 28 | -1,662,238 | 15 / 10 |
+| **Jan** | -1,338,789 | Jan 30 | -1,605,666 | 16 / 8 |
+| Feb | -1,207,534 | Feb 1 | -1,474,411 | 1 / 1 |
+
+- **60 days breach the 1M SEK credit line (implied-SEK); 27 days breach even on total-cash.** Nov–Jan is the worst (Nov 28 trough ~-1.67M implied SEK).
+- **This 100K deferral did NOT cause it** — it deepened Oct by ~100K only. Re-spreading the 100K to Nov/Dec would be *strictly worse* (deeper months), so the CEO's Oct choice was the least-bad deferral target. No reconsideration warranted on placement.
+- **Heavily driven by PROVISIONAL items**: PLAN-H India H2 variance plugs (ids 74-80) on top of the full T1/T2/T3 766K base (no Padma-USD cancellation offsets after June), + Diwali bonus id 35 (Nov 4, 388K, PROVISIONAL). All flagged "STILL PROVISIONAL pending Padma's real plan." So the H2 trough has real downside uncertainty and could ease materially if India H2 costs come in lower / the real Padma plan differs from the budget-derived plugs.
+- **Escalated to CEO** as a funding decision (not an agent re-spread). Per Rules 12/17: did not propose specific facility/funding moves unsolicited.
+
+**Follow-up flagged for next session**: validate the H2 India plugs (PLAN-H ids 74-80) against Padma's actual H2 cash plan when available — they dominate the Nov-Jan trough depth.
+
+---
+
+## 2026-07-07: BDO May-service invoice deferred June → mid-August (single scheduled overlay, 5-step PASS)
+
+**Trigger:** CEO (Nordea "Hantera betalningar" screenshot + the BDO invoice): "This payment to BDO scheduled for end of June was deferred to July. I suggest we defer it to mid August." Invoice = BDO faktura 20106886615, service period Maj 2026, exkl moms 100,723.30 + 25% moms 25,180.83 = **125,904.00 SEK**, förfall 2026-06-30.
+
+**Change (5-step, scheduled_payment):** INSERT **id 86** — 125,904 SEK outflow on 2026-08-15, account 6530, supplier 15, is_inflow=false, deferred fields NULL, enabled. No offset. Recurring id 20 (66,250/day28) + rows 48/51 untouched.
+
+**Process (the first plan was wrong on its anchor — worth remembering):**
+- v1 PLAN (offset Jun 28 66,250 + add Aug 15 125,904) → REVIEW **62 + 22 FAIL**. Both caught the load-bearing error: I assumed a May-31 snapshot anchor (from the stale 2026-06-08 log entry) but the live system now has a **June-30 snapshot** (start_date 2026-07-01). The Jun 28 offset was pre-window = a no-op.
+- v2 PLAN (single INSERT, re-anchored) → **88 + 68**. The 68 flagged: (a) deferred fields set would drive a 59,654 June get_forecast_accuracy over-adjust; (b) missing August credit-line validation.
+- v3 PLAN (NULL deferred fields; commit to post-INSERT liquidity report; doc hardening) → **PASS 87 + 86**.
+- IMPLEMENT: INSERT → id 86, INSERT 0 1. VERIFY: all 11 fields match. Collateral: id 20 + rows 48/51 unchanged.
+- AUDIT: **PASS 94 + 96** (both vs live DB; 3 distinct BDO events in day-stream — Jul 28 recurring, Aug 15 scheduled, Aug 28 recurring — no double-count).
+
+**Liquidity (validated post-INSERT):** window min −1,079,260 (Jul 30) → **−1,184,756 (Aug 29)**; Aug 15 balance −496,890. The deferral lands 125,904 onto the pre-existing Aug 26–29 EOM cluster → credit-line breach on implied-SEK basis (total − ~267K non-SEK). Surfaced to CEO; option to push past the cluster (early Sept) noted. Deepening 105,496 < 125,904 because intervening Aug 16–29 revenue partially offsets (correct cumulative-model signature).
+
+**Open items:** 46,280 Periodrapportering credit query to BDO (reduce id 86 if credited); disable id 86 after the real August payment lands; BDO baseline id 20 (66,250) possibly under-models steady-state by ~half (May actual ~126K) — calibration TODO.
+
+**Rollback:** `UPDATE scheduled_payment SET enabled=false WHERE id=86;`
+
+### Post-mortem vs previous run (2026-06-08 PLAN-L3)
+
+**Prior verdict (2026-06-08):** flagged a structural Oct–Jan credit-line funding gap (Nov 28 trough ~−1.4M total), heavily driven by PROVISIONAL India PLAN-H plugs; and a process gap "snapshot was never saved month-to-month — forecast silently ran on April's seed."
+
+**What actually happened / drift:** Targeted single-deferral session, not a full EOM analysis, so no forecast-vs-actual EOM reconciliation this run. Two prior-run items updated:
+1. **Process gap "snapshot not saved" — CLOSED.** A **June-30 snapshot now exists** (−766,272, 15 rows); the May-31→June-30 handoff happened (likely via monthly-intake close). The forecast anchors on June-30, not the stale seed the prior run warned about. My v1 plan tripped on exactly this — I trusted the log's May-31 anchor instead of querying live. **Lesson reinforced: query `cash_position_snapshot` + forecast `start_date` at session start; NEVER trust the log's anchor date.** (The two review-FAILs 62/22 that caught this were worth their cost.)
+2. **August trough deepened** by this deferral to −1,184,756 (Aug 29), within the structural-gap territory the prior run flagged. The Oct–Jan gap + India PLAN-H provisional plugs remain open (unchanged this session).
+
+**Process gaps to close (carry to next run):**
+- [ ] Validate India H2 PLAN-H plugs (ids 74-80) + Diwali bonus (id 35) against Padma's real plan — still the dominant driver of the Nov–Jan trough. (carried from L3, unaddressed)
+- [ ] BDO recurring id 20 (66,250) may under-model steady-state by ~half; recalibrate once the true quarterly-report cost is known (CEO's 20-25K/quarter estimate vs the 46,280 billed on the May invoice — first-year comparative-data cost inflates it).
+- [ ] Disable id 86 after the real August BDO payment lands (avoid latent double-count vs id 20 arrears firings).
+- [ ] No session-start HTML snapshot generated (targeted-change session, acceptable for scope) — next full analysis should regenerate.
+
+---
+
+## 2026-07-07 — July MTD/upcoming verification + Henrik 40K payback re-timing (option-a, 5-step PASS)
+
+**Scope:** (1) verify July upcoming registered payments + MTD actuals are in the plan; (2) add the CEO's 40K loan/expense self-payback (paid Jul 6) net-zero against Oct.
+
+**Verification (analysis-only):** Upcoming 6 (Kommande) + July MTD outflows ALL map to the plan. Decoded the two Corporate Access bundles via Nordea Transaktionsdetaljer:
+- −112,124 (Jul 6) = Fluff/Rainbow id29 (41,499) + G&W id31 (43,125, exact) + Linn id5 (27,500, exact).
+- −9,825 (Jul 3) = Cision id10 (modeled 6,250 → +3,575).
+- −16,847 (Jul 7) = Bambora id16.
+Only non-plan items: the 40K UTLÄGG (Henrik payback, now added) + Svensk E-identitet 378 (immaterial). Calibration flags (no change made): **Bambora id16 modeled 60K/day-25 but only 16,847 hit Jul 7 — watch for a 2nd charge or recalibrate ~−43K/mo**; Cision +3.6K; Fluff +4K; credit-line interest ~14.4K vs 10K modeled, hits day 1.
+
+**Change (5-step):** CEO paid himself 40,000 SEK on 2026-07-06 (confirmed in SEK CSV "UTLÄGG −40,000"). Option-a = net against a future tranche.
+- REVIEW round 1 (single INSERT plan): R1 78 PASS (blocking: scheduled_payment has NO is_internal_transfer column), R2 62 FAIL (silent 607→647K drift; Tier-1 liquidity note). → revised to net-zero 2-op plan (option-a).
+- REVIEW round 2 (2-op plan): A 74 PASS, B 62 FAIL — converged 5 blockers: atomicity (save_scheduled_payment commits per call → must use raw single-txn), supersede s82 "ratify 207K" marker, restate invariant, currency='SEK', show trough.
+- IMPLEMENT: one db_session, single commit. UPDATE s82 amount 207000→167000 (amount-guarded WHERE id=82 AND amount=207000) + INSERT id 85 (40000 SEK, 2026-07-06, recipient Henrik Thome, acct 2890, is_inflow=false, enabled=true, category henrik). Two prior attempts rolled back cleanly on NOT-NULL (category, then created_at/updated_at) — atomicity proven, no orphans. Read-back assertion 40000+167000==207000 ✓.
+- AUDIT: 94 + 93 PASS. Atomicity proven by byte-identical id85.created_at == id82.updated_at. s82 marker correctly superseded to ratify 167K. Post-audit fix: corrected s82 banner factual error (s81 is 43K not 93K; total loan is 250K not 300K — 300K was cut to 250K in PLAN-L4).
+
+**Net effect:** total Henrik repayment unchanged (40K July + 167K Oct = 207K); 40K pulled forward from Oct to the Jul-6 actual. Rollback: DELETE id 85; UPDATE id 82 SET amount=207000.
+
+**Liquidity:** July trough −1,079,260 total on Jul 30 (structural India T2/T3 + MOSS day-24-30 cluster, all Tier-1). The 40K cleared fine Jul 6 (balance ~−472K then); it contributes 40K of the trough but is a real actual (correcting, not adding risk).
+
+### Post-mortem
+1. **Prior run (PLAN-L3 2026-06-08)** flagged a Nov-Jan funding gap dominated by PROVISIONAL India H2 plugs (ids 74-80) + Diwali bonus id 35. This session did not touch H2 — that gap and the "validate H2 plugs vs Padma's real plan" follow-up remain OPEN.
+2. **What drifted:** July trough is deeper than PLAN-L3's continuous run showed (−1,079K vs −855K). Root cause is NOT this 40K — it's the **June-30 EOM starting snapshot being understated**: PayPal rows are blank (statement uploaded post-build, snapshot not refreshed) + other manual holdings partly blank, so starting cash is ~150K+ too low → whole July trajectory too pessimistic.
+3. **Process gaps to close:**
+   - [ ] Refresh the June-30 cash_position snapshot (re-run auto_populate now PayPal statement/OMF req4 is uploaded) so July forecast is accurate. **HIGH — biggest driver of the pessimistic trough.**
+   - [ ] Bambora id16 recalibration decision after the July day-25 window (60K modeled vs 16,847 seen).
+   - [ ] Raw scheduled_payment INSERT requires NOT-NULL: category, created_at, updated_at (no defaults) + is_inflow(default false). Documented here to avoid the 2-attempt retry next time.
+4. **Forward:** complete the June snapshot before the next EOM-cluster stress read; H2 India plugs still the dominant Nov-Jan uncertainty.
+
+---
+
+## 2026-07-09: India seasonal charges re-activated as EXTERNAL cash (option E, audits 88/88 PASS)
+
+**Trigger:** CEO alarm — "Have you disabled all future seasonal payments for India?? 3-month view lacks seasonal payments?" Then the ruling: "Tax payment leaves the group, it is not an intercompany payment... keep the payment as an external payment" + "Internal transfer is ONLY relevant for payments not leaving the group."
+
+**Root cause found:** Six India seasonal charges (id36 insurance, id39-42 advance tax, id43 GST refund) were disabled 2026-05-20 (PLAN-I) AND flagged `is_internal_transfer=true`. The engine (`cash_flow_forecast_service.py:2753`) skips internal transfers BEFORE the enabled check → they were invisible to the forecast even if enabled. So the forward view carried NO India seasonal tax/insurance — real under-forecast, board risk.
+
+**Change (5-step):** `UPDATE recurring_payment SET is_internal_transfer=false, enabled=true WHERE id IN (36,39,40,41,42,43)` + scheduled offset id87 (2026-11-22, 1.652M INR, is_inflow) holding id36 Nov-2026 pending Padma plug-79 check. Descriptions banner-updated to supersede the stale PLAN-I "DISABLED/redundant intercompany" text.
+
+**Process (3 plan iterations — the gate earned its keep):**
+- Option A (enable-only + 4 offsets) → REVIEW **25 + 32 FAIL**. Both caught: is_internal_transfer skip makes enable a no-op; the offsets would be real uncancelled cash (~+3M INR corruption). Also surfaced: Sep plug id76 note "advance tax id41 + GST id43 SEPARATE from R6" — the plugs were built EXCLUDING the tax, expecting the seasonal to carry it (so disabling created the gap).
+- Option C (flip+enable, no Sep/Dec offsets since plugs exclude, 1 Nov offset) → **46 + 55 FAIL** on validation honesty: reviewer found the forecast horizon is only **93 days (ends 2026-10-02)** → Nov/Dec/2027 firings unobservable, so claiming them was false. Only Sep 30 is in-window.
+- Option E (converged): flip+enable all six, honest scoping (Sep +30K only observable). CEO confirmed "id43 GST refund needs to be in the forecast." IMPLEMENT → verify (6 flipped, id87 in). AUDIT **88 + 88 PASS** (both vs live DB + deployed forecast).
+
+**Validated:** Sep 30 fires id41 (−162,332 SEK) + id43 (+192,770 SEK) = **+30,437 SEK net inflow**; plug id76 fires 137K separately (no double-count); advance tax ≠ base T2 TDS (distinct, no double vs base); Nov/Dec/2027 armed but beyond 93d horizon.
+
+**Funding model confirmed (Padma 2026-07-09):** monthly cash requirement = sized to India's actual costs (RTDS/AWS/tax/severance/workation), trued up to the transfer date. R6/plug = normal-month run-rate estimate; lumpy annual tax is a SEPARATE additive line. July elevation decoded: severance $8K + workation prebook $8K + merch $1K; last two July tranches ($60K/$15,917) still being finalized by Padma (RTDS+AWS invoices) → July India NOT yet re-modeled to her actual 4 tranches (holding for her finalization).
+
+**Rollback:** `UPDATE recurring_payment SET is_internal_transfer=true, enabled=false WHERE id IN (36,39,40,41,42,43); UPDATE scheduled_payment SET enabled=false WHERE id=87;`
+
+### Post-mortem vs previous run (2026-07-07 BDO deferral)
+
+**Prior state:** BDO May invoice deferred to Aug 15 (id86); parallel session added CEO 40K payback (id85) + reduced Oct tranche (id82).
+
+**This run:** structural India-seasonal fix. No regression; the seasonal change lands Sep 30+ (after the Aug 29 trough), so the credit-line stress point is unaffected.
+
+**Process gaps / open items (carry to next run):**
+- [ ] **July India:** re-model to Padma's actual 4 USD tranches (Jul 9 $10K / Jul 14 $25K / Jul 27 $60K / Jul 30 $15,917) once she finalizes the last two on the transfer date. Currently on plug id74 estimate.
+- [ ] **June-30 snapshot has blank PayPal rows** → July trough (−1.08M Jul 30) is ~150K+ too pessimistic. Refresh the snapshot's PayPal balances. (Flagged in the 2026-07-07 parallel entry; still open.)
+- [ ] **Horizon:** default forecast is 93 days — extend `cashflow_forecast_days` (e.g. 365/545) so the re-activated Nov/Dec/2027 seasonal actually show in a board view. Resolve Nov plug-79 vs insurance (id87 offset) with Padma BEFORE trusting the longer view.
+- [ ] **Padma confirmations:** (a) R6 doesn't embed Sep tax/GST; (b) plug id79 doesn't embed Nov insurance.
+- [ ] **Workation hotel** payment (Padma flagged) — unquantified one-off to add when known.
+- [ ] Carried from prior: validate H2 India PLAN-H plugs vs Padma's real plan; BDO 46,280 Periodrapportering credit (reduce id86 if credited); Bambora id16 recalibration (60K modeled vs 16,847 actual Jul 7).
+
+---
+
+## 2026-07-10: Bambora recalibration (60K→46K) + July India top-up to Padma's estimate (NO agent gate — subagent quota exhausted)
+
+**Context:** CEO "Bambora set to 60K? Why? Check actuals and adjust. Follow the process." Then, mid-investigation, subagent weekly limit hit (resets 2026-07-14) → the 5-step review/audit agents were unavailable. CEO: "continue. There is no gate now." → proceeded with self-verification only, flagged as a process exception in-row + changelog.
+
+**A — Bambora id16 60,000 → 46,000 SEK.** The user's instinct ("60K seems high; is it Adyen too? we get net for Adyen") was half-right. Account 6571 = "Avgift Bambora & Adyen", P&L stable ~60K/mo COMBINED (SIE 12-mo avg 59,865, range 54-64K). id16 (60K) had been sized to the whole account; adding id52 Adyen (14K) later made the combined model 74K — overstating the 60K P&L by ~14K (Adyen double-count). Fix: Bambora = 59,865 − 14,000 = 45,865 ≈ 46,000 → combined ~60K = P&L. KEY: the bank "Bambora Online A/S" debit ~16,850 (Jan 8 16,888 + Jul 7 16,847) is ONLY the invoiced slice; the rest is netted from card settlements. Since forecast revenue is GROSS of PSP fees (PayPal id53 analog), id16 carries the FULL fee (~46K), NOT 16,850. So "reduce to 16,850" (my first instinct from bank data) would have been WRONG — the P&L 6571 is the right basis. day_of_month left at 25 (fee is part-netted-continuous + part day-7 invoice; no single "right" day). Rollback: amount=60000.
+
+**B — July India top-up (scheduled id88) $17,339 USD, 2026-07-27, account 6561.** CEO: "ensure July India totals equal Padma's latest estimate." Current July India = base T1/T2/T3 (7.91M INR) + plug id74 (1.115M INR) = 9.025M INR = $93,578 @ FX (INR/SEK 0.10023, USD/SEK 9.66655). Gap to Padma's $110,917 = $17,339 ≈ her itemized extras (severance $8K + workation $8K + merch $1K — nice cross-check). USD to match her currency (drifts with FX vs INR base). Padma finalizing last two tranches (RTDS+AWS, ±150 USD) → UPDATE id88 when final. Validated by hand-calc (MCP forecast disconnected): 9.025M INR × 0.10023 + $17,339 × 9.66655 = 1,072,177 SEK = $110,917 @ 9.66655 ✓. Rollback: disable id88.
+
+**Process/infra notes:**
+- NO 2-reviewer + 2-auditor gate (subagent weekly limit → 2026-07-14). CEO authorized. Both well-evidenced. RE-REVIEW when quota resets.
+- MCP financial-ops server disconnected mid-session → couldn't re-run get_cash_flow_forecast for validation; used SSH dbshell + hand-calc instead.
+- dbshell intermittently broken (venv: "No module named sqlalchemy/flask_login" + earlier exec-bit loss) from a 05:12 deploy — recovers after retries. Plan A landed first try; Plan B needed a retry (idempotent WHERE NOT EXISTS guard used to avoid double-insert). Both confirmed applied (id16=46000, id88 present).
+
+**Open (carry forward):** re-review A+B when subagents return; re-check the PayPal snapshot auto-refresh timer (CR-2026-07-09/07-19, parallel session) is healthy; the gross-vs-net PSP-revenue convention is worth a documented confirmation (whether customer_monthly_revenue is truly gross of card fees — the whole Bambora/Adyen/PayPal fee-modeling rests on it).
+
+### 2026-07-21 — Deferred re-review of the 2026-07-10 changes (COMPLETED, both PASS)
+Subagent quota restored → ran the 2-auditor gate that was skipped. **A (Bambora 60K→46K) = 92/92 PASS; B (July India top-up id88) = 91/88 PASS.** No corrections.
+- **Gross-vs-net resolved definitively:** card-revenue metric `revenue_cc_payments_mtd` = sales-report "Aggregated Non-fraud Credit card payments" (gross customer charges, NOT net settlements). So revenue is GROSS of PSP fees → 46K is right; 16,850 would under-count by ~29K/mo (the netted slice). Confirmed 6571 ∉ COGS band (4000-4999) so no auto-COGS-margin double-count. SIE 6571 12-mo avg reproduced to the krona (59,865); July India reconciles to $110,917 exactly.
+- **Doc fix:** id52 (Adyen) description said "separately invoiced; not netted" — contradicted CEO "we get net for Adyen". Corrected to "netted from settlements, still modeled as outflow (revenue gross)". Amount 14K unchanged.
+- **Confirmed principle for future PSP work:** revenue is GROSS of card fees, so EACH PSP fee (Bambora id16, Adyen id52, PayPal id53) is a full explicit outflow, and the combined Bambora+Adyen must equal SIE 6571 (~60K). Don't set a PSP fee line to just its bank-debit (invoiced) portion — that under-counts the netted slice.
+
+---
+
+## 2026-08-01: DBT Lån 2 amortization decoded (legal API) + early-Aug deferrals (5-step PASS 83/86 → 92/96)
+
+**Trigger:** CEO at July close — "update cashflow"; flagged osignerade Mangold 46,843 + Cision 11,131 (both betalningsdag 2026-07-31), a delayed ~132K DBT payment, BDO ~125K mid-Aug, and an unrecognized **66,425.44 SEK** DBT autogiro on Jul 31 ("2nd-loan amortization?").
+
+**Investigation — the 66,425.44 fully decoded via legal API (agreement 1528 "DBT nytt lån 2 MSEK", kreditnr 562):**
+2,000,000 SEK, ränta 7.65%+STIBOR 1M, **rak amortering**, första amorteringsdag **2026-07-31**, slutförfallodag 2029-10-30. → 40 monthly installments → 2,000,000/40 = **50,000 amort** + **16,425.44 interest** = 66,425.44 to the krona. The grace period (2025-11-30 interest-start → 2026-06-30) is the ~16K/mo we saw on DBT account 573-6624 all along; amortization kicked in exactly Jul 31. **CEO's instinct correct.** DBT Lån 1 (agr 1512 "5 MSEK", account 574-4446, ~132K/mo) did NOT charge in July (only DBT autogiro was Lån 2) — deferred to early Aug per CEO. Decoded July Corporate Access bundles (−136,583 Jul 14 = SEB Kort, not DBT; DBT autogiros are labelled "Autogiro DBT Capital", never "Corporate Access").
+
+**Changes (5-step, one atomic txn; REVIEW 83+86 PASS, AUDIT 92+96 PASS):**
+- **id 61 NEW** — DBT Lån 2 amortering 50,000 SEK, day 28, acct 2399, supplier 134. (model was missing ~50K/mo)
+- **id 26** 14,839.33 → 16,425.44 (renamed DBT Lån 2 interest). ids 24/25 renamed DBT Lån 1 int/amort (amounts intact).
+- **id 51 Mangold** monthly 12,500 → **quarterly 46,843**, quarter_months 2,5,8,11, day 5 (cadence from single osignerade invoice — refine next qtr).
+- **id 10 Cision** 6,250 → 10,000.
+- **sched 89** +135,098.33 inflow 2026-07-28 (offset Lån 1 Jul-28 recurring firing — did not charge) + **sched 90** −135,098.33 outflow 2026-08-05 (deferred Lån 1 paid early Aug). Net = clean Jul→Aug shift; Aug carries Lån 1 TWICE (Aug 5 deferred + Aug 28 own).
+- **sched 91** +10,000 inflow 2026-07-15 (offset Cision) + **sched 92** −11,131 outflow 2026-08-05 (deferred Cision July invoice).
+- BDO id 86 (125,904, Aug 15) confirmed already scheduled — untouched.
+
+**Liquidity (forecast after changes, Jun-30 anchor):** August EOM cluster crosses the −950K soft floor; **trough −1,180,485 on Aug 29** (Aug 26 −823K → Aug 28 −1,141K → Aug 29 −1,180K). Driven by Lån 1 double-load + Lån 2 amort + BDO + India. Cluster is mostly Tier-1 (DBT loans, India, salaries, Skatt); only Tier-2 deferrable is BDO Aug 15. Real trough likely ~−1.03M after PayPal-blank correction (Jun-30 snapshot understated ~150K).
+
+**Rollback:** DELETE recurring id 61; UPDATE id26 amount=14839.33; UPDATE id51 freq='monthly',amount=12500,quarter_months=NULL,day=15; UPDATE id10 amount=6250; DELETE scheduled 89,90,91,92.
+
+**Open items / TODO (carry to next run):**
+- [ ] **DELETE offsets 89 & 91 when a 2026-07-31 cash_position snapshot re-anchors the forecast to Aug 1** (they become out-of-window no-ops but should be cleaned to prevent a stale +145K inflow if the anchor ever rolls back). Cleanup note is in each row's description.
+- [ ] **Reconcile the deferred Lån 1 actual** when it debits early Aug (modeled 135,098.33; real historically ~131,851 → ~3.2K favorable). Disable sched 90 after the real payment lands.
+- [ ] **Refine Mangold quarter_months** (2,5,8,11 is a single-data-point inference) once the next quarterly invoice's timing is observed.
+- [ ] **id 26 interest declines** ~−400/mo with rak amortering (16,425 now → ~410 by 2029); acceptable near-term, revisit for long-horizon board views.
+- [ ] **Revenue override = 2.4 MSEK/mo** surfaced but not acted on; July actual net = 2,180,696 SEK for the 30 days in the forecast window (≈ matches). Offered CEO keep/adjust — pending.
+- [ ] **Jul-31 cash_position snapshot** not yet built (needs Padma India balance) — the whole August trough is ~150K pessimistic until it lands (blank PayPal on Jun-30). HIGH.
+
+### Post-mortem vs previous run (2026-07-10 Bambora recal + July India top-up)
+**Prior state:** Bambora id16 60K→46K; July India top-up id88; both re-reviewed 2026-07-21 PASS. Open: validate H2 India plugs vs Padma; June-30 snapshot blank-PayPal pessimism; extend forecast horizon.
+**This run:** targeted forecast-change session (DBT/Mangold/Cision), not a full EOM reconciliation — no forecast-vs-actual variance table. 
+**Drift/what happened:** the biggest structural miss surfaced — **DBT Lån 2 amortization (~50K/mo) was entirely unmodeled** since it started only Jul 31; now captured. Also confirmed the recurring DBT/loan block was ~invisible in the July bank actuals (only Lån 2 charged; Lån 1 deferred) — a real timing event, now modeled as a double-load in August.
+**Process gaps to close (carry forward):**
+- [ ] June-30 snapshot blank-PayPal (still open from 3 prior runs) → build the Jul-31 snapshot to fix August accuracy. Dominant open item.
+- [ ] Validate H2 India PLAN-H plugs (ids 74-80) + Diwali id 35 vs Padma's real plan (carried, unaddressed).
+- [ ] Full HTML session snapshot not generated (targeted session, per precedent 2026-07-07/07-10) — next full analysis should regenerate.
+
+## 2026-08-05: Goa get-together one-off + description de-bloat + India bonus flag
+- **Goa get-together (id 93 NEW scheduled):** 75,000 SEK one-off, 2026-08-15, "Company get-together Goa (Sep 2026)", is_inflow=false, category india, acct 7690. CEO 2026-08-05. 5-step: REVIEW 88/86 PASS, AUDIT 99/96 PASS. Standalone SEK cost; flagged to CEO to confirm not already inside Padma's India INR funding (id 88 Jul carried ~$8K workation prebook — July actual, no forecast double-count). Rollback: DELETE id 93.
+- **Description de-bloat (description-only, no 5-step):** CEO: descriptions "extremely much and cryptic". Rewrote 10 scheduled (81,82,86,75,76,77,79,80,87,88) + 1 recurring (35) from ~1,000-1,700 chars of PLAN-L/J/K supersede-chains down to ~180-340 char current-state summaries. **The supersede history now lives ONLY in this log** (PLAN-L/L2/L3/L4, PLAN-J/H/K) — descriptions point here. STILL BLOATED (not yet cleaned): id7 SEB Kort (2599), id1 Voxbone (1017), India advance-tax recurring 36/39/40/41/42/43 (~1350 ea, still carry MISLEADING "DISABLED PLAN-I" text though re-activated 2026-07-09), id33/52/18/60/16/etc.
+- **India Diwali bonus flag (id 35):** CEO "bonus payment in Oct seems considerably lower than it should be". Clarified: bonus is id35 = 4,000,000 INR ~= 400K SEK, fires **Nov 4** (NOT October; Oct 313K is variance-only id77). The old Oct note "4M INR=780K SEK" used a WRONG FX (~0.195; real ~0.10 → ~400K). PENDING CEO: correct bonus amount (400K/4M INR as-modeled vs ~780K/~8M INR) + month (Oct pre-Diwali vs Nov 4). Will update id35 via 5-step on his answer. This is the mandated October bonus-review, happening early.
+
+## 2026-08-05 (later) — Henrik utlägg-2890 50K actual paid (net-zero, NO agent gate)
+- CEO paid himself **50,000 SEK utlägg-2890 today (2026-08-05)**. Recorded as **scheduled id 94** (50K, 2026-08-05, is_inflow=false, category henrik, acct 2890) + **id 44 reduced 107K→57K** (soonest 2890 tranche, Aug 29) = net-zero pull-forward (total 2890 owed unchanged at 257K: id42 50 + id94 50 + id44 57 + id46 100). Mirrors the Jul-6 40K option-a. CEO confirmed "it is all in 2890 in the accounting".
+- **Process exception:** CEO rejected the reviewer-agent spawn + said "continue" → proceeded with self-verification only (no 2-reviewer/2-auditor gate), same as the 2026-07-10 precedent. Change is a simple net-zero 2-op; guard asserted id44=107000 before netting; post-commit read-back confirmed net-zero total 257,000. Rollback: DELETE id 94; UPDATE id 44 amount=107000.
+- **Assumption flagged:** net-zero (not additional-on-top). If CEO's total 2890 owed should DROP by 50K, keep id 94 and revert id 44 to 107000.
+
+## 2026-08-05 (later) — FIX: India tax cycle re-made visible (accidental half-revert of PLAN-E)
+- **Finding:** ids 36 (health ins), 39/40/41/42 (advance tax Q4/Q1/Q2/Q3), 43 (GST refund) were `is_internal_transfer=true` AND `enabled=true` (updated_at 2026-07-19) → engine (line 2753) skips internal transfers before the enabled check → **the entire India tax/insurance cycle was invisible to the forecast** since 2026-07-19. This silently re-created the exact bug PLAN-E (2026-07-09, audited 88/88) fixed. The 2026-07-19 flip is UNDOCUMENTED (that day's changelog is receipts + cash-position-timer only) — accidental half-revert (left enabled=true). ~4.85M INR (~486K SEK)/yr of India tax missing. Likely source of CEO "India seems off".
+- **Fix (CEO: 'Tax payments in India MUST be tracked'):** `UPDATE recurring_payment SET is_internal_transfer=false WHERE id IN (36,39,40,41,42,43)`. Re-applies PLAN-E. Plugs id75-80 exclude tax (no double-count); id36 Nov-2026 held net-zero by offset id87. Descriptions also de-bloated (~1350 -> ~130-220 chars).
+- **Verified in deployed forecast:** 2026-09-30 now fires id41 advance tax +160,141 SEK (outflow) + id43 GST refund -190,167 SEK (inflow) = ~+30K net inflow (matches PLAN-E's +30,437 prediction). Annual Nov/Dec/Jan/Jun entries beyond the 60-day window but armed.
+- **Process:** self-verified (no agent gate) per CEO directive + session pattern; re-applies an already-88/88-audited change. Rollback: SET is_internal_transfer=true WHERE id IN (36,39,40,41,42,43).
+- **FOLLOW-UP:** find what flipped them on 2026-07-19 (a deploy/migration/parallel session?) to prevent recurrence. Also still-bloated: id7 was cleaned; remaining >250-char recurring (33,52,18,60,16,53,27,57,58,59,4,50,49,48) not yet done.
+
+## 2026-08-05 (later still) — Revenue run-rate override 2.4 → 2.5 MSEK
+- **CEO question:** "We have 2.4 MSEK hard coded as run_rate for revenue. July was more like 2.7. Why was July so strong? What's the most likely run-rate going forward?"
+- **Change:** `cashflow_revenue_override_msek` **2.4 → 2.5**, applied via `POST /api/v1/cash-flow/forecast {"revenue_override_msek": 2.5}` (proper code path — `set_revenue_override`, cache-bust, INFO log — not raw SQL). Verified: POST + independent GET both `run_rate_daily 83333.33 / manual_override`; DB `2.500000 @ 2026-08-05 06:57:53`. Prior value had been frozen since 2026-06-09. **Rollback:** POST the same endpoint with `2.4`.
+- **Why July was 2.69 (not a new plateau):** (1) large-account timing — the ≥$100/mo bucket went $90,526 (Jun, lowest on record) → $111,081 (Jul, highest since Sep-25), i.e. **77% of the whole $26.5k USD MoM gain**; their 2-month average matches the Feb–Jul mean, so Jun/Jul simply offset. (2) one-day card-settlement batch **2026-07-17**, 204 KSEK vs ~80 KSEK norm (CC USD +$15,695 that day). (3) FX peak 9.675 vs 9.546 spot. (4) 31 days. Premium +21% MoM on +3% Premium customers = annual renewals landing, and Jul-2025 showed the same shape → July is seasonally strong, won't repeat Aug–Oct.
+- **Correction worth remembering:** my first pass told the CEO the business was declining 6–10% YoY and I haircut the forward rate by −3.4%. **He pushed back ("we just turned around the ARR decline") and he was right.** The −6–10% came from cash receipts measured against a Jun–Jul 2025 base inflated by the Skype wave (6,344 new paying in Apr-25 vs ~2–2.9k in Jan–Mar-25); that cohort's churn *is* the ARR slide from $2.93M (Nov) to $2.60M (Jun), and it has completed. **Daily** `arr_total` shows flat for 8 weeks (Jun 7 2,595,622 → Aug 3 2,601,081, +0.2%) — monthly averaging manufactured a fake "July trough". Lesson: **for ARR turns, always read the daily series; monthly averages lag the inflection by ~a month.**
+- **Forward basis:** trailing cash-basis months restated at spot FX 9.55 = Feb 2.42, Mar 2.60, Apr 2.63, May 2.57, Jun 2.36, Jul 2.66 → 6m avg **2.54**, 3m avg **2.53**. Subscriptions flat YoY (+2.4% Jul-on-Jul; 6m avg $180,537 vs $180,830); only usage erodes (−9.4% per half-year on ~17% of revenue ≈ −0.4%/quarter total). Central **2.53**, shipped **2.5** for conservative margin. Impact at 21.4% COGS: +~78.6 KSEK/mo net inflow, ~244 KSEK over the 93-day window.
+- **Why keep the override rather than free-run the model:** Best Estimate averages Two-Cohort + Rolling + Prior-Month-Actual; Prior-Month-Actual would anchor on July's 2.69 and swallow exactly the large-account timing noise isolated above.
+- **DATA BUG FOUND (open, affects the models):** `customer_monthly_revenue` under-reports **April 2026** — 15,874 customers / $244k vs ~18–19k in surrounding months, while the independent cash basis (email_metrics MTD) says April was normal at 2.56 MSEK. The ~2,300 missing rows are **all** <$100 accounts → looks like a partial PaymentAccount export. **Two-Cohort and Prior-Month-Actual both read this table**, so both run low for any window containing Apr-26. Fix via `analytics-intake` re-ingest.
+- **Review triggers:** stabilisation is only 8 weeks old — **re-test in September** before calling flat durable. Move off 2.5 if ARR breaks the 2.57–2.61M band either way, or SEK/USD moves >~3% from 9.55.
+- **Method note for next time:** three revenue bases disagree and the disagreement is informative — cash (`email_metrics` MTD, primary for a cash forecast), booked (`service_revenue_cogs`, for subscription-vs-usage mix), subscription base (`arr_*`). Normalise MTD months for day-count (series ends 1–2 days short of month end) and restate at a single FX before comparing.
+- Full write-up: `docs/investigations/2026-08-revenue-run-rate-review.md`; changelog `docs/changelogs/2026-08.md`.
+
+## 2026-08-05 (later) — ROOT CAUSE + durable fix of the India-tax-invisible regression
+- **Root cause found:** `scripts/deploy.sh` (lines 327-341) runs **EVERY** `run_migration_*.py` on **EVERY deploy** — no applied-tracking. `run_migration_078` Fix 2 then ran an UNCONDITIONAL `UPDATE recurring_payment SET is_internal_transfer=true WHERE recipient LIKE '%sonetel india%'`. ids 36/39-43 have recipient "Sonetel India" → flipped to true every deploy, reverting PLAN-E. (id 35 bonus survived: recipient "India Operations…", not matched.)
+- **Proven live:** my own changelog push (25b198ea) earlier today triggered a deploy that re-flipped 36-43 to true — caught it mid-session. Confirms the mechanism beyond doubt.
+- **Durable fix (committed 0b5a967b, deploys):** scoped 078 Fix 2 SELECT+UPDATE with `AND frequency <> 'annual'` → only marks the monthly intercompany book-entries (2/8/14/15); never touches the annual tax entries (36/39-43). Verified the scoped SELECT returns 0 rows to re-flip. Re-applied is_internal_transfer=false to 36-43. Monitoring the deploy to confirm they stay false.
+- **Broader fragility flagged:** deploy.sh re-running all migrations every deploy (no ledger) means ANY non-idempotent migration silently re-mutates prod. Recommended a separate CR to add a migrations-applied tracking table.
+- Spot-checked after the mid-session deploy: id35=3.5M, id93 Goa=75K, id94 utlagg=50K all intact (only the is_internal_transfer flag was reverted; seed script does NOT run on deploy).
+
+## 2026-08-05 (end) — description de-bloat COMPLETE + durable-fix confirmed
+- **Durable fix CONFIRMED:** after the 0b5a967b deploy ran the SCOPED 078, ids 36/39-43 remained is_internal_transfer=false (visible). The India tax cycle now survives deploys.
+- **Description cleanup finished:** cleaned the remaining 17 recurring lines (4,16,18,27,33,48,49,50,52,53,54,55,56,57,58,59,60) to concise current-state (kept amounts/channel-notes/VAT-basis, dropped CR-reference history). Combined with the earlier batches (~11 scheduled + id1/7/35/36/39-43), essentially all >250-char forecast descriptions are now readable. Only id35 remains ~371 (intentional: carries the 3.5M reduction rationale + Padma-Oct provisional note).
+- **Note:** id18 United Spaces amount 3,625 = 2,900 excl VAT x1.25 (consistent, not an error). id59 flags Anthropic should be 6540 not 4030 (pre-existing supplier-default issue, unchanged).
+
+## 2026-08-13 — BDO recurring id 20 kalibrerad mot budget (66,250 → 69,800 inkl moms)
+- **Underlag:** radspecificerad genomgång av 18 BDO-fakturor (dec-2024 → jul-2026), samtliga totaler avstämda mot Fortnox leverantörsreskontra. Rullande 12 mån (fakturadatum aug-25→jul-26) = **694,564 exkl / 868,204 inkl**. Steady state efter engångsposter ≈ **663,000 exkl / 829,000 inkl**. CEO uppgav BDO-budget 2026 = **670,000 SEK exkl** → 837,500 inkl / 12 = 69,792 → **69,800**.
+- **Change:** `UPDATE recurring_payment SET amount=69800 WHERE id=20 AND amount=66250` → `UPDATE 1`. Read-back bekräftar 69,800, day 28, konto 6530, supplier 15, enabled. Description omskriven till current-state (~340 tecken).
+- **Impact:** +3,550/mån. I 93-dagarsfönstret 3 firings (28 aug/sep/okt) = +10,650. Förvärrar aug 26–29-klustret med 3,550.
+- **Double-count kontrollerat:** endast id 20 på konto 6530 / supplier 15; enda framåtriktade scheduled är id 86 (125,904, 15 aug — den uppskjutna maj-fakturan, separat verklig räkning, inte dubblett).
+- **Process-undantag:** ingen 2-reviewer/2-auditor-spawn. Följer CEO-precedensen 2026-08-05 (avvisade agent-spawn för enkel ändring) + sessionens stående instruktion att inte spawna agenter utan begäran. Ändringen är ett enda amount-fält med amount-guard i WHERE och post-commit read-back. **Rollback:** `UPDATE recurring_payment SET amount=66250 WHERE id=20;`
+- **Revenue-override surfacad (mandat):** `cashflow_revenue_override_msek = 2.5`, satt 2026-08-05 efter full utredning. Oförändrad — inget skäl att röra 8 dagar senare. Nästa omprövning i september per det beslutets egen trigger.
+- **Öppen post stängd:** cash-flow-loggens 2026-07-07 följdfråga (a) — CEO frågade BDO om 46,280 Periodrapportering var befogad. **Ulrika Carlsson svarade 2026-07:** ca 18 tkr avser jämförelsetal per 250331. Ingen kreditering väntas → id 86 ligger kvar på 125,904. Följdfråga (b) (disable id 86 när augustibetalningen bekräftas) kvarstår.
+- **Ny insikt för framtida BDO-kalibrering:** jämförelsetalsbördan är en **engångspost på ~18 tkr som bara drabbar Q1 2026** — jämförelseperioderna 250630 och 250930 är redan framtagna och betalda under 2025. Löpande merkostnad för kvartalsrapportering i steady state ≈ 70–85 tkr/år. Största BDO-posten är inte rapporteringen utan löpande bokföring + periodavslut (~330 tkr under 2025 = 57 % av året).
+- **Ingen full HTML-sessionsnapshot** (riktad ändringssession, samma precedens som 2026-07-07/07-10/08-05).
+
+## 2026-08-14 — Momsåterbäring Q2 2026 modellerad + strukturell fix av id 48 (ingen agent-gate)
+
+**Trigger:** CEO lämnade in momsdeklarationen apr–jun 2026 (kvittens 20260814 145751), **moms att få tillbaka 151,774 SEK**, och frågade om återbäringen redan låg i prognosen.
+
+**Svar: delvis.** id 48 låg på **−100,000 SEK den 12 aug** — generisk mittpunkt, fel belopp, och på ett datum som redan passerat utan att något hänt på banken.
+
+**Två fel, det ena strukturellt:**
+
+1. **Augusti har förfallodag 17, inte 12.** Nordea SEK visar månadsskatt 2026-06-11 −69,659 och 2026-07-09 −69,653 men **ingenting i augusti t.o.m. den 13:e** — både arbetsgivardeklarationen för juli och kvartalsmomsen förfaller 17 augusti (Skatteverkets sommardatum). Modellen fyrade id 9 (70,741) + id 22 (8,107) den 12 aug mot en tom bank. Samma undantag gäller januari (17 jan).
+
+2. **Månadsskatten nettas mot momskrediten på skattekontot och lämnar aldrig banken en återbäringsmånad.** Verifierat mot maj 2026: ingen ~70K-debitering kring 12 maj, i stället **en enda BG INBETALNING +144,772.02 den 2026-05-19** = Q1-26-krediten 218,022 (konto 1650) minus månadsskatten. Samma delta stämmer varje observerat kvartal (Q1-25 173,078→98,554; Q2-25 185,080→25,207; Q3-25 247,189→167,558; Q4-25 207,833→46,142 ≈ kredit − ~70K − coronaanståndstranchen). Eftersom id 9 fyrar **varje** månad i modellen måste id 48 bära **bruttokrediten**, inte nettoutbetalningen. Som den låg dubbelräknades månadsskatten ~4 ggr/år (~280K/år i spökutflöde).
+
+**GL-serien som är den rätta källan:** konto **1650 "Fordran moms"** — positiv rad = kvartalskrediten, negativ rad = månaden den betalades ut. Q4-24 259,721 / Q1-25 173,078 / Q2-25 185,080 / Q3-25 247,189 / Q4-25 207,833 / Q1-26 218,022 / Q2-26 151,774 (deklarerad, ännu ej i SIE).
+
+**Ändringar (en atomisk transaktion):**
+- **id 48**: −100,000 → **−200,000**, dag 12 → **17**. Basis: 1650 rullande 4 kv = 206,205, 6 kv = 197,163 → 200,000. Dag 17 = median utbetalningsdag (14/16/19/20; femte obs dag 1 följde en kredit 30 april). Beskrivningen omskriven så att brutto-konventionen står explicit — en framtida session ska inte "rätta" tillbaka den till nettoutbetalningen.
+- **sched 96 NY**: +78,848 inflöde 2026-08-12 — annullerar id 9 + id 22 för augusti.
+- **sched 95 NY**: −200,000 utflöde 2026-08-17 — annullerar id 48:s augustifiring.
+- **sched 97 NY**: +74,012 inflöde **2026-08-24** = 151,774 − ~69,655 månadsskatt − 8,107 coronaanstånd. Datum = förfallodag 17 aug + de 7 dagars eftersläpning som observerades i maj-26 (12 maj kredit → 19 maj utbetalning).
+
+**Verifierat i deployad prognos:** 12 aug nettar till 0, 17 aug nettar till 0, 24 aug −74,012 inflöde. **Botten −1,010,058 (28 aug) → −957,198 (28 aug)**, dvs +52,860; 29 aug −943,865, 31 aug −817,198. Botten ligger fortfarande 7,198 under −950K-golvet och 26–28 aug-klustret är nästan uteslutande Tier 1 (Indien T3, Tomas, DBT ×2, löner, BDO).
+
+**Process:** ingen 2-reviewer/2-auditor-spawn (precedens 2026-08-05 / 2026-08-13 + sessionens stående instruktion). Beloppsguard i UPDATE (`WHERE id=48 AND amount=-100000` → `UPDATE 1`), read-back efter commit, samt omkörning av deployad prognos. **Rollback:** `UPDATE recurring_payment SET amount=-100000, day_of_month=12 WHERE id=48; DELETE FROM scheduled_payment WHERE id IN (95,96,97);`
+
+**Revenue-override surfacad (mandat):** `cashflow_revenue_override_msek` = 2.5 (satt 2026-08-05 efter full utredning). Oförändrad — nästa omprövning i september per det beslutets egen trigger.
+
+### Post-mortem vs föregående körning (2026-08-13, BDO id 20)
+
+1. **Vad sa förra körningen?** BDO kalibrerad 66,250 → 69,800; öppen post (b) "disable id 86 när augustibetalningen bekräftas" kvarstod. Ingen momsflagga restes.
+2. **Vad drev drift den här gången?** Ett fel som legat i modellen sedan PLAN-M (2026-05-20): id 48 satt till den *observerade bankutbetalningen* samtidigt som id 9 fyrade varje månad. Ingen tidigare körning korsläste utbetalningen mot GL 1650 — därför upptäcktes dubbelräkningen inte. Anticiperat av tidigare körning: **Nej.**
+3. **Rotorsak:** SKILL.md-noten "(8) Skatteverket konto netting" slog fast att id 48 och id 9 är oberoende flöden, byggt på ett *sammanträffande* i maj 2025 (+98,554 den 1 maj, −70,741 den 12 maj) där utbetalningen kom före månadsdebiteringen. Noten är nu markerad SUPERSEDED. Lärdom: när två poster påstås vara oberoende, verifiera mot **kontoutdraget i återbäringsmånaden** — frånvaron av en väntad debitering är lika mycket data som en närvarande.
+4. **Processluckor att stänga:**
+   - [ ] Justera sched 97 till faktiskt belopp/datum när utbetalningen landar, radera sedan 95/96.
+   - [ ] 17:e-undantaget (aug + jan) kan inte uttryckas i `recurring_payment` (ett enda day_of_month) — kräver samma scheduled-offset varje augusti och januari tills schemat stöder det. Kandidat för en riktig CR.
+   - [ ] Kvarstår från 2026-08-13: disable id 86 när augusti-BDO klarnar.
+   - [ ] Kvarstår sedan 2026-07: validera Indiens H2-plugs (74–80) + Diwali id 35 mot Padmas verkliga plan; id 77 okt-variansen 3,122,000 INR är fortfarande PROVISIONAL.
+   - [ ] Ingen HTML-sessionsnapshot (riktad ändringssession, samma precedens som 2026-07-07/07-10/08-05/08-13).
+5. **Framåt:** modellen är nu ~53K mindre pessimistisk i augusti och ~130K mindre pessimistisk per återbäringskvartal framåt (nov, feb). Augustibotten kvarstår strax under det operativa golvet — den drivs av Tier-1-poster, inte av momsen.
+
+### Samma session — Goa omtidsatt till Prashants tre trancher
+
+CEO vidarebefordrade Prashant (2026-08-05): *"For Goa.. yes, it is about 8K USD. 4K is to be paid next week and, 2K end of Aug (at check-in) and 2K in first week of Sept."* Modellen bar en klumpsumma 75,000 SEK 2026-08-15 (sched id 93, skapad 2026-08-05 innan uppdelningen var känd). Totalen stämmer (8,000 USD = 76,072 SEK @ 9.50895) — tidpunkten inte.
+
+- **id 93 disabled** (superseded, beskrivning annoterad).
+- **sched 98/99/100 NYA i USD** (auto-FX per betaldatum): 4,000 USD **2026-08-17**, 2,000 USD **2026-08-31** (check-in), 2,000 USD **2026-09-04**. Konto 7690, kategori india.
+- Tranche 1 daterad framåt eftersom den **inte syns i Nordea SEK eller USD t.o.m. 13 aug** trots att den skulle betalats "next week" räknat från 5 aug. Kvarstående kontroll: betalas Goa från Sverige eller ligger den redan i Indiens ordinarie INR-finansiering (T1/T2/T3 + id 75)? Prashants USD-notering pekar mot Sverige, men det är inte bekräftat.
+
+**Samlad likviditetseffekt av båda ändringarna:** augustibotten **−1,010,058 → −920,234 (2026-08-28)** — månaden bryter inte längre −950K-golvet (+52,860 från momsen, +36,964 från att flytta 75,000 SEK Goa-kostnad ut ur augustitoppen). **Nytt fokus: oktober −1,292,309 den 2026-10-30**, drivet av den fortfarande PROVISIONAL indiska oktobervariansen (id 77, 3,122,000 INR ≈ 311,905 SEK) den 26:e plus MOSS 206,000 den 30:e. Den pluggen behöver stämmas av mot Padmas verkliga plan — högsta öppna posten nu.
+
+**Infra-notering:** `/api/v1/cash-flow/forecast` timeoutade (>75 s, proxy-tak) under ca 20 minuter mitt i sessionen, samtidigt som nattjobben körde SIE-parse + daily-pulse. Ingen loggrad skrevs för de döda requesterna. Efteråt svarar den på 0,5–0,8 s med samma data. Inte orsakat av USD-raderna (testat isolerat). Om det återkommer: kolla om SIE/pulse-jobben kör innan man felsöker prognoskoden.
+
+### 2026-08-17 — Goa-kanalen bekräftad (beskrivningsändring, ingen 5-stegsprocess)
+
+CEO: *"Goa betalas från Sverige som extrabetalningar till Indien."* Därmed är sched 98/99/100 **additiva ovanpå** T1/T2/T3 + id 75 — ingen dubbelräkning, ingen beloppsändring behövs. Modellen var redan rätt; dubbelräkningsförbehållet är borttaget ur beskrivningarna på alla tre raderna.
+
+**Praktisk följd:** trancherna går sannolikt som USD-SWIFT till Sonetel Software Services, samma kanal som Padmas tranche-betalningar. Bankavstämningen kan därför binda dem till en India-recurring i stället för till 98/99/100 (samma matcher-begränsning som är dokumenterad för supplier_id=92) — stäm av manuellt när de landar.
+
+**Kvar att kontrollera:** tranche 1 (4,000 USD) var daterad 2026-08-17 och hade inte synts i Nordea SEK/USD t.o.m. 13 aug. Verifiera mot nästa CSV-dragning att den gått, annars flytta datumet.
+
+### 2026-08-17 — Alla framtida återbetalningar till Henrik borttagna ur modellen
+
+**CEO:** *"Vi låter modellen ligga utan återbetalningar till mig. Skulden är för övrigt större eftersom jag under tidigare delen av året inte tog ersättning för utlägg. Senaste SIE-filen visar storleken i juni."*
+
+**Ändring:** `UPDATE scheduled_payment SET enabled=false WHERE id IN (44,46,81,82)` → **UPDATE 4**. Borttaget: 81 (43,000 / 15 aug), 44 (57,000 / 29 aug), 46 (100,000 / 30 sep), 82 (167,000 / 15 okt) = **367,000 SEK**. Kvar aktiv: id 94 (50,000, faktiskt betald 5 aug) — historik, ska ligga kvar. Beskrivningarna annoterade med att skulden kvarstår på 2890 men saknar betaldatum.
+
+**id 81 obs:** daterad 15 aug, dvs passerad. Bankdata fanns bara t.o.m. 13 aug, så det går inte att se om den gick. Disablad enligt CEO:s "utan återbetalningar" — **om den faktiskt betalades ska den återaktiveras som faktisk post.**
+
+**Verifierat i deployad prognos:** botten **−1,292,309 (30 okt) → −971,485 (30 okt)**. Augusti: 28 aug −928,209, 31 aug −750,227. 15 okt vänder positivt (+13,719).
+
+**Skillnad mot scenariot jag räknade 15 aug** (−925,309): ~46K sämre, och det är **inte** en modellförsämring — 14–15 aug bytte från estimat till faktiskt utfall (51,352 + 36,195 = 87,547 mot estimatets 140,667). 15 aug var en lördag; modellen fördelar intäkten platt 70,333/dag medan PSP-settlements inte landar på helger. Jämnar ut sig i början av veckan. **Lärdom: jämför aldrig ett scenario räknat på estimatdagar med en körning där samma dagar hunnit bli faktiska — helgeffekten ser ut som drift.**
+
+**Skuldens verkliga storlek — konto 2890 (SIE t.o.m. juni 2026):** löpande saldo **−691,753 SEK per 2026-06-30** (kreditsaldo = bolaget är skyldigt Henrik). Modellen hade planerat att betala tillbaka 257,000 — dvs skulden är **~435,000 större än vad modellen hanterade**, och nu ligger noll av den inplanerad. Metod: `SUM(amount) OVER (ORDER BY period)` på `sie_monthly_balances`; verifierat att `amount` är periodrörelse och inte UB genom att `SUM(amount)` per period = 0 (dubbel bokföring går ihop). Serien börjar 202307.
+
+**Öppet:** 2890 kan innehålla både utlägg och lån — konto 2893 har inga SIE-rader, så lånedelen syns inte separat i 28xx (2820 −34,229 och 2899 −136,584 hör till Tomas/övriga). Kräver verifikatnivå i Fortnox för att dela upp. Juli–augusti är inte med i −691,753, så den faktiska skulden idag är högre.
+
+**Rollback:** `UPDATE scheduled_payment SET enabled=true WHERE id IN (44,46,81,82);`
+
+### 2026-08-17 (senare) — FAKTISK India-överföring 3 aug 25,917 USD saknades helt i modellen
+
+**CEO:** *"Jag betalade 25 KUSD istället för minimum 15 KUSD i början av aug till Indien, så de har kunnat betala första betalning 15 aug från det."*
+
+**Bankfakta (Nordea USD 214 72 33-7) — verkliga SWIFT till SONETEL SOFTWARE SERVICES PVT LTD:**
+
+| Datum | USD | Meddelande |
+|---|---:|---|
+| 2026-07-02 | 13,044 | INVOICE 20260002 |
+| 2026-07-09 | 10,000 | INVOICE 20260003 |
+| 2026-07-16 | 25,000 | INVOICE 20260003 |
+| 2026-07-27 | 50,000 | 50 000 USD FOR INVOICE 20… |
+| **2026-08-03** | **25,917** | 25917 USD FOR INVOICE 202… |
+
+Juli totalt 98,044 USD (mot Padmas estimat 110,917 — id 88 låg på 17,339 som top-up; **avstäm juli separat**). Augusti: 25,917 USD den 3:e.
+
+**Felet:** modellen hade **noll India-utflöde i början av augusti** — hela månaden låg som INR-trancher T1 (18:e), T2 (24:e), T3 (26:e) + id 75. Ett faktiskt utflöde på 246,395 SEK saknades, och de kommande firings skulle dubbelräkna det.
+
+**Ändring (samma konvention som PLAN-G/J: verklig USD-SWIFT + avräkningsoffset mot INR-basen):**
+- **sched 101 NY** — 25,917 USD utflöde 2026-08-03 (faktisk).
+- **sched 102 NY** — 6,619 USD inflöde 2026-08-18 (avräknar T1 630,000 INR ≈ 62,940 SEK).
+- **sched 103 NY** — 15,298 USD inflöde 2026-08-24 (avräknar del av T2).
+- **id 98 disabled** — Goa-tranche 1 (4,000 USD) betalades av Indien ur överskottet i 3 aug-överföringen; ingen separat svensk utbetalning.
+
+**Varför offset = 21,917 och inte 25,917:** Goa är EXTRA ovanpå ordinarie finansiering. Av de 25,917 är 4,000 Goa-tranche 1, resterande 21,917 ordinarie India-finansiering som ska avräknas mot T1/T2. Verifierat: India+Goa augusti totalt = **894,131 SEK** ≈ ordinarie 838,907 + Goa t1 38,036 + Goa t2 19,018 = 895,961 (diff ~1,8K = FX-drift mellan USD-offsets och INR-firings, acceptabelt).
+
+**Effekt:** månadstotalen oförändrad, bara tidpunkten rätt. Botten **−971,485 → −971,709 (30 okt)**, augusti −928,209 → −928,525 — dvs i praktiken oförändrat. Men 3 aug visar nu det verkliga saldot −628,143 i stället för ett för optimistiskt, och 18/24 aug nettar ner.
+
+**Lärdom (generell):** India-finansieringen sker i praktiken som **USD-SWIFT i klumpar** (1–4 per månad, oregelbundna datum), inte som de tre INR-trancher modellen bär. INR-basen T1/T2/T3 är en *fördelningsmodell*, inte en betalningsplan. **Varje cash-flow-session bör läsa USD-kontots SWIFT-rader mot Sonetel Software Services för innevarande månad och avräkna mot INR-basen** — annars ligger hela månadens India-utflöde systematiskt för sent i prognosen. Sökmönster: `Namn = SONETEL SOFTWARE SERVICES PVT LTD` i `PLUSGIROKONTO FTG 214 72 33-7`.
+
+**Öppet:** täcker överskottet i 3 aug-överföringen även Goa-tranche 2 (2,000 USD, 31 aug) och 3 (2,000 USD, 4 sep)? CEO nämnde bara första betalningen. Om ja → disabla 99/100. Fråga ställd.
+
+**Rollback:** `DELETE FROM scheduled_payment WHERE id IN (101,102,103); UPDATE scheduled_payment SET enabled=true WHERE id=98;`
+
+### 2026-08-17 (rättelse) — India-ändringen backad på CEO:s order; ny styrande princip
+
+**CEO:** *"Ändra inte Indien för augusti! Det jämnar ut sig. Onödigt att komplicera modellen med en massa clutter."* och *"Viktigast är att totalerna för månaden är rätt. Vi behöver inte tracka varje betalning."*
+
+**Backat:** `DELETE scheduled_payment 101,102,103` + `id 98 enabled=true` (beskrivningsannoteringen borttagen). Modellen är tillbaka i läget före India-ändringen. Verifierat: botten **−971,351 (30 okt)**, 28 aug −928,167, 31 aug −750,185.
+
+**Mätningen som gav honom rätt:** hela korrigeringen — tre extra rader — flyttade bottennivån **224 SEK** (−971,485 → −971,709). Kostnaden var permanent underhållsbörda för noll beslutsvärde.
+
+**Ny styrande princip införd i SKILL.md** ("Månadstotalen är kontraktet — inte varje betalning"): flytta inte poster inom en månad när nettoeffekten är noll. Gör det bara när tidpunkten avgör om −950K-golvet eller 1 MSEK-krediten bryts på ett specifikt datum. Testet: *ändrar det bottennivån, eller vilken dag den infaller, på ett sätt som betyder något operativt?*
+
+**Vad jag gjorde fel:** jag hade bankfakta (25,917 USD den 3 aug saknades i modellen) och behandlade "modellen avviker från verkligheten" som automatiskt = "modellen ska ändras". Rätt fråga var: *påverkar avvikelsen månadstotalen eller ett beslut?* Svaret var nej på båda. Skillnaden mellan en **observation** (hör hemma i log.md) och en **modelländring** (hör hemma i databasen) var det jag missade. Bevarad observation: India finansieras som oregelbundna USD-klumpar 1–4 ggr/månad (jul: 13,044 + 10,000 + 25,000 + 50,000 = 98,044; aug hittills 25,917), inte som INR-trancherna T1/T2/T3 — som är en **fördelningsmodell, inte en betalningsplan**. Kvarstår som ett **total-nivåfel värt att stämma av**: juli faktiskt 98,044 USD mot Padmas estimat 110,917.
+
+### 2026-08-17 (efterskrift) — parallell session normaliserade intäkten per kalendermånad; ALLA siffror ovan är stale
+
+Commit **6d82ca8f** (parallell session, deployad under den här sessionen) rättade en verklig överskattning: modellen bokade `run_rate/30` per kalenderdag utan att kapa 31-dagarsmånader tillbaka till 30 → +583,333 SEK/år brutto. Dag 31 har nu vikt 0,5 och varje månad summerar exakt till run-raten.
+
+**Reviderade nivåer efter fixen (samma modellinnehåll som ovan):**
+
+| | Före 6d82ca8f | Efter |
+|---|---:|---:|
+| 28 aug | −928,167 | **−981,185** |
+| 31 aug | −750,185 | −841,252 |
+| 30 okt (botten) | −971,351 | **−1,097,008** |
+
+**Konsekvens för slutsatserna i den här loggposten:** augusti bryter det operativa golvet −950K igen (−981,185 den 28:e), och oktober bryter **checkkrediten 1 MSEK med ~97K**. Det jag skrev tidigare idag — att augusti klarade golvet — gäller inte längre.
+
+**Processlärdom:** två sessioner arbetade i samma modell samtidigt och den ena ändrade beräkningsgrunden under den andra. Jag upptäckte det bara för att changelogfilen ändrades under mig. Ingen mekanism varnade. Detta är samma grundproblem som total-driften: **det finns ingen kanal som pushar en förändring till den som behöver veta.** Argument för att driftrapporten ska skriva ett persistent underlag som varje session läser vid start, inte bara maila CEO.
+
+### 2026-08-17 (senare) — OpenRouter id 27 kalibrerad 50,000 → 20,000; kalibreringskontrollen hade ett blindhål
+
+**CEO:** *"Openrouter 50 000 SEK finns månatligen. Stämmer det verkligen? Vi har väl flyttat teamet till Claude Code och minskat OpenRouter mycket."* Instinkten var rätt.
+
+**Underlag — faktiskt utfall i utläggsbatcharna (`transactions` join `transaction_batches` där `file_type ILIKE '%expense%'`):**
+
+| Månad | OpenRouter | Anthropic/Claude |
+|---|---:|---:|
+| apr-26 | 14,749 (Tomas) | 19,207 (Tomas) |
+| maj-26 | 17,093 (Tomas 14,594 + Henrik 2,499) | — |
+| jun-26 | 15,212 (Tomas) | 1,993 (Henrik) |
+| jul-26 | — (batch saknas) | 4,080 (Henrik) |
+| aug-26 | 15,092 (Tomas) | — |
+
+OpenRouter är **stabilt ~15,000/mån**. Modellen bar 50,000 — aldrig kalibrerad sedan raden skapades.
+
+**Kontroll på totalnivå innan ändring** (per principen "månadstotalen är kontraktet"): konto 6540 modellerades av id 7 (100,000) + id 27 (50,000) + id 3 AWS (2,000) = **152,000** mot bokfört **124,906** (12 mån) och **111,392** (apr–jun). Kontot var övermodellerat 27–40K/mån.
+
+**Ändring:** id 27 → **20,000**, omdöpt "Openrouter + AI-verktyg via utlägg". 15,000 OpenRouter + ~5,000/mån för de Anthropic/Claude-poster som också bokförs på 6540 via utlägg men saknar egen modellrad (2026 jan–jul 49,101 totalt; mar/apr 20K/19K ser ut som ikapp-bokning). Ny modellsumma 6540 = **122,000**, mellan 12-månaderssnittet 124,906 och senaste kvartalets 111,392. Amount-guard `WHERE id=27 AND amount=50000` → `UPDATE 1`. **Rollback:** `UPDATE recurring_payment SET amount=50000 WHERE id=27;`
+
+**Effekt:** −30,000/mån. Botten −1,186,923 → **−1,025,062** (30 okt), 28 aug −1,019,221 → **−952,732**. (Del av förbättringen kommer från parallella ändringar, se nedan.)
+
+**VARNING inför nästa kalibrering:** SIE går bara till juni. Om teamets Claude Code-platser rampat upp efter det landar de på 6540 — antingen via utlägg (den här raden) eller på SEB-kortet (id 7). Ompröva när jul/aug-SIE finns.
+
+### Blindhål i calibration_check.sql — rättat
+
+Kontroll 1 krävde att avvikelsen översteg 10K på **både** inkl- och exkl-moms-vyn (`AND`). Konto 6540 domineras av omvänd skattskyldighet (OpenRouter US, AWS Irland) och bär alltså **ingen svensk moms** — den exkl-vyn visade bara −3,306 och kontot slank igenom trots 27–40K verklig glidning. **Ändrat till `OR`.** Fler falska positiva är priset; agenten tillämpar momsregeln vid genomgången. Detta är kontrollens första självrättelse och exakt vad en genomgång ska producera.
+
+**Fortsatt observation om parallella sessioner:** bottennivån rörde sig ytterligare ~72K från ändringar jag inte gjort medan detta pågick. Fjärde gången i dag.
+
+### 2026-08-17 (senare) — SEB-kortet dekomponerat mot faktiska kortrader; totalen stämde, FÖRDELNINGEN var fel
+
+**CEO:** *"Kolla SEB-kortet för juli och tidigare. Har inte Tomas någon Anthropic-kostnad?"*
+
+**Datakällan som inte använts tidigare:** `transaction_batches.file_type='credit_card'` innehåller **radspecificerade kortköp** från SEB-fakturan, 2025-08 → 2026-07. Tidigare sessioner har skrivit i SKILL.md att "endast SEB Kort-fakturan visar uppdelningen" och behandlat id 7 som en svart låda. **Den låg i databasen hela tiden.**
+
+**Svar på frågan om Tomas:** nej. Tomas har **en enda** Anthropic-post i utläggsrapporterna — april 2026, 19,207 SEK. Inget sedan dess. Teamets Claude-kostnad ligger på **företagskortet**, och den **sjunker**: maj 14,191 → juni 10,221 → juli 7,636. (Henrik har 1,993 i juni och 4,080 i juli via egna utlägg.)
+
+**Kortets faktiska sammansättning, snitt maj–juli 2026, mot modellen:**
+
+| Kategori | Faktiskt/mån | Modellerat | Avvikelse |
+|---|---:|---:|---:|
+| META annons (5991) | 50,789 | } | |
+| Övrig SaaS/resa (6540/5800) | 55,162 | } id 7 = 100,000 | **−16,634** |
+| Anthropic/Claude dev (6540) | 10,683 | } | |
+| Awin (4020) — id 57 | 12,984 | 30,000 | **+17,016** |
+| AI-produktion (4030) — id 59 | 11,941 | 25,000 | **+13,059** |
+| SMS (4021) — id 58 | 9,599 | 7,000 | −2,599 |
+| **Summa** | **151,158** | **162,000** | +10,842 |
+
+**Kortets TOTAL var alltså nästan rätt — fördelningen var kraftigt fel.** Och fördelningen spelar roll trots "totalen är kontraktet"-principen, av en icke-uppenbar anledning: ids 57/58/59 ligger på 4xxx-konton och ingår i `tracked_cogs_monthly`, som dras från `full_cogs_percent`. Övermodellerad tracked COGS ⇒ **undermodellerad effektiv COGS** ⇒ för generös intäktsnettning. Detta är undantaget från totalprincipen: **när en post ligger i COGS-bandet påverkar dess storlek intäktssidan, inte bara utgiftssidan.**
+
+**Ändring (fyra rader, en transaktion, alla med amount-guard):** id 7 100,000 → **117,000**; id 57 30,000 → **13,000**; id 58 7,000 → **9,600**; id 59 25,000 → **12,000**. Summa 151,600 mot faktiska 151,158.
+
+**Effekt — prognosen blev SÄMRE:** `tracked_cogs` 145,205 → 117,805, tracked% 5,8 → 4,7, **effektiv COGS 15,6 % → 16,7 %**. Botten **−1,025,062 → −1,074,155** (30 okt), 28 aug −952,732 → −965,822. OpenRouter-fixen gav +160K, den här tog tillbaka ~49K.
+
+**Rollback:** `UPDATE recurring_payment SET amount=100000 WHERE id=7; UPDATE recurring_payment SET amount=30000 WHERE id=57; UPDATE recurring_payment SET amount=7000 WHERE id=58; UPDATE recurring_payment SET amount=25000 WHERE id=59;`
+
+**META-noteringen i SKILL.md är föråldrad och farlig.** Kalibreringsregistret säger "META declining fast (Nov 150K → Mar 34K → Apr 6K)" och drar slutsatsen att id 7 kan sänkas till 150K. **META ligger på ~50,789/mån maj–juli 2026** — den har rampat tillbaka och är kortets enskilt största post. Slutsatsen i registret pekar åt fel håll.
+
+**Ny kontroll att lägga till i calibration_check.sql:** kortraderna finns i `transactions` och kan dekomponeras mot ids 7/57/58/59 automatiskt. Det är den enda modellpost där en per-vendor-uppdelning ÄR motiverad, eftersom COGS-bandet gör fördelningen kassaflödespåverkande.
+
+### 2026-08-17 (avslut) — CEO bekräftar nettningen; id 48:s bruttokonvention står
+
+**CEO:** *"Jag tror du har rätt, de 70 K dras av från momsåterbäringen, så att vi får ut nettot."*
+
+Därmed stängd: den enda öppna risken i dagens utgiftsändringar. Fördubblingen av id 48 (−100,000 → −200,000/kvartal, +400,000/år) vilade på att månadsskatten (id 9, 70,741) nettas mot momskrediten på skattekontot och aldrig lämnar banken en återbäringsmånad. Jag hade verifierat det direkt i **en** månad (maj 2026: ingen ~70K-debitering kring den 12:e, en enda BG INBETALNING +144,772 den 19:e) och inferrerat resten ur utbetalningssiffror i SKILL.md skrivna av tidigare sessioner. Konto 1630 kunde inte avgöra saken — BDO nollställer skattekontot varje period. CEO bekräftade i stället direkt.
+
+**Konsekvens:** id 48 ska bära BRUTTOkrediten så länge id 9 fyrar varje månad. Sätts den till den observerade bankutbetalningen dubbelräknas månadsskatten ~4 ggr/år (~280K/år i spökutflöde). Bekräftelsen är inskriven i radens beskrivning OCH i SKILL.md så att den inte rivs upp igen.
+
+**Beloppets grund står också:** konto 1650 senaste fyra kvartalen 247,189 + 207,833 + 218,022 + 151,774 = 824,818/år = 206,205/kvartal. 200,000 ligger strax under faktiskt utfall. Augusti använder inte siffran (firingen annullerad, deklarerad nettoutbetalning 74,012 bokad i stället) — den slår till först i november, som avser Q3, historiskt starkaste kvartalet.
+
+**Kvar öppet efter dagens genomgång:** ändringslogg saknas helt (ingen historik-/audittabell; 7 av 56 aktiva rader har daterad motivering; `updated_at` opålitlig som proxy eftersom omdöpningar rör den). CR för `forecast_change_log` + trigger + `app.change_basis` erbjuden, ej beställd.

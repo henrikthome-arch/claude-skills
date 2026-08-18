@@ -260,6 +260,31 @@ Reference: see `~/.claude/skills/cash-flow/snapshots/2026-05-09-cashflow.html` f
 
 ---
 
+## MANDATORY rule — surface the revenue run-rate override EVERY session (CEO 2026-06-03)
+
+**The forecast's revenue run-rate can be a hardcoded manual override (`business_parameters.cashflow_revenue_override_msek`, in MSEK/month) that does NOT self-update. A stale override silently makes the whole forecast optimistic or pessimistic. Every session, the skill MUST surface the current override and ask the user whether to keep / change / remove it — do not let it sit unexamined.**
+
+**At session start (or whenever doing forecast work), run:**
+```sql
+SELECT parameter_value FROM business_parameters WHERE parameter_name = 'cashflow_revenue_override_msek';
+```
+- **If set (> 0):** the forecast is on a STATIC manual run-rate. Compute the **prior-month actual** for comparison and present BOTH to the user, then ask: **keep / change / remove (→ auto Best Estimate model)?**
+- **If 0 / absent:** the forecast uses the auto "Best Estimate" model (avg of two-cohort ARR forecast + rolling trailing avg + prior-month actual, FX-repriced each run). Note this and move on.
+
+**Default base = the prior month's actual revenue.** Per CEO 2026-06-03: *"Using prior months level as a base is usually a good idea."* Compute it from the same source the auto model uses:
+```sql
+SELECT SUM(net_revenue_usd) AS prior_month_net_usd
+FROM customer_monthly_revenue
+WHERE period = date_trunc('month', CURRENT_DATE) - interval '1 month';
+```
+Convert to SEK at the current Riksbanken USD/SEK (`currency_rates_daily`, latest ≤ today). That SEK/month figure is the recommended override value (round lightly, no bias). **Revenue is USD-denominated, so a fixed-SEK override is FX-blind** — if USD/SEK has moved materially since it was last set, the override drifts; flag that, or recommend clearing to the auto model which re-prices FX.
+
+**Reference (2026-06-03 baseline):** May 2026 actual = 272,213 USD ≈ 2.52 MSEK @ 9.25; 7-month avg (Nov 2025–May 2026) also ~2.52 MSEK; range 2.42–2.61. Override was 2.6 (top of range) → reset to **2.52** (May / prior-month base). `customer_monthly_revenue.net_revenue_usd` is the authoritative top-line basis (NOT `service_revenue_cogs`, which is usage-only and excludes subscriptions ~2.1 MSEK).
+
+**Changing the override is a `business_parameters cashflow_*` change → full 5-step process.** Removing it (set to 0 / delete) to hand control to the auto model is ALSO a 5-step change. The COGS interaction is subtle: `effective_cogs_percent = full − tracked%` where `tracked% = tracked_cogs_monthly / (run_rate × 30)`, so lowering the run-rate RAISES tracked% and slightly LOWERS effective COGS — net inflow is not a clean linear scale of gross. Always re-run the forecast and read actual output rather than hand-computing the impact.
+
+---
+
 ## India — ALL entries (canonical reference, check FIRST before any India-related work)
 
 **Before proposing any India-related forecast change, query the FULL set of India entries below. Don't reason from partial knowledge.**
@@ -366,6 +391,13 @@ If the current session date is between **2026-10-01 and 2026-10-25** (and equiva
 
 Multiple recurring rows now share `supplier_id=92` (Sonetel Software services pvt ltd): ids 35 (annual bonus), 54 (T1 vendor), 55 (T2 statutory), 56 (T3 salaries). When the matcher (`_match_outflows`) sees a Plusgiro SWIFT, it picks the FIRST recurring row matching an alias — nondeterministic across Python dict iterations. The bonus SWIFT may bind to id 54/55/56 instead of id 35. Post-event manual reconciliation is the safest path until matcher gets amount-tolerance disambiguation.
 
+**Wider than supplier 92, and worse than "nondeterministic" (verified in code 2026-08-17, `bank_reconciliation_service.py` `auto_match_outflows`).** The matcher takes the first alias-matching recurring row and applies **no due-month filter and no amount check**. Consequences to expect on ANY supplier with more than one recurring row:
+
+- Every bank line for that supplier collapses onto a single row. All 13 DBT lines Jan–Jul 2026 (supplier 134, rows 24/25/26/61) bound to **id 25**, regardless of whether the line was 16K or 137K.
+- A row **not due in that month** can absorb a payment. July's India USD transfers bound to **id 63** — *"health insurance refund 1 of 2"*, an annual INR row due in January. Nothing health-insurance-related happened in July.
+
+**Therefore: `matched_payment_id` is a hint, not an attribution.** Never read a matched row's delta as a forecast variance, and never quote "actual vs forecast" per vendor off the matcher alone — verify by amount and date against the specific rows first. Two of three "findings" reported to the CEO on 2026-08-17 were the matcher's output taken at face value; both were wrong.
+
 ### CRITICAL rule — enumerate before changing
 
 **Before proposing any forecast change related to India (or any other topic):**
@@ -420,12 +452,19 @@ id 60 EU VAT inflow monthly day 1 ~-68,667 each:
 - Quarter nets to 0; intra-quarter ~206K float on our Nordea
 ```
 
-### id 48 Swedish input VAT refund (corrected 2026-05-20)
+### id 48 Swedish input VAT refund (recalibrated 2026-08-14 — read the netting rule below)
 
-- Frequency: quarterly, quarter_months='2,5,8,11', day=12
-- Amount: -100,000 SEK (midpoint; varies 25-170K)
-- Fires: Feb 12, May 12, Aug 12, Nov 12
-- Represents NET Swedish refund (input VAT we paid on Swedish supplier invoices MINUS output VAT collected on domestic Swedish sales)
+- Frequency: quarterly, quarter_months='2,5,8,11', day=**17**
+- Amount: **-200,000 SEK** = the GROSS moms credit, NOT the net bank payout
+- Fires: Feb 17, May 17, Aug 17, Nov 17
+- Basis: GL account **1650 "Fordran moms"** carries the quarterly credit exactly. Series: Q4-24 259,721 / Q1-25 173,078 / Q2-25 185,080 / Q3-25 247,189 / Q4-25 207,833 / Q1-26 218,022 / Q2-26 151,774 (declared). Trailing-4 avg 206,205, trailing-6 197,163 → 200,000. Day 17 = median observed payout day (14/16/19/20).
+- To read the current quarter's real number: `SELECT period, amount FROM sie_monthly_balances WHERE account_number='1650' ORDER BY period` — the positive row is the credit, the negative row the month it was paid out.
+
+**BEKRÄFTAD AV CEO 2026-08-17:** *"de 70 K dras av från momsåterbäringen, så att vi får ut nettot"*. Nettningen är därmed inte längre ett antagande utan ett fastställt faktum — den behöver inte verifieras om, och id 48:s bruttokonvention ska inte ifrågasättas på nytt.
+
+**CRITICAL — why GROSS and not net (learned 2026-08-14, CEO-confirmed 2026-08-17):** the monthly Skatteverket debit (id 9, ~70K) is **netted against the VAT credit on the skattekonto and never leaves the bank in a refund month.** Verified: no ~70K debit around May 12 2026; instead one `BG INBETALNING +144,772.02` on 2026-05-19 = Q1-26 credit 218,022 − monthly tax. Same delta reconciles every observed quarter. Since id 9 fires in the model *every* month, id 48 must carry the gross credit so the arithmetic nets correctly. **Do NOT "correct" id 48 back to the observed bank payout — that double-counts the monthly tax ~4×/year (~280K/yr of phantom outflow).** This supersedes the note at "(8) Skatteverket konto netting" further down, which read the May-2025 coincidence as two independent flows.
+
+**Deadline exception — August and January are the 17th, not the 12th.** Both the arbetsgivardeklaration and the quarterly VAT return fall due 12 Feb / 12 May / **17 Aug** / 12 Nov, and 17 Jan for December's payroll. `recurring_payment` has a single `day_of_month`, so id 9 (day 12) fires 5 days early in August and January. Model it with a scheduled inflow offset for that month (see scheduled 96, 2026-08-12, +78,848) — and expect the bank to show *nothing* from Skatteverket before the 17th in those months.
 
 ### What's still asymmetric
 
@@ -535,6 +574,151 @@ Always look at the **SEB Kort invoice details** (not SIE aggregates) for true pe
 
 ---
 
+## Ändringslogg — OBLIGATORISK vid varje forecast-ändring (CR-2026-08-17)
+
+**Databasen avvisar varje skrivning till `recurring_payment` och `scheduled_payment` som saknar motivering och avsändare.** Det är inte en konvention utan en trigger. Motiveringen måste vara minst 20 tecken och beskriva underlaget — källa, siffror, datum.
+
+### Läs radens historik INNAN du ändrar den
+
+```sql
+SELECT datum, actor, operation, changed_fields, fran_belopp, till_belopp, basis
+FROM forecast_row_history
+WHERE table_name = 'recurring_payment' AND row_id = 27
+ORDER BY datum DESC;
+```
+
+Det här steget är inte valfritt. id 27 (OpenRouter) bar 50 000 SEK/mån i månader därför att ingen såg att siffran aldrig haft ett underlag — den kostade ~420 000/år i övermodellering. Historiken svarar på "vad byggde den här posten på" innan du lägger till en ny gissning ovanpå en gammal.
+
+### Beloppsändringar kräver en NAMNGIVEN GODKÄNNARE (CEO 2026-08-18)
+
+CEO på frågan om varje ändring ska bära ett namn på vem som godkänt: *"Ja — ändring av belopp i cashflow forecast."* Och på frågan om kanal: *"Jag vill ta det här via dialog med dig."*
+
+**Scopet är pengar.** Ett ändrat belopp, en ny betalningsrad, en borttagen rad → godkännare krävs. En beskrivningsrättelse eller ett omdöpt mottagarnamn → krävs inte. Databasen avvisar det första utan `app.change_approved_by`.
+
+**Vad som räknas som godkännande:** ett uttryckligt ja i tråden. Inte tystnad. Inte min tolkning av sammanhanget. Och uttryckligen **inte** automatiska systemnotiser — flera i den här sessionen var formulerade så att de kunde läsas som bekräftelse, och de är det aldrig.
+
+**Motiveringen ska citera godkännandet ORDAGRANT.** Inte "godkänt av Henrik" utan hans faktiska ord. Då kan han läsa loggen mot sitt eget minne av samtalet i stället för mot min sammanfattning av det.
+
+**Var ärlig om vad detta är.** Godkännandet sker i dialog, inte i portalen, så mekanismen är ingen grind — jag kan fylla i fältet utan att ha frågat. Vad den gör är att göra tystnad omöjlig: en beloppsändring utan namngiven godkännare går inte att skriva, så en utelämning blir ett aktivt påstående i stället för en tyst underlåtelse.
+
+### Mall för ändring via dbshell — använd exakt denna
+
+```sql
+\set ON_ERROR_STOP on
+BEGIN;
+SELECT set_config('app.change_basis', $$Basis 2026-08-18: <källa, siffror, datum>. Godkänt av Henrik: "<hans ord ordagrant>".$$, true),
+       set_config('app.change_actor', $$claude/cash-flow-session$$, true),
+       set_config('app.change_approved_by', $$Henrik Thome$$, true);
+UPDATE recurring_payment SET amount = 20000 WHERE id = 27 AND amount = 50000;
+COMMIT;
+```
+
+Utelämna `app.change_approved_by` för rena beskrivningsändringar — då slipper de kravet.
+
+Tre detaljer som är nödvändiga, inte kosmetiska:
+
+- **`\set ON_ERROR_STOP on`** — utan den rullar psql tillbaka vid fel och **returnerar ändå exit-kod 0**. Eftersom varje glömd eller för kort motivering nu avbryter transaktionen är tysta no-ops en realistisk risk. **Kontrollera alltid att utdata innehåller `COMMIT` och inte `ROLLBACK`.**
+- **Dollar-citering `$$...$$`** runt motiveringen — svenska motiveringar innehåller apostrofer ("Jennifers underlag", "Henrik's AMEX") och enkla citattecken ger syntaxfel.
+- **Enradsändringar kan köras som `dbshell "sats1; sats2"`** — `psql -c` kör flera satser som en enda implicit transaktion, så `BEGIN`/`COMMIT` behövs inte där.
+
+### Motiveringen ÄR planens "Why/source"-rad
+
+5-stegsprocessens steg 4 (IMPLEMENT) skriver in planens underlag som `basis`. Ingen extra text att formulera — men den måste innehålla källan och siffrorna, inte bara "justering enligt plan".
+
+### Vad mekanismen INTE garanterar
+
+Både portalen och `dbshell` kopplar upp som RDS-masteranvändaren som äger tabellerna. `session_replication_role = replica` och `ALTER TABLE ... DISABLE TRIGGER` kringgår loggningen. TRUNCATE och direkt redigering av loggen är blockerade. **Skyddet är mot glömska och slarv, inte mot en aktör som medvetet stänger av det** — vilket kräver ett avsiktligt beslut, inte ett misstag.
+
+## Validating an amount against its real payment channel (CEO 2026-08-18)
+
+**Most costs never appear in the bank account as a readable line.** Validating against Nordea alone is why four rows sat 2,600–30,000 SEK/month wrong for three months. Every number must be checked against the channel it is *actually paid through*.
+
+### The five channels, all already in the database
+
+| Channel | Source | Covers through | Group on |
+|---|---|---|---|
+| Card | `transaction_batches.file_type='credit_card'` — line-itemised per merchant | 2026-07 | `transactions.transaction_date` |
+| Expense claims | `file_type='expense_batch'` | 2026-08 | `transaction_date` |
+| PayPal | `file_type='paypal'` | 2026-07 | `transaction_date` |
+| Bank | `bank_outflow_transaction` | 2026-07-31 — **7 months only** | payment date |
+| Bookkeeping (all channels pooled) | `sie_monthly_balances` | 2026-06 | `period` |
+
+**Never group on `transaction_batches.year_month`.** Two card batches have it NULL — 76 transactions, 311,046 SEK, spanning 29 Sep – 26 Nov 2025 — and a `GROUP BY year_month` drops them silently. Expense batches also take whatever arrives into the currently-open batch, so their `year_month` is not the cost month either.
+
+**Some rows have no channel and must say so.** The PayPal fee (id 53) is never invoiced — it is netted from settlements. The VAT rows are computed. India's T1/T2/T3 is a distribution model, not a payment plan. For these the verification is *"derived from X"*, and the basis names the derivation. Pretending everything can be matched builds in false confidence.
+
+### How to record a verification — no new machinery
+
+A verification is a description touch on the row. The change-log trigger records it automatically with the basis, the actor and the approver:
+
+```sql
+BEGIN;
+SELECT set_config('app.change_basis', $$Verified 2026-08-18 against card lines May-Jul: 12,984/mo vs model 13,000. Approved by Henrik: "<his words>".$$, true),
+       set_config('app.change_actor', $$claude/cash-flow-session$$, true),
+       set_config('app.change_approved_by', $$Henrik Thome$$, true);
+UPDATE recurring_payment
+   SET description = description || ' [verified 2026-08-18 vs card]'
+ WHERE id = 57;
+COMMIT;
+```
+
+Then `SELECT * FROM forecast_row_history WHERE row_id = 57` answers both "what is this built on" and "when did we last look". Set `app.change_approved_by` even though a description change does not require it — the point is that Henrik owns the number.
+
+**Check a row's history before touching it.** id 27 carried 50,000 SEK/month for months because nobody saw the figure had never had a basis.
+
+### The sweep — two rounds, largest first
+
+- **Round 1: the 18 SEK rows with an absolute monthly equivalent ≥ 25,000 — 1,241,511 SEK = 52.9 % of the model.** Absolute basis on both sides, so the large VAT inflow rows (47, 48, 60) do not fall out unremarked.
+- **Round 2:** the remaining 24 SEK rows confirmed as a group in one approval, with the reason stated.
+- Present each row with the model amount, the channel outcome (3 months, and 12 where the channel has that much history — the bank has only 7), the deviation in SEK, and a recommendation.
+- Henrik approves the round or names exceptions. **Any amount change that falls out needs his approval anyway** (migration 102).
+- Run these as step 0 of the next two monthly calibration passes, not as a parallel process. Track the remaining count in `todos.md` P0 — a stall then shows as a number that does not move.
+
+### India is a separate track — 12 rows, 37 % of the model
+
+Those rows leave Sweden as one USD lump sum and are distributed in India. **No Swedish channel can validate them.** See `todos.md` for the letter content and the blocker that must be cleared first — the skill's own India table below disagrees with the database on six rows, and asking India to confirm before that is resolved risks locking in a double count.
+
+## Månatlig kalibreringsgenomgång — körs vid månadsstängning (CEO 2026-08-17)
+
+**Detta ersätter "kom ihåg att kontrollera X"-reglerna i den här skillen.** Modellen driver inte för att ingen kan se avvikelserna — den driver för att ingen ställs inför ett beslut. India-pluggarna id 74–80 stod märkta PROVISIONAL i varje prognosutskrift i tre månader och drev ändå oktoberbotten. Detektion var aldrig problemet.
+
+**Trigger:** står som återkommande P0-post överst i `todos.md` — ingen hook, ingen timer, ingen sida att öppna. Skillen läser todos.md vid sessionsstart (checklistan punkt 3a); posten säger när den är körd senast och vad som ligger öppet. Kör den när månadens SIE-data landat, oavsett om CEO frågat efter den.
+
+**Steg 1 — kör underlaget:**
+```
+ssh -i github-actions-deploy ubuntu@44.194.218.109 "dbshell" < ~/.claude/skills/cash-flow/calibration_check.sql
+```
+Fem kontroller: (1) modellens månadstotal per konto mot bokföringen 3 och 12 mån, (2) kostnadskonton med materiell kostnad men **ingen** prognosrad, (3) balanskonton — skuld mot vad som ligger inplanerat, (4) provisoriska rader med ålder i dagar, (5) intäktsöverstyrningens ålder.
+
+**Steg 2 — översätt varje träff till ett BESLUT, inte en observation.** Presentera max 5–7 poster, rangordnade i kronor per månad. Varje post ska ha: vad modellen säger, vad källan säger, vad avvikelsen kostar per månad, **ett förslag**, och den specifika fråga som behöver besvaras. Data utan förslag är inte en genomgång.
+
+**Steg 3 — varje post ska landa i exakt ett av tre utfall:**
+- **Justera** — kör 5-stegsprocessen direkt i samma session.
+- **Bekräfta som den är** — skriv in skälet i radens beskrivning så nästa körning inte tar upp den igen.
+- **Skjut upp** — **kräver ett datum**. Utan datum är det inte ett uppskjutande, det är att posten ruttnar.
+
+**Steg 4 — uppskjutna poster återkommer nästa månad med sin ålder.** Ingen post får bäras tyst. En post som skjutits upp två gånger ska lyftas som ett eget beslut: *"den här har vi undvikit att bestämma två gånger — vad hindrar oss?"*
+
+**Kända falska positiva** (kontrollera mot dessa innan något lyfts):
+- Konto 5990 Google: 12-månaderssnittet är uppblåst av H2-2025-spikar; **läs 3-månaderskolumnen**.
+- Konton där modellen bär INKL moms men bokföringen EXKL — kolumnen `modell_exkl_moms` är rätt jämförelse för de svenska leverantörsraderna (listan i "VAT classification rules").
+- Kontrollens exkluderingslista i SQL-filen fångar det som är medvetet omodellerat (avskrivningar, omvänd skattskyldighet, COGS via cogs_factor, poster inne i SEB Kort id 7 eller löner id 12). **Uppdatera listan när ett skäl upphör att gälla** — annars döljer den ett verkligt gap.
+- Kontroll 3 fungerar bara för konton där den löpande summan verkligen ÄR saldot. 2852 är exkluderat för att dess rader är anståndsbetalningar, inte skulden.
+
+**Parallella sessioner:** kontrollera `git log --oneline -5` och `updated_at` på de rader du tänker röra innan du ändrar något. Den 2026-08-17 arbetade två sessioner samtidigt i modellen och bottennivån flyttade sig tre gånger på en timme utan att någon varnades.
+
+## Månadstotalen är kontraktet — inte varje betalning (CEO 2026-08-17)
+
+**Prognosens uppgift är att få MÅNADSTOTALEN per kostnadsområde rätt. Den ska inte spegla varje enskild betalning.**
+
+CEO 2026-08-17, efter att en session lagt in tre rader för att flytta en faktisk India-överföring från dag 18/24 till dag 3: *"Ändra inte Indien för augusti! Det jämnar ut sig. Onödigt att komplicera modellen med en massa clutter"* och *"Viktigast är att totalerna för månaden är rätt. Vi behöver inte tracka varje betalning."* Den korrigeringen flyttade bottennivån **224 SEK** — för tre extra rader plus permanent underhållsbörda.
+
+**Regel:** flytta INTE en post inom en månad om nettoeffekten är noll för månaden. Gör det bara när tidpunkten avgör om en verklig gräns bryts — det operativa golvet −950K eller checkkrediten 1 MSEK — på ett specifikt datum. Testet är: *ändrar det bottennivån eller vilken dag den infaller med något som betyder något operativt?* Om nej: låt vara, och notera observationen i log.md i stället för i modellen.
+
+**Vad regeln INTE ursäktar:** en månad vars **total** är fel. Det är alltid värt att korrigera. Exempel på riktiga fel (total-nivå): en post som saknas helt, ett belopp som är strukturellt felkalibrerat, en provisorisk plugg som aldrig validerats. Exempel på icke-fel (tidpunkt inom månad): en betalning som gick den 3:e i stället för den 18:e, en helgförskjutning i intäktsflödet, en leverantör som drog två dagar tidigt.
+
+**Följd för avstämning:** stäm av **totaler per område och månad** (Indien, lån, löner/skatt, PSP, konsulter), inte enskilda transaktioner. Per-transaktionsmatchning är en återvändsgränd — den genererar offsetpar som ingen underhåller.
+
 ## Forecast philosophy — most probable path, no bias
 
 **Per CEO 2026-05-09**: "I want the forecast to show the most probable path forward, given all facts. Neither conservative nor optimistic."
@@ -622,7 +806,7 @@ This section is the single source of truth for what the cash flow forecast repre
    - **Swedish supplier rows are stored INCL VAT** (×1.25) for 13 vendors with clear Swedish VAT applicability (Linn, CFO, Cision, Euroclear, United Spaces, Tomas/Dolutions, BDO, Fluff, Nasdaq, G&W, Forvis Mazars annual a conto + slut, Schibsted). Bank reality: Nordea debits incl VAT on each invoice payment.
    - **EU VAT collected modeled as monthly inflow** (id 60, -68,667 SEK day 1, ~206K/3): mirrors quarterly MOSS outflow (id 47). Sonetel collects destination VAT from EU customers (held in Nordea until remittance). Day 1 chosen for max within-month float.
    - **MOSS id 47** = 206K outflow quarter_months 1,4,7,10 day 30. Fires Jan 30 (Q4 prior year remit), Apr 30 (Q1 Jan-Mar), Jul 30 (Q2 Apr-Jun), Oct 30 (Q3 Jul-Sep). VAT inflow side now modeled via id 60 → Q-cycle nets to 0.
-   - **id 48 Skatteverket refund** = -100K quarterly inflow on quarter_months 2,5,8,11 day **12** (NOT day 30 q-months 1,4,7,10 as old SKILL.md erroneously stated; verified 2026-05-20). Captures NET Swedish refund (input VAT we paid minus output VAT collected on domestic sales).
+   - **id 48 Skatteverket refund** = **-200K** quarterly inflow on quarter_months 2,5,8,11 day **17** (recalibrated 2026-08-14). Carries the **GROSS** moms credit from GL 1650, not the net bank payout, because id 9's monthly tax debit is netted against it on the skattekonto — see "id 48 Swedish input VAT refund" above before touching it.
    - **Bambora id 16** kept at 60K — **already entered incl VAT** per historical convention; would double-count if multiplied.
    - **Mangold id 51** kept at 12,500 excl VAT — placeholder pending first invoice empirical evidence (Reviewer A 2026-05-20 PLAN-M).
    - **Skipped rows** (foreign reverse charge, financial exempt, loans, salaries, tax): see PLAN-M-spec.md for full classification.
@@ -794,7 +978,7 @@ Don't compare id 7 budget to any single P&L account. Decompose across all 5 abov
 
 **(7) Voxbone payment pattern**: Per CEO 2026-05-08, paid before the 10th of each month (direct path). If credit-card route, deferred to utlägg cycle (~day 28-30). Recurring id 1 day_of_month=1 is the documented baseline pending TODO-12 channel-mix audit (end Oct 2026).
 
-**(8) Skatteverket konto netting (VAT refund + monthly Skatt)**: Both id 48 (refund) and id 9 (Skatt) firing on day 12 is CORRECT — they're independent real cash flows. Empirical May 2025: +98,554 refund (May 1) + -70,741 Skatt (May 12) = +27,813 net. Forecast +29,259 net = match within noise. NOT a double-count.
+**(8) Skatteverket konto netting (VAT refund + monthly Skatt)** — **SUPERSEDED 2026-08-14.** This used to claim id 48 and id 9 are independent flows that both hit the bank. They are not: in a refund month the monthly tax is netted against the VAT credit on the skattekonto and only the surplus is paid out, so no ~70K debit appears in the bank at all. id 48 therefore carries the GROSS credit (200K) while id 9 keeps firing monthly — see "id 48 Swedish input VAT refund" above for the evidence and the do-not-revert warning.
 
 **(9) PayPal fees lump-sum is wontfix per CEO**: id 53 (45K SEK day 28) is structurally wrong on daily distribution but correct on monthly net. CR-2026-05-08 closed wontfix. Re-open trigger: if drift detection (TODO-2) shows day-28 distortion causing material mis-decisions on EOM cluster planning.
 
@@ -1022,6 +1206,16 @@ Verify before reporting: when you see a Henrik/Tomas utlägg payment, check whet
 
 ## Step 2: Parse Bank CSV
 
+> **Bank outflows now import themselves (CR-2026-08-17, 2026-08-17).** `bank-outflow-import.timer` runs daily at 05:00 UTC over the 3 most recent completed months, so `bank_outflow_transaction` — and `get_bank_transactions` (MCP) — should already hold every closed month. Prefer querying it over re-parsing CSVs by hand.
+>
+> Before trusting it, check two things:
+> - **Coverage.** The forecast payload carries `bank_data_stale_warning`; if it's non-empty it names the months with no data. Empty means the last 3 completed months are all present. (Between the 1st and 6th the check allows an extra month's grace, because the CSVs arrive on the 1st–4th.)
+> - **Scope.** The import covers the **three Nordea Plusgiro accounts only** (91 55 78-9, 214 72 32-9, 214 72 33-7). **SEB SEK and SEB EUR+USD are not parsed at all**, though they appear in the cash position. A payment made from SEB is invisible here and must never be reported as "didn't happen".
+>
+> Backfill or force a month: `sudo -u accounting /opt/accounting-app/venv/bin/python /opt/accounting-app/scripts/import_bank_outflows.py --month YYYY-MM` (idempotent; preserves manual matches and manual categorizations).
+>
+> Historical note: before 2026-08-17 the import had no trigger at all and had not run since 2026-04-06, so Feb and Apr–Jul 2026 were empty (BUG-20260817-001). Any analysis from that window that claimed forecast-vs-actual coverage was working from the ledger, not from payments.
+
 Parse the Nordea SEK CSV to extract:
 
 ### Daily closing balances
@@ -1061,6 +1255,21 @@ Parse the Nordea SEK CSV to extract:
 ### FX/inter-account conversions (NOT outflows)
 
 Same-day, same-`Meddelande/OCR` ID appearing in multiple account CSVs as paired ±entries = **currency conversion, not a real cost outflow**. The SEK CSV will show "-X SEK" with rubrik like `0260429008007 260429008007`; the USD or EUR CSV will show "+Y USD/EUR" with the same `0260429008007` ID. These pairs net to a small FX-spread loss only (~0.5%). **Always cross-check all 5 account CSVs by Meddelande/OCR ID before flagging an outflow as unidentified.**
+
+#### `Ny DEPOSIT VALUTA` = overnight sweep, NOT an outflow (verified 2026-08-17)
+
+The two dedicated accounts (214 72 32-9 EUR, 214 72 33-7 USD) are **swept to zero nightly** via a "NY DEPOSIT VALUTA" withdrawal. `bank_balance_service` knows this (`handle_sweep` recovers the pre-sweep balance), but the reconciliation's classifier does **not** — `TRANSFER_PATTERNS` is only `UTTAG / ÖVERFÖRING / INSÄTTNING`, so every sweep lands in `bank_outflow_transaction` as a genuine `untracked` outflow.
+
+Measured share of recorded "actual outflow" that is really sweep movement:
+
+| Month | Sweep rows | Sweep SEK | Recorded total | Share |
+|---|---|---|---|---|
+| 2026-02 | 39 | −1,869,766 | −4,642,244 | 40% |
+| 2026-04 | 40 | −3,791,553 | −7,339,958 | 52% |
+| 2026-06 | 40 | −4,901,937 | −7,880,551 | 62% |
+| 2026-07 | 46 | −4,188,141 | −7,172,308 | 58% |
+
+**Always exclude `recipient_raw ILIKE '%DEPOSIT VALUTA%'` before quoting any total-outflow or untracked figure.** They sit only on `nordea_eur` / `nordea_usd`. This is also most of the "~80% untracked" in the reconciliation view — the untracked share is far smaller once sweeps are removed. (2026-01 shows zero sweep rows, which doesn't fit the pattern and is unexplained — don't build on that month without checking.)
 
 Confirmed FX-wash IDs in April 2026:
 - `0260424003669` (-10,288 SEK) — paired with EUR/USD account inflows same day
@@ -1127,6 +1336,22 @@ For every recurring/scheduled item that fails the SEK CSV match, you MUST do all
 6. **Add the deferred outflow to the EOM cash-flow plan**, not as a "not in CSV" parking-lot entry. Show it as: `Deferred utlägg reimbursement (Voxbone catch-up): est. ~77K, expected ~end of [month]`. The forecast ought to plan for this even though it doesn't appear in `get_cash_flow_recurring`.
 
 If after all checks the item is still missing entirely from every channel, classify it as **MISSING — escalate**. Could indicate supplier change, contract dispute, accounting error, or invoice not received.
+
+#### Unpaid-at-EOM rule — MANDATORY (CEO 2026-08-17)
+
+The chase-to-ground rule above covers payments that went out through *another channel*. This rule covers the other case: the payment **did not go out at all**, usually because there wasn't cash to pay it. That is a normal event here — the credit line runs at 99%+ utilisation and EOM clusters get triaged — and the forecast handles it badly by default.
+
+**Why it breaks the forecast**: a recurring row fires on its own schedule. When a payment is skipped, the recurring row for the *next* month still fires exactly once, so the model shows one payment in M+1 where two are actually due. The skipped krona silently disappears from the plan and resurfaces as an unexplained squeeze in the month it's finally paid.
+
+**At every month close, for every recurring/scheduled payment due in month M that did not leave the bank:**
+
+1. **Confirm it was skipped, not mis-matched or mis-labelled.** Absence from the *matched* list is not absence from the bank — see the matcher limitation and the sweep/FX sections before concluding anything.
+2. **Ask the user why. Never infer the reason from the gap.** Skipped for cash? Deferred by agreement? Invoice not received? Paid from an account this import doesn't cover (SEB is **not** parsed)? *(2026-08-17: a missing July DBT Lån 1 payment was read as "the loan looks repaid". It was a cash-shortage skip, paid in August, on a loan that runs for years. The bank data supported only one statement — that the payment did not happen.)*
+3. **Check whether a catch-up one-off already exists in M+1** — query `scheduled_payment` for `deferred_recurring_id = <recurring id>` (and `deferred_from_month = 'M'`). The schema supports exactly this linkage; the job is to verify it was used.
+4. **If it doesn't exist, propose one** — a `scheduled_payment` early in M+1 for the skipped amount, with `deferred_recurring_id` + `deferred_from_month` set so the catch-up stays traceable to the row it came from. Expect combined payments: DBT delayed from the prior month typically lands as one early-month transaction (see DBT timing below).
+5. **Creating that row is a forecast data change** → 5-step process, and it does not happen without approval. Per CEO 2026-08-17: *"Every change of a value underlying the forecast must be human approved."* Surface the gap and the proposed row, then wait.
+
+Report skipped payments on their own line in the MTD table with status **Skipped — catch-up in M+1 (modelled / NOT modelled)**, so the unmodelled ones are visible at a glance instead of buried under "Overdue".
 
 #### Variance follow-up — every line, no exceptions
 
@@ -1481,7 +1706,7 @@ Based on the crosscheck, rate the forecast:
 12. **The 1 MSEK Nordea credit line is fixed.** Nordea has indicated they cannot expand it. Do not propose "increase credit line" as a structural fix. Real structural options are: (a) renegotiate vendor payment timing to de-cluster EOM (e.g. move DBT to mid-month), (b) accelerate receivables, (c) reduce structural costs, (d) alternative funding (other banks, factoring, shareholder loans), (e) move to monthly VAT periods for faster refund cycles. Always frame mitigations in this set, never expanding the existing facility.
 13. **Timing varies.** Planned "day of month" is approximate. Google often hits 2-3 days early, DBT may arrive as a single combined payment on a different day. Match by recipient + approximate amount, not exact date.
 14. **Budget is excl. VAT, bank is incl. VAT.** Always divide bank amounts by 1.25 for Swedish VAT suppliers before comparing. See VAT Handling section for which suppliers charge VAT.
-15. **Quarterly VAT flows.** MOSS/OSS outflow (id 47, ~206K) on day 30 of months 1/4/7/10. Input VAT refund inflow (id 48) on day 12 of months 2/5/8/11 (post-quarter month) per the netting model — see Skatteverket section. Net quarterly VAT outflow: ~80-150K depending on Corona offset and revenue mix. Both are real cash flows — the bank pays costs incl. VAT and collects VAT from customers even though the forecast uses net/excl. figures. EOM snapshots may include accrued MOSS debt — this is a known timing artifact.
+15. **Quarterly VAT flows.** MOSS/OSS outflow (id 47, ~206K) on day 30 of months 1/4/7/10. Input VAT refund inflow (id 48, **-200K gross credit**) on day **17** of months 2/5/8/11 (post-quarter month) — the monthly Skatt (id 9) is netted against it on the skattekonto, see the "id 48 Swedish input VAT refund" section before changing either. Net quarterly VAT outflow: ~80-150K depending on Corona offset and revenue mix. Both are real cash flows — the bank pays costs incl. VAT and collects VAT from customers even though the forecast uses net/excl. figures. EOM snapshots may include accrued MOSS debt — this is a known timing artifact.
 16. **Hejdad detection mandatory.** A non-zero Hejdad count is never routine — it is Nordea silently holding a payment because the credit line was insufficient at the scheduled debit date. Trace the cause (which payment, which date, against what saldo), compute when SEK headroom recovers, and treat held items as deferred outflows to plan for. Whenever EOM SEK saldo is within 50K of the credit limit AND a payment is due day 1 next month, flag the Hejdad risk *before* it triggers. Never frame Hejdad as a discretionary delay — it is a leading indicator of credit-line saturation.
 17. **No unsolicited operational advice.** When the analysis surfaces a constraint, report the data and the implication. Do not propose contacting the bank, requesting credit-line extensions, calling vendors to negotiate, or other operational moves the user did not ask for. Nordea has stated the 1 MSEK credit line cannot be extended (Rule 12); never speculate that they might. If the user wants suggestions, they will ask. Until then, stick to facts and forecast implications.
 18. **Payment priority hierarchy is non-negotiable.** When recommending how to handle a tight cluster, follow Section 5b.1 tiering: protect staff and near-staff payments first (Tomas, Linn, Fluff, CFO, Henrik utlägg, Martin utlägg, salaries), statutory tax second, financial covenants third, then commercial vendors. **Never propose delaying contractor or staff payments to make room for vendor payments.** Fluff, Tomas, Linn, CFO etc. are people whose income depends on us — they get paid on time even when SEB Kort or BDO has to wait. SEB Kort late payment has happened before without damage; missing a contractor's payment damages the relationship and is structurally wrong.
@@ -1489,7 +1714,17 @@ Based on the crosscheck, rate the forecast:
 
 20. **CR discipline is non-negotiable.** Every change to `recurring_payment`, `scheduled_payment`, or `business_parameters` for cashflow_* goes through the tiered CR process documented at the top of this file (Change Request discipline section). Inline mini-CR for one-offs, mini-CR + 1 reviewer for recurring changes, full CR + 2 reviewers for structural changes. Every change ends with a verify query and a `docs/changelogs/YYYY-MM.md` entry. Skipping any step is forbidden — the Apr 29 → May 8 DBT slippage proved why.
 
-21. **Delayed payments must be added in the same response they're mentioned.** When the user says "X is delayed from EOM month Y to date Z," the assistant adds the scheduled_payment immediately, verifies with SELECT, confirms in the response. Notes in `log.md` are not a substitute for actual model edits. Recurring entries stay unchanged — the delayed payment is always a one-off scheduled overlay.
+21. **Delayed payments must be added in the same response they're mentioned.** When the user says "X is delayed from EOM month Y to date Z," the assistant adds the scheduled_payment immediately, verifies with SELECT, confirms in the response. Notes in `log.md` are not a substitute for actual model edits. Recurring entries stay unchanged — the delayed payment is always a one-off scheduled overlay. *(The user stating the delay IS the human approval required by Rule 22 — act on it. What still needs asking is the case where YOU detected the skip and the user hasn't spoken to it: Rule 23.)*
+
+22. **Every change to a value underlying the forecast must be human-approved (CEO 2026-08-17).** No exceptions, no "obviously correct" edits, no tidying. Propose the change with its reasoning and wait. This sits above the 5-step process: the process governs *how* an approved change is made, not whether you may start.
+
+23. **Run the unpaid-at-EOM check at every month close** (Step 3). For each payment due in month M that never left the bank, verify a catch-up one-off exists in M+1 linked via `deferred_recurring_id`/`deferred_from_month`; if not, propose one and get approval. A skipped payment is not a saving — the recurring row fires only once next month, so the money silently drops out of the plan and returns as an unexplained squeeze.
+
+24. **Absence in the bank data supports exactly one statement: the payment did not appear.** It is never, on its own, evidence that a cost ended, a loan was repaid, a contract lapsed, or a supplier changed. Ask the user. *(2026-08-17: a missing July DBT Lån 1 payment was reported to the CEO as "the loan looks repaid" — it was a cash-shortage skip, paid in August, on a loan running for years. Same session, two vendor "variances" were the matcher's mis-attributions rather than real deltas. Three wrong findings, one root cause: treating derived or absent data as fact without checking amounts and dates against the underlying rows.)*
+
+25. **Never assume API and UI agree without running `scripts/validate_cashflow_api_ui_parity.py`.** Exit code 2 = mismatch = ship-blocker. Run it after every cashflow-touching CR before declaring shipped. CR-2026-05-21 was declared done without it and shipped broken (page renderer overrode `params.cogs_percent` while API didn't); CR-2026-05-21b had to re-do the work.
+
+    *Architectural background for this rule (post-CR-2026-05-21b, shipped 2026-05-21):* Both the `/analytics/cash-flow` page (`portal/blueprints/analytics.py` cash_flow handler) and the API endpoint `/api/v1/cash-flow/forecast` (`portal/blueprints/api.py` api_cash_flow_forecast) resolve forecast parameters through `CashFlowForecastService.get_forecast_params()`. `cogs_percent` is auto-resolved from the last quarter of P&L data via `get_cogs_data()` → `get_auto_cogs_percent()` — the `business_parameters.cashflow_cogs_percent` row is now a fallback only (consulted when P&L data is unavailable). The `revenue_override_msek` business parameter (CR-2026-05-21) is also override-aware in `_run_rate_cache`: any change to it (via UI, API, or direct SQL) invalidates the cache on the next call. Don't reason about "stale API forecast" — the cache self-heals.
 
 ---
 

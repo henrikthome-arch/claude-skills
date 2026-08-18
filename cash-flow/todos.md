@@ -2,6 +2,76 @@
 
 Living todo list of cash flow forecast model improvements. Created 2026-05-08. Updated as items complete or new ones surface. Future agents: read this in addition to SKILL.md, log.md, and the Calibration Registry.
 
+## ÖPPNA BESLUT OCH LÖSA TRÅDAR (2026-08-18, väntar på Henrik eller på nästa session)
+
+### Väntar på Henrik
+- [ ] **Granskningsgrindens nivå.** Dokumenterat är 70 (kassaflödesskillens 5-stegsprocess); för kod finns ingen siffra alls i CLAUDE.md. Jag föreslog **80 för kod som rör produktionens skrivvägar** (migrationer, triggrar, routes) plus en absolut regel: **noll olösta blockerare oavsett poäng**. Skälet: migration 102 passerade på 74/82 och bröt varenda skrivning i portalen; CR-2026-08-18 fick 76/76 med tre blockerare. Han har inte svarat.
+
+### Lösa trådar från 2026-08-17/18
+- [ ] **id 81** (43 000, 15 aug, Henrik-återbetalning) avstängd utan att kunna verifieras mot bank — bankdata gick bara till 13 aug. Bekräfta om den betalades; i så fall återaktivera som faktisk post.
+- [ ] **Juli Indien-gap:** faktiskt 98 044 USD mot Padmas estimat 110 917 = **12 873 USD**. Total-nivå, ingår i Indien-brevet.
+- [ ] **SEB Kort id 7 döljer ~66 KSEK** som hör till konto 5991/5992/5800/5410/6211 (changelog 2026-08-17).
+- [ ] **SKILL.md motsäger sig själv på två ställen** och båda ska skrivas om i samma pass som India-tabellen: rad ~567 *"Only the SEB Kort invoice itemises the autogiro charges by vendor"* är motbevisat — kortraderna ligger i `transaction_batches` med `file_type='credit_card'`, radspecificerade. Och rad ~671 *"Per-transaktionsmatchning är en återvändsgränd"* drar mot vendor-nivå-matchning som svepet bygger på. Två regler som pekar åt olika håll.
+- [ ] **Parallella sessioner:** 2026-08-17 arbetade två sessioner i modellen samtidigt och bottennivån flyttade sig fyra gånger på en timme utan att någon varnades. Kolla `git log --oneline -5` och `updated_at` på berörda rader innan ändring.
+- [ ] **`saveRecurring()` nollställde `is_internal_transfer`** — lagat 2026-08-18, men loggens tidiga poster kan visa spökflippar av det fältet från UI-sparningar före fixen. Läs dem inte som manipulation.
+
+## P0 — VALIDERINGSSVEPET (beslutat 2026-08-18, INTE påbörjat)
+
+CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
+
+**Status: 0 av 42 svenska rader verifierade. 0 av 12 India-rader.**
+
+### Omgång 1 — 18 rader, 1 241 511 SEK/mån (52,9 % av modellen)
+Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 mån, 12 där historiken räcker), avvikelse, förslag. Batchgodkännande av Henrik.
+
+- [ ] Kör omgång 1 (18 rader, |månadsekvivalent| ≥ 25 000, SEK)
+- [ ] Omgång 2 (återstående 24 SEK-rader, ett samlat ja)
+
+### India — eget spår, 12 rader, 874 068 SEK/mån (37 %)
+
+- [ ] **SPÄRR FÖRST:** skillens India-tabell (SKILL.md rad 305–330) stämmer inte med databasen på sex rader — 36/39/40/41/42/43 står DISABLED men är aktiva; id 35 säger 4 000 000 INR/november/dag 4 mot databasens 4 024 356/oktober/dag 30; id 56 säger 4 195 000 mot 4 004 810; ids 63/64 saknas helt. Gå rad för rad mot `SELECT id, amount, annual_month, day_of_month, enabled FROM recurring_payment WHERE currency='INR'` och skriv in utfallet. **SKILL.md:388 har en oktoberpåminnelse som citerar fel belopp och fel månad — rätta i samma pass.** ~20 min.
+- [ ] **Cirkulariteten:** de sex raderna märkta "covered by Padma SWIFTs" kan bara avgöras av Padmas SWIFT-historik, vilket är det brevet frågar om. Lös 39 (jan) och 40 (jun) mot Nordeas USD-konto på totalnivå; 36/41/42/43 ligger i sep/nov/dec utanför bankdatans fönster (jan–jul) och går som öppna frågor i brevet i stället.
+- [ ] **Skicka brevet** till Padma Karanam, kopia Prashant Pant. Engelska, tabell i brödtexten, svar inom 10 arbetsdagar, Riksbankens INR-kurs utskriven. Innehåll finns i `docs/plans/CR-2026-08-18-multichannel-validation-sweep.md` (övergiven som CR, men tabellen och brevinnehållet är verifierade och korrekta).
+  - Alla tolv raderna med **belopp, frekvens OCH datum**
+  - ids 41 och 43 som EN parad rad — båda 30 sep, +1 600 000 mot −1 900 000, netto −300 000
+  - De tre inflödesraderna (43, 63, 64) formulerade som "när kommer den och står beloppet sig", inte "bekräfta att ni betalar"
+  - T3-tilläggen: scheduled 104–107, +190 190 INR/mån aug–nov, annars bekräftar Padma 4 004 810 mot en modell som planerar 4 195 000
+  - T1/T2/T3: begär **underlag** (betalningskalender eller kontoutdrag för en månad), inte ett ja på vår 8/39/53-gissning
+  - Goa id 62 (8 000 USD/år) med — annars avgränsas Indien på valuta i stället för kostnadsägarskap
+  - Öppen fråga: finns poster Indien betalar som saknar rad hos oss?
+- [ ] När svaret kommer: verifieringsnotering per rad med Padmas svar i `basis`, Henriks OK i `approved_by`. Avvikelser blir beloppsändringar och kräver hans godkännande enligt migration 102.
+
+### Övergivet, med avsikt
+`CR-2026-08-18` (valideringskolumner + migration 103) — **återuppliva inte** utan att först ha kört en omgång manuellt och funnit att det som saknas verkligen är en "senast kontrollerad"-kolumn.
+
+## P0 — ÅTERKOMMANDE: månatlig kalibreringsgenomgång (införd 2026-08-17)
+
+**Körs varje månad när SIE-datat för den stängda månaden landat** (Fortnox-synken drar in det automatiskt). Ingen hook, ingen timer — den här raden ÄR påminnelsen. CEO 2026-08-17: *"Bättre att ha en skill som identifierar potentiella gap och pratar igenom det hela med mig, t.ex. vid månadskörning av rapporter."*
+
+1. Kör `ssh -i github-actions-deploy ubuntu@44.194.218.109 "dbshell" < ~/.claude/skills/cash-flow/calibration_check.sql`
+2. Följ *Månatlig kalibreringsgenomgång* i SKILL.md: översätt varje träff till ett **beslut** med förslag, inte till en observation.
+3. Varje post landar i justera / bekräfta-som-den-är / skjut-upp-**med-datum**. Uppskjutet utan datum = posten ruttnar.
+4. Uppskjutna poster förs in nedan och tas upp igen nästa månad **med sin ålder**. Två uppskjutanden i rad → lyft som eget beslut: "vad hindrar oss från att bestämma?"
+
+**Senast körd:** 2026-08-17 (första körningen). **Nästa:** när augusti-SIE landat.
+
+### Öppna poster från körningen 2026-08-17 — ej genomgångna med CEO ännu
+
+| Post | Modell | Bokföring | Per mån | Status |
+|---|---:|---:|---:|---|
+| 6572 PayPal-avgifter (id 53) | 45,000 | 55,218 | −10,218 | Ny — underbudgeterat |
+| 6490 Övr förvaltning (ids 13/31/51 + Nasdaq) | 40,158 exkl | 24,447 | +15,711 | Ny — överbudgeterat. Mangold-placeholder id 51 är 107 dgr gammal och ligger här |
+| 2890 Henriks skuld | 0 planerat | 691,753 skyldigt | — | Känt, CEO-beslut 2026-08-17: inget planeras |
+| 2899 övriga kortfr. skulder | 0 planerat | 136,584 skyldigt | — | Ny — **vems skuld? Troligen Tomas/övriga. Utred.** |
+| 6380 / 6996 / 5410 / 5810 | ingen rad alls | 16–72K/mån | — | Ny — oklassade konton utan prognosrad. Klassa: modellera eller lägg i exkluderingslistan med skäl |
+| `cashflow_cogs_percent` 21.8% | manuell | — | — | Satt 2026-01-30, **199 dgr sedan**. Omkalibrera mot SIE 4xxx÷intäkt |
+
+### Övriga öppna poster 2026-08-17
+- [ ] **Aug OCH okt bryter checkkrediten**: 28 aug −1,019,221 / 30 okt −1,186,923 mot 1 MSEK-taket. Kräver eget beslutsmöte — det är inte en kalibreringsfråga.
+- [ ] **id 81 (43,000, 15 aug)** disablad utan att kunna verifieras mot bank (data bara t.o.m. 13 aug). Bekräfta om den betalades → återaktivera som faktisk post.
+- [ ] **Juli India total-gap**: faktiskt 98,044 USD mot Padmas estimat 110,917 (~12,900 USD). Total-nivå, värt att stämma av.
+- [ ] **Parallella sessioner**: 2026-08-17 arbetade två sessioner i modellen samtidigt, bottennivån flyttade sig tre gånger på en timme utan varning. Kolla `git log --oneline -5` och `updated_at` på berörda rader innan ändring.
+
 ## P0 — Active code work (real CRs, blocking other improvements)
 
 ### TODO-1: Revise + ship CR-2026-05-08 (PSP fees model fix)

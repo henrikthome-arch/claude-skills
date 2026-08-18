@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 2 av 44 rader klara. India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 3 av 44 rader klara. India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -50,13 +50,15 @@ Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 m�
   betald 2026-06-10; 2026-06 = 136 583,53 betald 2026-07-14). Faller i september, inte oktober.
 - [ ] **FÖLJDKONTROLL ~1 sep 2026:** augustibatchen ska visa Salesforce ~25 aug. Gapet dec-2025 till feb-2026
   var 56 dagar, inte 90, så kadensen är inte helt ren. Syns den inte — ta upp id 67 igen.
-- [~] **id 19 Tomas André (Dolutions AB), 115 625 SEK/mån — PÅBÖRJAD, väntar på Henrik.** Beloppet är
-  bekräftat rätt: 92 500 exkl moms x 1,25 = 115 625, och konto 6550 står på exakt 92 500 i period 202511
-  (en månad då han var ende konsulten). MEN banken visar bara fem betalningar jan-jul: 28 jan, 2 mar, 25 mar,
-  28 apr, 24 jul. Inget i maj eller juni. 578 125 betalt mot 809 375 modellerat = 231 250 = exakt två
-  månader. Henrik kollar två kandidatrader hos Corporate Access: **2026-05-15 120 494,37** och
-  **2026-06-25 125 188,00**. Är någon av dem Dolutions är raden oförändrad; är den inte det finns antingen
-  en obetald skuld (lägg scheduled catch-up) eller så fakturerade han inte (sänk raden).
+- [x] **id 19 Tomas André (Dolutions AB), 115 625 SEK/mån — VERIFIERAD OFÖRÄNDRAD** (2026-08-18).
+  92 500 exkl moms x 1,25, och konto 6550 står på exakt 92 500,00 i period 202511. Sex betalningar på
+  exakt 115 625 under sju månader; endast maj 2026 saknas (~115 625 utestående). Junibetalningen låg inne
+  i en buntad rad "(2) Corporate Access" 125 188 = Dolutions 115 625 + United Spaces 9 563, bekräftat av
+  Henriks Nordea-uppslag. Ingen catch-up-rad: en leverantör som ligger permanent en månad efter påverkar
+  inte kassaflödet framåt. Ta upp igen bara om Tomas betalas ikapp.
+
+- [ ] **id 18 United Spaces — 2,6x-gap.** Betalt 9 563 den 25 juni mot modellens 3 625/mån. Upptäckt som
+  sidofynd i buntraden ovan. Tas när raden kommer upp i storleksordningen.
 
 - [ ] **STRUKTURELLT — bankvalideringens blinda fläck.** 63 % av allt utflödesvärde saknar mottagarnamn.
   Per konto: nordea_main 66 rader / 4,0 MSEK utan namn (44 % av kontots värde), nordea_usd 154 / 16,3 MSEK

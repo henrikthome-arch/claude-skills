@@ -635,6 +635,51 @@ Både portalen och `dbshell` kopplar upp som RDS-masteranvändaren som äger tab
 
 **Some rows have no channel and must say so.** The PayPal fee (id 53) is never invoiced — it is netted from settlements. The VAT rows are computed. India's T1/T2/T3 is a distribution model, not a payment plan. For these the verification is *"derived from X"*, and the basis names the derivation. Pretending everything can be matched builds in false confidence.
 
+### The bank does NOT tell you who was paid — 63 % of the value has no name
+
+Measured 2026-08-18 over the seven months of `bank_outflow_transaction`:
+
+| Payee label | Rows | SEK | What it is |
+|---|---:|---:|---|
+| `Ny DEPOSIT VALUTA` | 246 | −19,871,013 | FX-account movements, mostly nordea_usd / nordea_eur |
+| *named recipient* | 198 | −17,687,972 | the only rows where the payee is readable |
+| digits only | 95 | −5,894,953 | |
+| `(n) Corporate Access` | 52 | −3,491,826 | Nordea batch payments, main account |
+| `Importerade kontohändelser` | 4 | −305,133 | |
+
+Per account, unnamed share of value: **nordea_main 44 %, nordea_usd 63 %, nordea_eur 75 %.**
+
+**It is AMOUNT-matching, not name-matching, that carries the sweep.** That works when a figure is distinctive
+(Google 111,637.39; Tomas 115,625 exactly) and fails when it is round or shared. Say so when a row cannot be
+proved this way, rather than leaning on a weak match.
+
+**The CSV cannot be fixed in code.** Header is
+`Bokföringsdag;Belopp;Avsändare;Mottagare;Namn;Ytterligare detaljer;Meddelande;Egna anteckningar;Saldo;Valuta`.
+For Corporate Access rows the `Namn`, `Mottagare` and `Meddelande` columns are all EMPTY, so the parser falls
+back to `Ytterligare detaljer` and stores "CORPORATE ACCESS". Nordea's web UI has the payee, the recipient
+account and the OCR; the account-statement export does not. Do not propose an import fix — verified against
+`bank_balance_service._parse_transactions_auto_currency` and a real CSV on 2026-08-18.
+
+### `(n) Corporate Access` — the number is the BUNDLE SIZE
+
+`(1)` = one payment, so the bank amount IS that payment and amount-matching works.
+`(2)` or higher = several supplier payments summed into one bank line, and **no amount match is possible**.
+
+| Bundle size | Bank lines | SEK |
+|---|---:|---:|
+| (1) | 35 | −1,959,789 |
+| (2)+ | 17 | −1,532,037 |
+
+So ~1.5 MSEK of main-account outflow is structurally unmatchable from the statement alone. Check the prefix
+before concluding a payment is missing: on sweep row 3, Tomas André looked two months unpaid, and one of the
+"missing" payments was sitting inside a `(2)` line of 125,188 = Dolutions 115,625 + United Spaces 9,563.
+
+**Nordea CAN expand a bundle, and that view exports CSV.** In the UI the bundle opens as
+*"Kontohändelser importerade \<date\>"* listing each payment with Till namn/bank, Till konto, Meddelande/OCR and
+Belopp, with a **CSV (Excel)** button. That is the route to recovering the hidden payees — ask Henrik to open
+the specific line rather than guessing, and name the exact date and amount so the lookup is one click.
+Capturing those exports alongside the monthly statement would close the gap permanently; not yet built.
+
 ### The bookkeeping runs AHEAD of the bank — use it to predict the next payment
 
 `sie_monthly_balances` is usually treated as a lagging cross-check. For any vendor whose cost lands in one

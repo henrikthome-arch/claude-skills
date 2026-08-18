@@ -50,7 +50,25 @@ Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 m�
   betald 2026-06-10; 2026-06 = 136 583,53 betald 2026-07-14). Faller i september, inte oktober.
 - [ ] **FÖLJDKONTROLL ~1 sep 2026:** augustibatchen ska visa Salesforce ~25 aug. Gapet dec-2025 till feb-2026
   var 56 dagar, inte 90, så kadensen är inte helt ren. Syns den inte — ta upp id 67 igen.
-- [ ] Nästa rad: **id 19 Tomas André, 115 625 SEK/mån**.
+- [~] **id 19 Tomas André (Dolutions AB), 115 625 SEK/mån — PÅBÖRJAD, väntar på Henrik.** Beloppet är
+  bekräftat rätt: 92 500 exkl moms x 1,25 = 115 625, och konto 6550 står på exakt 92 500 i period 202511
+  (en månad då han var ende konsulten). MEN banken visar bara fem betalningar jan-jul: 28 jan, 2 mar, 25 mar,
+  28 apr, 24 jul. Inget i maj eller juni. 578 125 betalt mot 809 375 modellerat = 231 250 = exakt två
+  månader. Henrik kollar två kandidatrader hos Corporate Access: **2026-05-15 120 494,37** och
+  **2026-06-25 125 188,00**. Är någon av dem Dolutions är raden oförändrad; är den inte det finns antingen
+  en obetald skuld (lägg scheduled catch-up) eller så fakturerade han inte (sänk raden).
+
+- [ ] **STRUKTURELLT — bankvalideringens blinda fläck.** 63 % av allt utflödesvärde saknar mottagarnamn.
+  Per konto: nordea_main 66 rader / 4,0 MSEK utan namn (44 % av kontots värde), nordea_usd 154 / 16,3 MSEK
+  (63 %), nordea_eur 177 / 9,2 MSEK (75 %). Etiketterna är "Ny DEPOSIT VALUTA" (246 rader, valutakontona),
+  "Corporate Access" (52 rader, 3,5 MSEK, huvudkontot), bara siffror (95 rader) och "Importerade
+  kontohändelser" (4). **Det är beloppsmatchning, inte namnmatchning, som burit svepet hittills** — det
+  fungerar när beloppet är distinkt och fallerar när det inte är det. Fråga till Henrik: vad ÄR Corporate
+  Access, och finns mottagarnamn i Nordeas export som vi inte importerar? Svaret låser upp validering för
+  hela den återstående sweepen, inte bara en rad.
+
+- [ ] Nästa rad efter id 19: **id 25 DBT Lån 1 - amortering, 98 000 SEK/mån** (och id 12 Salaries Sweden
+  98 000, samma storlek).
 
 ### India — eget spår, 12 rader, 874 068 SEK/mån (37 %)
 

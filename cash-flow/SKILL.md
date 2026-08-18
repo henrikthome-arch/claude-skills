@@ -680,6 +680,32 @@ Belopp, with a **CSV (Excel)** button. That is the route to recovering the hidde
 the specific line rather than guessing, and name the exact date and amount so the lookup is one click.
 Capturing those exports alongside the monthly statement would close the gap permanently; not yet built.
 
+### When a payment will not decompose cleanly, ASK FOR THE INVOICE
+
+A bank amount that resists explanation is not an invitation to fit arithmetic to it. On sweep row 4 a single
+payment of 9,563 produced two confident and wrong readings before anyone looked at the document:
+
+1. *"Monthly rent 6,325 plus part of a seat reduction"* — the leftover 4,290 excl VAT sat neatly between the
+   old and new seat rates, which looked like corroboration and was coincidence.
+2. *"Monthly rent plus the June board meeting"* — which then made a second row's timing look wrong and nearly
+   moved it.
+
+The invoice settled it in one line: **one seat at 2,550/month excl VAT, billed three months in advance.** The
+row did not have the wrong amount, it had the wrong **frequency** — a category of error that no amount of
+averaging bank data would ever have revealed, because the average was roughly right.
+
+**The tell:** a payment that is not a clean multiple, sum or VAT-gross-up of anything you already model.
+Round numbers decompose; 9,563 did not. When that happens, ask Henrik for the invoice before building any
+theory on it, and say plainly that the arithmetic is speculation until the document arrives.
+
+**Check frequency before amount.** For any row where the payment cadence is not directly observed — every row
+whose payments hide inside bundles, and every row on a supplier who might bill in advance — the question
+"is this monthly?" comes before "is 3,625 right?". A quarterly-in-advance supplier modelled monthly is right
+on the annual total and wrong in eight months of twelve.
+
+**Retire dead theories explicitly in the basis.** Both readings above are named and killed in id 18's log
+entry. A future session reading only the surviving conclusion would otherwise rebuild them from the same data.
+
 ### The bookkeeping runs AHEAD of the bank — use it to predict the next payment
 
 `sie_monthly_balances` is usually treated as a lagging cross-check. For any vendor whose cost lands in one

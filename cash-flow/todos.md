@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 3 av 44 rader klara (+1 ny rad tillagd). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 4 av 44 rader klara (+2 nya rader). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -63,13 +63,19 @@ Kör mot rätt kanal per rad. Presentera med modellbelopp, kanalens utfall (3 m�
   bankbetalning på exakt 4 200,00 den 2026-01-08. Möten hålls dec/feb/jun/sep; KASSAN kommer ~en månad
   senare, alltså quarter_months 1,3,7,10 dag 8. **Oktoberutfallet ligger i bottenmånaden.** Godkänt: *"4200 ok"*.
 
-- [ ] **id 18 United Spaces månadsrad — VÄNTAR PÅ HENRIK.** Raden står på 3 625 inkl moms (2 900 exkl).
-  Konto 5011 visar basen 5 060 exkl = **6 325 inkl**, konsekvent över fem perioder, bekräftat av en exakt
-  bankbetalning på 6 325 den 2026-01-22. Gap: **2 700/mån ≈ 32 400/år**. Henrik säger att en platsminskning
-  sänkt kostnaden och att 2 900 + moms ska ligga kvar. Det går ihop BARA om minskningen fick effekt efter
-  maj 2026 (där bokföringen slutar) — men enda junipunkten är en betalning på 9 563, alltså HÖGRE, inte
-  lägre. **Fråga: vilket datum fick platsminskningen effekt?** Rör inte raden innan svaret finns; att sätta
-  Henriks namn på 3 625 när senaste evidensen pekar åt andra hållet vore en falsk verifiering.
+- [x] **id 18 United Spaces — OMSTRUKTURERAD, inte omkalibrerad** (2026-08-18). Raden hade fel FREKVENS.
+  Henrik tog fram faktura 2491 (2026-05-26, OCR 249169, 30 dagar netto): en rad, *"Lounge Large
+  (2026-07-01 – 2026-09-30)"*, 3,00 x 2 550,00 = 7 650 exkl = 9 562,50 inkl — vilket ÄR betalningen på
+  9 563,00 den 2026-06-25 som låg gömd i en Corporate Access-bunt. Alltså **en plats, 2 550/mån exkl moms,
+  fakturerad kvartalsvis i förskott**. Raden är nu 9 563 kvartalsvis, quarter_months 3,6,9,12 dag 25.
+  Månadsekvivalent 3 188 mot tidigare 3 625.
+  - **Två tidigare tolkningar är därmed döda:** (a) 9 563 var INTE månadshyra + styrelsemöte, så uträkningen
+    som pekade på en delvis platsminskning i juni var en slump; (b) det fanns ingen styrelsemötesbetalning
+    i juni, vilket ÅTERSTÄLLER en månads eftersläpning och bekräftar att id 68 ska ligga kvar på 1,3,7,10.
+  - **ANTAGANDE** (Henrik: *"Får förmoda"*): att kvartalsfakturering i förskott är permanent. Bokföringen
+    visar en MÅNATLIG bas på 5 060 exkl t.o.m. period 202605, så det är en färsk ändring.
+    **TEST ~2026-09-25:** faktura ska utfärdas ~26 aug och betalas ~25 sep för okt–dec. Kommer i stället
+    månadsbetalningar tillbaka — ställ om raden till monthly igen.
 
 - [ ] **STRUKTURELLT — bankvalideringens blinda fläck.** 63 % av allt utflödesvärde saknar mottagarnamn.
   Per konto: nordea_main 66 rader / 4,0 MSEK utan namn (44 % av kontots värde), nordea_usd 154 / 16,3 MSEK

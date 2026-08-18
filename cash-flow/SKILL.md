@@ -302,90 +302,62 @@ ORDER BY date DESC LIMIT 3;
 
 **NEVER hardcode FX assumptions in calculations** — this caused a ~967K SEK over-statement in PLAN-H (used 0.112 SEK/INR instead of Riksbanken 0.0969). Lesson: every "should I just multiply by ~0.1?" instinct must be replaced with "query `currency_rates_daily`".
 
-### Complete India entries (post-PLAN-J 2026-05-20, all in native currency)
+### Live India entries — QUERY, never transcribe
 
-**Monthly cash operations recurring** (`is_internal_transfer=false`, account 6561, currency=INR — auto-FX):
-| id | Description | Amount | Day | Notes |
-|---|---|---:|---|---|
-| 54 | T1 vendor + ad-hoc | **630,000 INR** | 18 | 8% of Padma April pattern |
-| 55 | T2 statutory TDS+RTDS | **3,085,000 INR** | 24 | 39%, SWIFT 3-day lag |
-| 56 | T3 salaries | **4,195,000 INR** | 26 | 53%, SWIFT 3-day lag pre-month-end |
-| **Monthly cash total** | | **7,910,000 INR** | | ≈ 766K SEK at SEK/INR=0.0969 (Riksbanken 2026-05-20) |
+**There is deliberately no table of India rows in this file.** One used to live here, and on 2026-08-18 it was checked against production and found wrong in five separate blocks: ids 36/39/40/41/42/43 were marked DISABLED while all six were live; id 35 was listed at 4,000,000 INR on 4 Nov when the row holds 4,024,356 INR on 30 Oct; id 56 was listed at 4,195,000 against an actual 4,004,810; ids 63/64 were absent entirely; the PLAN-H rows 74–80 were presented as live when all six are disabled; and a per-month cash-impact table computed from those disabled rows had every monthly figure wrong. See `docs/plans/CR-2026-08-18-monthly-india-confirmation.md` in financial-ops.
 
-**Annual events**:
-| id | Description | Amount | annual_month / day | Status |
-|---|---|---:|---|---|
-| **35** | **Diwali annual bonus** | **4,000,000 INR (~388K SEK)** | **11 / 4** | **ACTIVE (re-enabled 2026-05-20 PLAN-K, is_internal_transfer=false, supplier_id=92). Fires every Nov 4 going forward. [STILL PROVISIONAL] until Padma-confirmed.** |
-| 39 | Advance tax Q4 | 1,100,000 INR | 1 | DISABLED (covered by Padma SWIFTs) |
-| 40 | Advance tax Q1 | 800,000 INR | 6 | DISABLED |
-| 41 | Advance tax Q2 | 1,600,000 INR | 9 | DISABLED |
-| 42 | Advance tax Q3 | 1,600,000 INR | 12 | DISABLED |
-| 43 | GST refund (offset) | -1,900,000 INR | 9 | DISABLED |
-| 36 | Annual health insurance | 1,652,000 INR | 11 | DISABLED (covered by Padma SWIFTs) |
+**Standing rule: any table in a skill file that mirrors database state is a bug waiting to happen. Carry the query, not the answer.**
 
-**Intercompany book-entry side** (`is_internal_transfer=true` — DISABLED 2026-05-20 PLAN-I):
-| id | Description | Amount | Day | Status |
-|---|---|---:|---|---|
-| 2 | Sonetel India intercompany | 125K SEK | 5 | DISABLED |
-| 8 | Sonetel India intercompany | 112K SEK | 10 | DISABLED |
-| 14 | Sonetel India "Monthly cost" | 503K SEK | 27 | DISABLED |
-| 15 | Sonetel India dividend tax | 20K SEK | 27 | DISABLED |
+```sql
+-- Live India recurring rows. This is the ONLY source.
+SELECT id, recipient, amount, currency, frequency,
+       day_of_month AS dag, annual_month AS mnd, quarter_months AS kvartal,
+       enabled, is_internal_transfer
+FROM recurring_payment
+WHERE currency = 'INR' OR LOWER(recipient) LIKE '%india%'
+   OR LOWER(COALESCE(description,'')) LIKE '%india%'
+ORDER BY enabled DESC, frequency, annual_month NULLS FIRST, day_of_month;
 
-**Padma SWIFT scheduled entries May-Jun 2026 (PLAN-G v2, currency=USD post-PLAN-J)**:
-| id | Pay date | Amount | supplier_id | Note |
-|---|---|---:|---:|---|
-| 60 | 2026-05-08 | 35,000 USD | 92 | Already sent |
-| 62 | 2026-05-13 | 7,224 USD | 92 | Immediate |
-| 63 | 2026-05-25 | 50,000 USD | 92 | Pre-May 28 |
-| 66 | 2026-06-01 | 14,000 USD | 92 | Pre-Jun 4 |
-| 67 | 2026-06-10 | 16,000 USD | 92 | Pre-Jun 14 |
-| 68 | 2026-06-17 | 17,000 USD | 92 | Pre-Jun 20 |
-| 69 | 2026-06-25 | 61,044 USD | 92 | June closure (all needs) |
+-- Scheduled overlays that modify the above (holdbacks, cancellations, top-ups, SWIFTs)
+SELECT id, pay_date, recipient, amount, currency, enabled, is_inflow
+FROM scheduled_payment
+WHERE currency = 'INR' OR LOWER(recipient) LIKE '%india%'
+   OR LOWER(COALESCE(description,'')) LIKE '%india%'
+ORDER BY enabled DESC, pay_date;
+```
 
-**Cancellation offsets for T1/T2/T3 fires May-Jun** (is_inflow=true, currency=INR matching T1/T2/T3):
-| id | Pay date | Cancels | Amount | Net effect |
-|---|---|---|---:|---|
-| 61 | 2026-05-24 | T2 May | 3,085,000 INR | net 0 day 24 |
-| 64 | 2026-05-18 | T1 May | 630,000 INR | net 0 day 18 |
-| 65 | 2026-05-26 | T3 May | 4,195,000 INR | net 0 day 26 |
-| 70 | 2026-06-18 | T1 Jun | 630,000 INR | net 0 day 18 |
-| 71 | 2026-06-24 | T2 Jun | 3,085,000 INR | net 0 day 24 |
-| 72 | 2026-06-26 | T3 Jun | 4,195,000 INR | net 0 day 26 |
+Read each row's `description` before acting on it — the provenance, the rollback recipe and the "still provisional" warnings live there, and they are maintained.
 
-**PLAN-H scheduled entries Jul-Dec 2026** (currency=INR, variance plugs on top of T1/T2/T3 base — STILL PROVISIONAL pending Padma's real plan):
-| id | Pay date | Variance INR | Note |
-|---|---|---:|---|
-| 74 | 2026-07-26 | 1,115,000 | Jul: R6 9,025K - 7,910K base - $0 savings |
-| 75 | 2026-08-26 | 487,000 | Aug: R6 8,881K - 7,910K - $5K savings |
-| 76 | 2026-09-26 | 137,000 | Sep: R6 9,015K - 7,910K - $10K savings |
-| 77 | 2026-10-26 | 3,122,000 | Oct ex-bonus: 12,000K - 7,910K - $10K |
-| ~~78~~ | 2026-11-04 | 4,000,000 | DISABLED 2026-05-20 PLAN-K — replaced by recurring annual id 35 |
-| 79 | 2026-11-26 | 2,802,000 | Nov: 11,680K - 7,910K - $10K |
-| 80 | 2026-12-26 | 944,000 | Dec: 9,822K - 7,910K - $10K |
+**Always pair a row id with its table.** `recurring_payment` and `scheduled_payment` each have an id 63 and an id 64. In `recurring_payment` they are the health-insurance refunds; in `scheduled_payment` a 50K USD SWIFT and a T1 cancellation. A bare "id 63" will eventually point at the wrong row — write `recurring 63` or `scheduled 63`.
 
-### Per-month India cash impact (post-PLAN-J, at Riksbanken 2026-05-20 FX)
+**Per-month cash impact is computed, never stored here.** Run the forecast and read the India rows out of it, or sum the live rows above with their overlays. Any month table written into this file is stale the day a row changes — that is exactly how the previous one came to be wrong in every row.
 
-| Month | Base T1+T2+T3 | Cancellations | Padma USD | PLAN-H INR | Total SEK |
-|---|---:|---:|---:|---:|---:|
-| May | -766K | +766K | -865K | n/a | **-865K** |
-| Jun | -766K | +766K | -1,013K | n/a | **-1,013K** |
-| Jul | -766K | 0 | n/a | -108K | **-874K** |
-| Aug | -766K | 0 | n/a | -47K | **-813K** |
-| Sep | -766K | 0 | n/a | -13K | **-779K** |
-| Oct | -766K | 0 | n/a | -302K | **-1,068K** |
-| Nov | -766K | 0 | n/a | -271 + -388 (bonus) | **-1,425K** |
-| Dec | -766K | 0 | n/a | -91K | **-857K** |
+**Disabled rows are not history.** They stay queryable and they matter: an intercompany book-entry that is disabled would double-count if re-enabled, and a disabled plug is evidence of a superseded plan. Always select them explicitly and separate them, rather than filtering `enabled = true` and forgetting they exist.
 
 ### Display rules for user-facing summaries
 
-- Show **monthly cash side** (T1+T2+T3 = 766K SEK at current FX) as primary base
+- Show **monthly cash side** (T1+T2+T3, summed from the live rows and converted at current FX) as primary base
 - Show **scheduled USD (Padma) or INR (variance) overlays** separately
 - Explicitly state "TOTAL CASH IMPACT" per month at current FX
 - When FX moves materially (>2%), re-state the SEK values
 
 ### MANDATORY October bonus-review prompt
 
-If the current session date is between **2026-10-01 and 2026-10-25** (and equivalent windows in future years), proactively flag to the user: "Diwali bonus id 35 fires 2026-11-04 at 4M INR (~388K SEK). Confirm bonus amount with Padma before Nov 4. To revise: update id 35 amount." The 4M INR value is from budget ver 16.48, not Padma-confirmed.
+The India appraisal bonus is the largest single India row and it is still provisional — its amount is our reconstruction from Prashant's report, not a figure India has confirmed.
+
+**Query recurring id 35 for the live amount and firing date, then flag it to the user.** Do not quote any figure from this file; the prompt that used to live here named 4M INR on 4 November, while the row had already moved to 4,024,356 INR on 30 October.
+
+```sql
+SELECT id, amount, currency, annual_month, day_of_month, enabled, description
+FROM recurring_payment WHERE id = 35;
+```
+
+Trigger the prompt when the session date falls in the calendar month **before** the row's `annual_month`, and in the first three weeks of the firing month itself — computed from the query, not from a hardcoded window. Tell the user what the row currently says, that it is unconfirmed, and ask them to check it with Prashant before it fires.
+
+Two traps, both real:
+
+- A `scheduled_payment` row has carried this same bonus in the past (id 77, now disabled). Before proposing any change, query *both* tables for the bonus so you don't add a second one alongside a live row.
+- The bank-rec matcher cannot be trusted to attribute the bonus SWIFT to id 35 — see "Known bank-rec matcher limitation" below.
 
 ### Known bank-rec matcher limitation
 

@@ -933,6 +933,42 @@ them.** The list goes to India for confirmation every month via `monthly-intake`
 Prashant on 2026-08-18. Do not validate these against Swedish channels — wait for India's answer, then record it
 against each row.
 
+### Rader som ENBART kan verifieras mot ett bokföringskonto — räkna om varje månad
+
+Vissa rader har ingen betalkanal alls. De syns aldrig i banken, på kortet eller i utläggen, eftersom pengarna
+aldrig lämnar kontot som en egen transaktion. För dem är bokföringen inte en kontrollkälla utan **den enda
+källan**, och de driver därför ifrån utan att något ser fel ut. Räkna om dem i varje månadsgenomgång — en
+fråga per konto, ingen kod, ingen migration.
+
+| Rad(er) | Konto | Kommentar |
+|---|---|---|
+| id 16 Bambora + id 52 Adyen, **som par** | `6571` Avgift Bambora & Adyen | Kontot slår ihop båda leverantörerna. **TOTALEN går att verifiera, INTE fördelningen 46/14** — den vilar bara på radens egen notering ~1 500 USD/mån. |
+| id 53 PayPal-avgifter | `6572` Bankavgift Paypal | Nettas ur settlements, ingen bankutbetalning existerar. |
+
+```sql
+SELECT period, round(sum(amount) FILTER (WHERE account_number='6571')) AS bambora_adyen,
+                round(sum(amount) FILTER (WHERE account_number='6572')) AS paypal
+FROM sie_monthly_balances WHERE period >= '202601' GROUP BY period ORDER BY period;
+```
+
+Utgångsläge 2026-08-19: `6571` sexmånaderssnitt **59 249** mot modellens 46 000 + 14 000 = 60 000 (1,3 % fel).
+`6572` sexmånaderssnitt **53 463**, senaste tre **52 323**; raden sattes till 52 000 samma dag från 45 000.
+
+**Dessa avgifter modelleras som egna utflöden eftersom intäkten ligger BRUTTO före PSP-avgifter.** Kontrollerat
+2026-08-19 både mot den gamla manuella överriden (2,5 MSEK) och mot den nuvarande beräknade körtakten
+(2 533 333/mån), båda i nivå med resultaträkningens nettoomsättning (apr–jun snitt 2 517 653). Vore körtakten
+i stället NETTO efter avgifter skulle de tre raderna dubbelräkna ~112 000/mån. **Kontrollera det om
+intäktsmodellen någonsin byts ut.**
+
+**Varför de INTE lades om till en procentsats av intäkten** (övervägt och förkastat 2026-08-19, CEO): en
+PSP-avgiftsprocent på ~4,4 % hade tagit bort det påhittade betalningsdatumet och följt volymen automatiskt.
+Men (a) beloppen är redan rätt — felet är enbart att dag 28 är en platshållare för avgifter som nettas
+löpande, värt ~66 000 inom en månad och **noll på månadstotalen**, (b) intäkten är numera själv en beräknad
+körtakt, så en procentsats hade staplat två skattningar på varandra, och (c) kostnaden är en kodändring i
+prognostjänsten plus en migration plus ett övergångsfönster där procenten och de tre raderna dubbelräknar
+112 000/mån om ordningen blir fel. Fel byte för 66 000 i tajming. Samma avvägning som när
+valideringsmaskineriet skrotades 2026-08-18 — låt skillen göra jobbet.
+
 ## Månatlig kalibreringsgenomgång — körs vid månadsstängning (CEO 2026-08-17)
 
 **Detta ersätter "kom ihåg att kontrollera X"-reglerna i den här skillen.** Modellen driver inte för att ingen kan se avvikelserna — den driver för att ingen ställs inför ett beslut. India-pluggarna id 74–80 stod märkta PROVISIONAL i varje prognosutskrift i tre månader och drev ändå oktoberbotten. Detektion var aldrig problemet.

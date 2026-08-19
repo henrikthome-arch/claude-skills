@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 17 av 44 rader klara (+2 nya rader). COGS-procenten omlagd till automatik. Botten −902 522 (2026-10-30). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 20 av 44 rader klara (+2 nya rader). COGS-procenten omlagd till automatik. Botten −902 522 (2026-10-30). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -149,12 +149,13 @@ vilket är rätt: intäkten drivs av samma abonnemang som kostnaden (CEO 2026-08
   (apr–jun snitt 2 517 653), som är BRUTTO före PSP-avgifter. Hade den härletts ur bankinsättningar hade de
   tre raderna dubbelräknat ~105 000/mån.
 
-- [ ] **id 20 BDO 69 800 — i praktiken verifierad, ej loggad.** Konto 6530 snitt 51 663 exkl moms 2026
-  (64 579 inkl) och 56 314 exkl över nio månader (70 393 inkl). 125 904 den 14 aug var en känd förfallen
-  faktura, redan i planen som scheduled 86. Stäng med en beskrivningsnotering.
-- [ ] **Städa scheduled 54** "Adyen (overdue Apr)" 15 338 daterad 2026-05-08, fortfarande enabled men utanför
-  fönstret — samma mönster som borttagna scheduled 89.
-- [ ] **id 4 Nordea bankavgifter 7 000** mot konto 6570 som ligger på 8 474/mån — gap ~1 500.
+- [x] **id 20 BDO 69 800 — VERIFIERAD OFÖRÄNDRAD.** Konto 6530 snitt 51 663 exkl 2026 (64 579 inkl) och
+  56 314 exkl över nio perioder (70 393 inkl); budget 670 000 exkl/12 = 69 792. **BDO syns ALDRIG i
+  bankdatan** — alla betalningar ligger i buntar. 125 904 den 14 aug var scheduled 86, en känd förfallen
+  majfaktura, inte en månadsbetalning.
+- [x] **scheduled 54 borttagen** (Adyen overdue Apr, 15 338, daterad 2026-05-08, utanför fönstret).
+- [x] **id 4 Nordea bankavgifter 7 000 → 8 500.** Konto 6570 stabilt 8 271 / 8 749 / 8 935 / 8 326 / 8 474,
+  snitt 8 551. Avvikarna 202511 (26 666) och 202601 (13 452) uteslutna. Ligger inte på samma konto som id 21.
 
 - [ ] Nordea-lånen (id 22 26 041,67 + id 23 9 375) — ej påbörjade.
 

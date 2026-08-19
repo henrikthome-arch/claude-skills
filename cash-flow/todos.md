@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 22 av 44 rader klara (+2 nya rader). COGS-procenten omlagd till automatik. Botten −902 522 (2026-10-30). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 25 av 44 rader klara (+2 nya rader). COGS-procenten omlagd till automatik. Botten −902 522 (2026-10-30). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -171,8 +171,30 @@ vilket är rätt: intäkten drivs av samma abonnemang som kostnaden (CEO 2026-08
 **REGEL:** när aritmetiken stöder två motsatta slutsatser — sluta räkna, be om fakturan. Gällde både id 18
 United Spaces (fel FREKVENS) och id 29 Fluff (residual-artefakt).
 
-- [ ] **Snabb stängning: id 51 Mangold 46 843/kvartal** — bekräftad exakt av bankutfallet 2026-08-10
-  (MANGOLD FONDKOMMISSION AB −46 843,00). Behöver bara loggas.
+- [x] **id 31 G&W 43 125/kvartal — VERIFIERAD OFÖRÄNDRAD.** Tretton fakturor (lev.nr 26) på exakt 43 125,
+  bara två avvikare 2024. Betalningar i jan/apr/jul/okt matchar quarter_months. Dag varierar 4–27 → dag 14
+  är en median, inte observerad.
+- [x] **id 51 Mangold 46 843/kvartal — BEKRÄFTAD.** Radens "inferred from single invoice" är infriad:
+  bankutfall 2026-08-10, OCR 1040872, −46 843,00.
+- [x] **id 30 Nasdaq 190 000 → 166 000.** Raden blandade ihop den ÅRLIGA noteringsavgiften (161 250, alltid
+  fakturerad 31 jan, serie 125 000 → 161 250 sedan 2019) med oregelbundna EMISSIONSkostnader. CEO: *"We do
+  not do issues of shares regularly."* Fyrar nästa gång mars 2027 → 161 250 × 1,03.
+
+### Efter deploy 2026-08-19 05:37 — COGS-fixen live
+
+- [x] Andra agenten shippade båda: `1a2c272a` (source-etiketten) och `3d17060f` (migration 100 återskapade
+  överriden). **Auto-COGS är nu live: source `pl_quarter`, "Average COGS from P&L: 2026-04, 2026-05, 2026-06
+  (19.5%)", effektiv COGS 15,0 %.**
+- [x] **BOTTENMÅNADEN HAR FLYTTAT: −851 082 den 2026-08-28**, inte oktober. Sep −615 006, okt −834 591,
+  nov −739 717.
+- [ ] **DAG 28-KLUSTRET — ~435 000 fyrar samma dag och sätter nu bottnen.** BDO 69 800, DBT 195 925, PayPal
+  52 000, Fluff 37 500, Nordea-lån 35 417, OpenRouter 20 000, Adyen 14 000, checkkredit 10 000. **PayPal och
+  Adyen nettas ur settlements och har ingen betalningsdag alls** — deras dag 28 är en platshållare. Bottnen
+  är delvis ett artefakt av datumkonventionen. Utred vilka dag-28-datum som är observerade.
+- [ ] **Kontrollera efter NÄSTA deploy** att `cashflow_cogs_percent_override` fortfarande är borta — det
+  validerar att `3d17060f` håller över mer än en deploy.
+- [ ] **ÖPPET: intäktsöverriden.** Rensad 2026-08-19 05:02 via portalen av någon annan; prognosen kör nu
+  84 444/dag ur en 3-modellsuppskattning i stället för Henriks manuella 2,5 MSEK. Var det avsiktligt?
 
 - [ ] Nordea-lånen (id 22 26 041,67 + id 23 9 375) — ej påbörjade.
 

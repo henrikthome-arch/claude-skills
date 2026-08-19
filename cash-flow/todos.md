@@ -19,6 +19,8 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
+**➡️ SVEPETS FULLA LÄGE: [`sweep-2026-08.md`](sweep-2026-08.md) — läs den först.**
+
 **Status: 25 av 44 rader klara (+2 nya rader). COGS-procenten omlagd till automatik. Botten −902 522 (2026-10-30). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).

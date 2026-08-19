@@ -19,7 +19,7 @@ Living todo list of cash flow forecast model improvements. Created 2026-05-08. U
 
 CEO 2026-08-18: *"Bin the machinery. Just have a skill do the work."* Metoden ligger i SKILL.md, "Validating an amount against its real payment channel". Ingen migration, inga nya kolumner — verifieringen skrivs som en beskrivningsnotering och loggas automatiskt.
 
-**Status: 20 av 44 rader klara (+2 nya rader). COGS-procenten omlagd till automatik. Botten −902 522 (2026-10-30). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
+**Status: 22 av 44 rader klara (+2 nya rader). COGS-procenten omlagd till automatik. Botten −902 522 (2026-10-30). India: listan skickad till Prashant 2026-08-18, svar inväntas.**
 
 56 aktiva recurring-rader totalt: 44 svenska/övriga + 12 India (parkerade tills India svarar).
 
@@ -156,6 +156,23 @@ vilket är rätt: intäkten drivs av samma abonnemang som kostnaden (CEO 2026-08
 - [x] **scheduled 54 borttagen** (Adyen overdue Apr, 15 338, daterad 2026-05-08, utanför fönstret).
 - [x] **id 4 Nordea bankavgifter 7 000 → 8 500.** Konto 6570 stabilt 8 271 / 8 749 / 8 935 / 8 326 / 8 474,
   snitt 8 551. Avvikarna 202511 (26 666) och 202601 (13 452) uteslutna. Ligger inte på samma konto som id 21.
+
+### Leverantörsfakturor slår residualräkning (2026-08-19)
+
+- [x] **id 29 Fluff 37 500 — VERIFIERAD OFÖRÄNDRAD.** Fakturorna (lev.nr 58452543): 15 438 / 9 750 / 11 375 /
+  38 806 / 33 313 / 41 499 / 41 746 / 28 802. Snitt senaste fem 36 833, senaste tre 37 349 — inom 700.
+  **Min residualanalys (6550 minus Tomas) gav 26 468–41 623 och var ett artefakt.** Den ärvde två antaganden
+  som inte håller: att Tomas fakturerar exakt 92 500 varje månad, och att bokföringsmånad = fakturamånad.
+- [x] **id 5 Linn Kristensen 27 500 → 23 800.** Fakturor (lev.nr 56448357): 24 750 / 20 625 / 23 375 / 23 375 /
+  23 375 / 27 500 / 24 750 / 20 625. Snitt åtta 23 547, sex 23 833, tre 24 292. **27 500 var seriens TAK**,
+  träffat en enda gång. Timing (dag 5) stämmer.
+  - Öppen observation till Henrik: arvodet ligger platt medan Googles spend föll 350K → 110K.
+
+**REGEL:** när aritmetiken stöder två motsatta slutsatser — sluta räkna, be om fakturan. Gällde både id 18
+United Spaces (fel FREKVENS) och id 29 Fluff (residual-artefakt).
+
+- [ ] **Snabb stängning: id 51 Mangold 46 843/kvartal** — bekräftad exakt av bankutfallet 2026-08-10
+  (MANGOLD FONDKOMMISSION AB −46 843,00). Behöver bara loggas.
 
 - [ ] Nordea-lånen (id 22 26 041,67 + id 23 9 375) — ej påbörjade.
 

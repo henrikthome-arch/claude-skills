@@ -680,6 +680,43 @@ Belopp, with a **CSV (Excel)** button. That is the route to recovering the hidde
 the specific line rather than guessing, and name the exact date and amount so the lookup is one click.
 Capturing those exports alongside the monthly statement would close the gap permanently; not yet built.
 
+### Cancellation rows hardcode the amount they cancel — check before changing ANY recurring row
+
+`scheduled_payment` contains offset rows whose only job is to neutralise a recurring row's firing in a given
+month ("annullerar id NN", "cancellation", "offset"). **They store a fixed amount copied from the recurring row
+at the time they were written.** Change the recurring amount and the pair silently stops cancelling.
+
+This happened on 2026-08-19. id 48 was reduced 200,000 → 151,774; scheduled 95, which exists to cancel id 48's
+August firing, stayed at 200,000. The two no longer netted, leaving 48,226 of spurious outflow on 2026-08-17
+and moving the October trough from −885,022 to −933,248. The basis text written minutes earlier had asserted
+the change could not affect that trough.
+
+**Before altering any recurring row, run this:**
+
+```sql
+SELECT id, pay_date, recipient, amount, enabled, is_inflow, description
+FROM scheduled_payment
+WHERE description ILIKE '%id ' || :row_id || '%'
+   OR recipient  ILIKE '%annuller%'
+   OR recipient  ILIKE '%cancellation%'
+   OR recipient  ILIKE '%offset%'
+ORDER BY pay_date;
+```
+
+Then change both in the SAME transaction, so the log shows them as one decision.
+
+**Two related traps in the same family**, all "row A silently depends on row B's number":
+
+- **Dates before today still fire.** The forecast starts from the bank snapshot, not from `today`, so a row
+  dated a few days back is inside the window. Both id 48 and scheduled 95 fire on 2026-08-17 in a forecast
+  requested on 2026-08-19.
+- **Holdback rows** (e.g. the India T3 rows 104–107, +190,190/month) hold a recurring row at a pre-change
+  level. Same coupling, opposite sign: they hardcode the *difference*, so changing the base row makes the
+  holdback wrong rather than making it stop cancelling.
+
+**Always re-read the trough after a change.** The arithmetic in a basis text is a prediction; the forecast is
+the observation. This trap was caught only because the trough was checked immediately afterwards.
+
 ### When a payment will not decompose cleanly, ASK FOR THE INVOICE
 
 A bank amount that resists explanation is not an invitation to fit arithmetic to it. On sweep row 4 a single

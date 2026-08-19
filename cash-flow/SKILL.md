@@ -801,6 +801,68 @@ in the accrual **months** after the first invoice.
   within 1.6 %. Use it that way; do not use it to move a single row inside the cluster.
 - Seasonality: check H1 vs H2 before averaging. The forecast window is what matters, not the year.
 
+#### 0a. NEVER infer a rate or driver FROM the modelled amount — that reasoning is circular
+
+**The costliest error of the sweep.** id 23 Nordea ränta was modelled at 9,375. I observed that 9,375 is
+exactly 0.75 %/month on the original 1.25 MSEK loan, concluded "this is the opening figure, frozen at
+drawdown", and built an entire theory on it — including a search for a refinancing to explain why it had
+never been updated. The Nordea statement then showed the real rate is **6.37 %/yr**. Interest at drawdown
+would have been 6,635. **9,375 was never correct at any point in the loan's life.**
+
+The arithmetic was right and the conclusion was still wrong. Deriving a rate from the number you are trying
+to verify tells you only that *some* formula reproduces it — never that it is the right formula. It then
+makes a wrong number feel explained, which is worse than leaving it unexplained.
+
+**Rule: a modelled amount can never be its own evidence.** When a row implies a rate, a percentage or a
+schedule, get that parameter from an **external document** — loan agreement, invoice, bank statement — or
+mark the row unverified. "It reconciles to X %" is not verification.
+
+Corollary: this is also why "the amount matches the last invoice exactly" was not enough for Forvis. It
+matched, but the invoice covered an 18-month fiscal year. **Check what the source document is a document
+OF**, not just that the number agrees.
+
+#### 0c. Verifying a loan: read the bank's loan view, not the ledger
+
+Loan rows decompose cleanly and quickly if you ask for the right screen:
+
+- **Interest = `Belopp` − `Amortering`** on each row of the Nordea loan transaction list. That is the only
+  place the interest appears separately — account 8410 combines all three loans and 2352 combines two.
+- **Remaining balance ÷ monthly amortisation = payments left.** Nordea: 729,160 ÷ 26,042 = exactly 28, so
+  the loan runs to Dec 2028 and amortises through the whole 600-day window. Use this to confirm a row should
+  still be firing at the end of the horizon.
+- **Original = amortised + remaining** — confirms the loan was never refinanced, which kills or confirms any
+  refinancing theory in one line.
+
+**Signed loan agreements are in the finops legal archive**, and they carry the rate, the amortisation
+structure AND the covenants. `search_legal_agreements` / `get_legal_agreement` are **BROKEN**
+(BUG-20260819-001 — the axios baseURL ends in `/api/v1` while the legal blueprint is at `url_prefix='/legal'`).
+**Use curl directly:**
+
+```sh
+curl -s -H "Authorization: Bearer $TOKEN" "http://44.194.218.109:8000/legal/api/v1/agreements?limit=100"
+curl -s -H "Authorization: Bearer $TOKEN" "http://44.194.218.109:8000/legal/api/v1/agreements/<id>"
+```
+
+**Standing risk to carry into any board or funding discussion**: DBT Lån 2 (kreditnummer 562, 2 MSEK,
+7.65 % + STIBOR 1M) imposes an **ARR covenant of minimum 25 MSEK measured quarterly from Q4 2025**, and
+negative undertakings barring new loans, factoring, pledges or dividends without written consent. **Breach
+is grounds for calling the loan.** A cash forecast that ignores this understates the real risk.
+
+#### 0d. The forecast HORIZON decides what is material — check it before dismissing a row
+
+Repeatedly during the sweep, rows were set aside as "outside the 93-day window, no trough impact" — the
+board fees, Forvis, Nasdaq, Schibsted, the India annual rows. Then the CEO said the board would see **600
+days**, and every one of them became material; several fire twice.
+
+- **Read `cashflow_forecast_days` (default 93) before saying a row does not matter.**
+- Never let "outside the window" do any work in a *justification* — the window is a setting, not a fact
+  about the row. Say "fires in April, outside the current 93-day default" so it survives a horizon change.
+- **`forecast_days` is settable ONLY via POST body**, not query string:
+  `POST /api/v1/cash-flow/forecast {"forecast_days": 600}`. And you MUST omit `revenue_override_msek`
+  entirely — sending it (even as 0) **clears the stored override**.
+- At 600 days, sanity-check that the last month is not truncated. A horizon ending mid-month cuts off the
+  day-28 cluster and shows a fake surplus.
+
 #### 0b. Check what the trough is measured *at* before quantifying a timing error
 
 The "PayPal + Adyen sit on a placeholder day-28 date, worth ~66,000 of artificial depth" claim was wrong by

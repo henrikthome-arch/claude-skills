@@ -773,9 +773,40 @@ entry. A future session reading only the surviving conclusion would otherwise re
 
 ### What the 2026-08 sweep taught — read before checking any row
 
-**Scoreboard after 23 of 44 rows.** Roughly half were wrong, and the errors ran in BOTH directions — the sweep
+**Scoreboard after 46 of ~56 rows.** Roughly half were wrong, and the errors ran in BOTH directions — the sweep
 converges the forecast, it does not improve it. Two costs were not modelled at all (Salesforce, United Spaces
 board rooms) and were only found by decomposing a payment. Expect the same rate in the rows still unchecked.
+
+#### 0. THE SUPPLIER LEDGER IS AUTHORITATIVE. THE ACCRUAL ACCOUNT IS NOT.
+
+**This is the single most important lesson of the sweep.** On 2026-08-19 an accrual account pointed the wrong
+way **three times in one day**, and each time it would have produced a confident, well-argued, wrong change:
+
+| Row | What the account said | What the invoices said |
+|---|---|---|
+| Forvis 46/49 | konto 6420 accrual → cut 20–25 % | modelled figures matched the last invoice **to the krona** |
+| Cision id 10 | konto 5980 H1 avg → cut 10,000 → 7,200 | 12 invoices = 9,950/mo; the "gap" was autumn seasonality |
+| Mangold id 51 | konto 6490 → a 144,000/yr overstatement | fee is real; BDO's accrual lagged a **restarted engagement** |
+
+Why it happens: BDO books a monthly accrual from what was known when the year opened, then trues it up late
+(2025 saw big catch-ups in September and December). A restarted, repriced or newly-signed engagement shows up
+in the accrual **months** after the first invoice.
+
+**Rules:**
+- A P&L account is evidence of an *upper bound on what has been booked so far*, never of what a vendor charges.
+- **Before proposing any change justified by an account balance, ask the CEO for that supplier's ledger**
+  (Fortnox → leverantörsreskontra). It settled Cision, Forvis, Euroclear, G&W, Nasdaq and Mangold cold, each
+  in one step, and it shows amount, invoice date, due date AND payment date together.
+- A shared account (6490, 6540, 5980) can still **validate a cluster** — 6540 matched its four modelled rows
+  within 1.6 %. Use it that way; do not use it to move a single row inside the cluster.
+- Seasonality: check H1 vs H2 before averaging. The forecast window is what matters, not the year.
+
+#### 0b. Check what the trough is measured *at* before quantifying a timing error
+
+The "PayPal + Adyen sit on a placeholder day-28 date, worth ~66,000 of artificial depth" claim was wrong by
+15×. The trough is measured at the **end** of day 28, so lumping deducts 66,000 while continuous netting has
+already deducted 28/30 × 66,000 = 61,600. **The real distortion is 4,400.** Before claiming a dating error is
+worth X, compute the *cumulative* difference at the trough date, not the size of the lump.
 
 #### 1. Rows on COGS accounts (4000–4999) are CASH-NEUTRAL to adjust
 

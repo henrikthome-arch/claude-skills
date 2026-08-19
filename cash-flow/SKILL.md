@@ -771,6 +771,86 @@ on the annual total and wrong in eight months of twelve.
 **Retire dead theories explicitly in the basis.** Both readings above are named and killed in id 18's log
 entry. A future session reading only the surviving conclusion would otherwise rebuild them from the same data.
 
+### What the 2026-08 sweep taught — read before checking any row
+
+**Scoreboard after 23 of 44 rows.** Roughly half were wrong, and the errors ran in BOTH directions — the sweep
+converges the forecast, it does not improve it. Two costs were not modelled at all (Salesforce, United Spaces
+board rooms) and were only found by decomposing a payment. Expect the same rate in the rows still unchecked.
+
+#### 1. Rows on COGS accounts (4000–4999) are CASH-NEUTRAL to adjust
+
+`effective_cogs_percent = full_cogs_percent − tracked_cogs_percent`, where tracked is every enabled recurring
+row whose `account_number` falls in 4000–4999. Lower such a row and the effective percentage rises by the same
+amount. **The total does not move.** Verified: dropping id 1 by 7,605 changed total modelled COGS by ~100 SEK.
+
+Consequences:
+- Verifying a COGS row is worth doing for attribution, but never promise a trough movement from it.
+- Recalibrating the SEB COGS rows on 2026-08-17 made the trough WORSE, because lowering them raised the
+  effective percentage. That looked mysterious and was mechanical.
+- **The deduction is only valid when the row's cost is genuinely INSIDE the measured percentage.** id 17
+  Europlanet sat on account 4015, which has ZERO ledger movement — so 4,000 was being subtracted from a
+  percentage that contained no Europlanet, netting the row to exactly zero. It had been in the forecast
+  contributing nothing. Any dormant row on a COGS account does this silently.
+- The real COGS lever is the percentage itself, not the rows. DIDWW is 60 % of COGS (account 4018, ~322,000/mo)
+  and has no row at all — correctly, since cost and revenue share one subscription driver.
+
+#### 2. Mirror pairs and offsets cancel — never reason about one half
+
+- **Mirror pair**: id 47 (MOSS, quarterly out) and id 60 (EU VAT collected, monthly in) exist to net to zero per
+  quarter. Changing both together moved the trough by **one krona** after I predicted ~5,000. Changing only one
+  breaks the netting.
+- **Cancellation rows** hardcode the amount they cancel — see the separate section above.
+- Before touching any row, query `scheduled_payment` for offsets referencing it, and check whether another
+  recurring row exists to mirror it.
+
+#### 3. Shared ledger accounts verify TOTALS, never components
+
+Do not infer one row by subtracting another from a shared account. It inherits every assumption in the
+subtrahend and the error lands entirely on the row you are trying to measure.
+- id 29 Fluff, inferred as 6550 minus Tomas's assumed 92,500, produced a range of 26,468–41,623 incl VAT
+  spanning "11,000 too high" to "4,100 too low". The invoices showed the model was right within 700.
+- Account 6571 combines Bambora and Adyen. The 60,000 TOTAL is verified to 1.3 %; the 46/14 SPLIT is not
+  verified at all and rests only on a note in the row's own description. Say so rather than implying both.
+
+#### 4. Check whether a row conflates recurring and one-off costs
+
+id 30 Nasdaq carried 190,000 because it mixed the annual listing fee (161,250, invoiced every 31 January
+without fail since 2019) with irregular SHARE-ISSUE invoices. Averaging a history that contains one-off events
+inflates the row permanently. Look at the invoice series before averaging it: if some entries are off-cycle or
+wildly different in size, ask what they are.
+
+#### 5. Day-of-month is often convention, not observation — and it sets the trough
+
+On 2026-08-19 the binding trough was 2026-08-28, where EIGHT rows fire on the same day for about 435,000. Some
+are real (the DBT autogiro). Others cannot be: **PayPal (id 53) and Adyen (id 52) are netted from settlements
+and have no payment date at all**, so their day 28 is a placeholder that creates a month-end cliff.
+
+Before treating a trough as real, list what fires on that exact day and ask which of those dates are observed
+and which are conventional. A trough built from placeholder dates is an artefact.
+
+#### 6. Forecast inputs change underneath you
+
+- **A deploy can undo a database change.** `deploy.sh` re-runs every migration every deploy, and a seeding
+  migration re-creates any parameter it finds missing. Deleting `cashflow_cogs_percent_override` held for hours
+  and was restored at the next deploy with `set_by = migration_100`. **Before deleting a business parameter,
+  grep `scripts/` for a migration that seeds it** — otherwise the change is temporary and you will not notice.
+- **`business_parameters` is NOT covered by the change-log trigger.** Only `recurring_payment` and
+  `scheduled_payment` are guarded. Parameters that drive the whole forecast — the COGS override, the revenue
+  run-rate override, the buffer, the credit line — can change with NO record at all. When changing one, write a
+  `forecast_change_log` row by hand with `table_name = 'business_parameters'`.
+- **Other people and sessions change things mid-work.** The revenue override was set at 04:31 and cleared at
+  05:02 on 2026-08-19 by someone in the portal, switching the run-rate from a manual 2.5 MSEK to a computed
+  84,444/day. I noticed only because the trough moved unexpectedly. When the trough moves more than your change
+  explains, re-read `cogs_info`, `run_rate_source` and `business_parameters` before assuming your own edit.
+- **A transient `No module named X` from dbshell means a deploy is running** and the app is mid-rebuild. Writes
+  fail cleanly (the transaction never lands). Wait for `/health` to return 200 rather than retrying blindly.
+
+#### 7. Re-read the trough after EVERY change
+
+A number written into a basis is a prediction; the forecast is the observation. Both wrong predictions in this
+sweep — the broken offset on id 48 and the net-zero mirror on id 47 — were caught only by reading the trough
+immediately afterwards, and both had already been asserted as fact in an append-only log entry.
+
 ### The bookkeeping runs AHEAD of the bank — use it to predict the next payment
 
 `sie_monthly_balances` is usually treated as a lagging cross-check. For any vendor whose cost lands in one

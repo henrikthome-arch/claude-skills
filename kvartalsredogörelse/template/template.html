@@ -1,10 +1,12 @@
 {# Sonetel Kvartalsredogörelse — Jinja2 template
    13-page layout matching v1.0 visual language. #}
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="{{ 'en' if lang == 'en' else 'sv' }}">
 <head>
   <meta charset="utf-8">
-  <title>{{ meta.report_type }} {{ meta.period_short }} — Sonetel AB (publ)</title>
+  {% if lang == 'en' %}<title>{{ notice.pdf_title }}</title>
+  <meta name="description" content="{{ notice.pdf_subject }}">
+  {% else %}<title>{{ meta.report_type }} {{ meta.period_short }} — Sonetel AB (publ)</title>{% endif %}
   <style>
     body {
       string-set: footer-label "SONETEL.COM" footer-label-left "{{ meta.footer_label }}";
@@ -25,19 +27,70 @@
   </div>
   <div class="cover-bottom">
     <div class="cover-title">{{ meta.report_type }}</div>
-    <div class="cover-period">{{ meta.period_label }}</div>
+    <div class="cover-period">{{ meta.period_label }}</div>{% if lang == 'en' %}
+    <div class="translation-cover-note">{{ notice.cover }}</div>{% endif %}
   </div>
 </section>
 
 {# =================================================== Page 2 — Perioden i sammandrag #}
 <section class="sammandrag">
-  <div class="tagline">{{ meta.tagline }}</div>
+  <div class="tagline">{{ meta.tagline }}</div>{% if lang == 'en' %}
+  <div class="translation-inline">{{ notice.inline_short }}</div>{% endif %}
   <div class="page-divider"></div>
-  <div class="subhead-red">KONCERNEN {{ meta.period_label }}</div>
-
+  {# Both blocks live in ONE column container so the text flows continuously from the
+     bottom of column 1 into the top of column 2, regardless of which block it belongs to.
+     Two separate containers would restart the columns at the block boundary. #}
   <div class="kpi-paragraphs">
-    <p>Återkommande årliga intäkter (ARR) ökade med +{{ fmt_pct(kpis.arr.yoy_pct) }}% till {{ fmt_msek(kpis.arr.current) }} MSEK ({{ fmt_msek(kpis.arr.prior) }}).</p>
-    <p>Nettoomsättningen ökade med +{{ fmt_pct(kpis.nettoomsattning.yoy_pct) }}% till {{ fmt_msek(kpis.nettoomsattning.current) }} ({{ fmt_msek(kpis.nettoomsattning.prior) }}) MSEK.</p>
+  {#- Supplementary block (columns 2/3). Placed before the main block by default (halvårsrapport:
+      Q2 first, then jan–jun). meta.sekundart_block_sist puts it after — kvartalsredogörelse Q3:
+      jul–sep is the main period, jan–sep follows (Henrik 2026-11-17). -#}
+  {%- macro sekundart_block() %}
+  {% if kpis_kvartal and meta.quarter_label %}
+    <h3 class="subhead-red">{{ t('koncernen', 'KONCERNEN') }} {{ meta.quarter_label }}</h3>
+    {%- if lang == 'en' %}
+    <p>{{ ts('kpi_nettoomsattning', change=fmt_change(kpis_kvartal.nettoomsattning.yoy_pct), cur=fmt_msek(kpis_kvartal.nettoomsattning.current), prior=fmt_msek(kpis_kvartal.nettoomsattning.prior)) }}</p>
+    <p>{{ ts('kpi_bruttomarginal', cur=fmt_pct(kpis_kvartal.bruttomarginal_pct.current), prior=fmt_pct(kpis_kvartal.bruttomarginal_pct.prior)) }}</p>
+    <p>{{ ts('kpi_ebitda', cur=fmt_pct(kpis_kvartal.ebitda_pct.current), prior=fmt_pct(kpis_kvartal.ebitda_pct.prior)) }}</p>
+    <p>{{ ts('kpi_rorelseresultat', cur=fmt_msek(kpis_kvartal.rorelseresultat.current), prior=fmt_msek(kpis_kvartal.rorelseresultat.prior)) }}</p>
+    <p>{{ ts('kpi_resultat_fore_skatt', cur=fmt_msek(kpis_kvartal.resultat_fore_skatt.current), prior=fmt_msek(kpis_kvartal.resultat_fore_skatt.prior)) }}</p>
+    <p>{{ ts('kpi_kassaflode', cur=fmt_msek(kpis_kvartal.kassaflode_loepande.current), prior=fmt_msek(kpis_kvartal.kassaflode_loepande.prior)) }}</p>
+    {% else %}
+    <p>Nettoomsättningen {{ fmt_change(kpis_kvartal.nettoomsattning.yoy_pct) }} till {{ fmt_msek(kpis_kvartal.nettoomsattning.current) }} ({{ fmt_msek(kpis_kvartal.nettoomsattning.prior) }}) MSEK.</p>
+    <p>Bruttomarginalen uppgick till {{ fmt_pct(kpis_kvartal.bruttomarginal_pct.current) }}% ({{ fmt_pct(kpis_kvartal.bruttomarginal_pct.prior) }}%).</p>
+    <p>EBITDA låg på {{ fmt_pct(kpis_kvartal.ebitda_pct.current) }}% ({{ fmt_pct(kpis_kvartal.ebitda_pct.prior) }}%).</p>
+    <p>Rörelseresultatet uppgick till {{ fmt_msek(kpis_kvartal.rorelseresultat.current) }} ({{ fmt_msek(kpis_kvartal.rorelseresultat.prior) }}) MSEK.</p>
+    <p>Resultat före skatt uppgick till {{ fmt_msek(kpis_kvartal.resultat_fore_skatt.current) }} ({{ fmt_msek(kpis_kvartal.resultat_fore_skatt.prior) }}) MSEK.</p>
+    <p>Kassaflöde från den löpande verksamheten uppgick till {{ fmt_msek(kpis_kvartal.kassaflode_loepande.current) }} ({{ fmt_msek(kpis_kvartal.kassaflode_loepande.prior) }}) MSEK.</p>
+    {%- endif %}
+  {% endif %}
+  {%- endmacro %}
+  {% if not meta.sekundart_block_sist %}{{ sekundart_block() }}{% endif %}
+
+    <h3 class="subhead-red">{{ t('koncernen', 'KONCERNEN') }} {{ meta.period_label }}</h3>
+    {%- if lang == 'en' %}
+    <p>{{ ts('kpi_arr', change=fmt_change(kpis.arr.yoy_pct), cur=fmt_msek(kpis.arr.current), prior=fmt_msek(kpis.arr.prior)) }}</p>
+    {%- if 'arr_musd' in kpis %}
+    <p>{{ ts('kpi_arr_musd', cur=fmt_decimal(kpis.arr_musd.current, 1), prior=fmt_decimal(kpis.arr_musd.prior, 1)) }}</p>
+    {%- endif %}
+    <p>{{ ts('kpi_nettoomsattning', change=fmt_change(kpis.nettoomsattning.yoy_pct), cur=fmt_msek(kpis.nettoomsattning.current), prior=fmt_msek(kpis.nettoomsattning.prior)) }}</p>
+    <p>{{ ts('kpi_bruttomarginal', cur=fmt_pct(kpis.bruttomarginal_pct.current), prior=fmt_pct(kpis.bruttomarginal_pct.prior)) }}</p>
+    <p>{{ ts('kpi_ebitda', cur=fmt_pct(kpis.ebitda_pct.current), prior=fmt_pct(kpis.ebitda_pct.prior)) }}</p>
+    <p>{{ ts('kpi_saas40', cur=fmt_pct(kpis.saas40_pct.current)) }}{% if kpis.saas40_pct.prior is not none %}{{ ts('kpi_saas40_jmf', prior=fmt_pct(kpis.saas40_pct.prior)) }}{% endif %}{{ ts('kpi_saas40_slut') }}</p>
+    <p>{{ ts('kpi_rorelseresultat', cur=fmt_msek(kpis.rorelseresultat.current), prior=fmt_msek(kpis.rorelseresultat.prior)) }}</p>
+    <p>{{ ts('kpi_resultat_fore_skatt', cur=fmt_msek(kpis.resultat_fore_skatt.current), prior=fmt_msek(kpis.resultat_fore_skatt.prior)) }}</p>
+    <p>{{ ts('kpi_resultat_per_aktie', cur=fmt_decimal(kpis.resultat_per_aktie.current, 2), prior=fmt_decimal(kpis.resultat_per_aktie.prior, 2)) }}</p>
+    <p>{{ ts('kpi_kassaflode', cur=fmt_msek(kpis.kassaflode_loepande.current), prior=fmt_msek(kpis.kassaflode_loepande.prior)) }}</p>
+    <p>{{ ts('kpi_likvida_medel', cur=fmt_msek(kpis.likvida_medel_eom.current), prior=fmt_msek(kpis.likvida_medel_eom.prior)) }}</p>
+    <p>{{ ts('kpi_aktiva_kunder', change=fmt_change(kpis.aktiva_betalande_kunder.yoy_pct), cur=fmt_int(kpis.aktiva_betalande_kunder.current), prior=fmt_int(kpis.aktiva_betalande_kunder.prior)) }}</p>
+    <p>{{ ts('kpi_cac', cur=fmt_pct(kpis.cac_kr.current), prior=fmt_pct(kpis.cac_kr.prior)) }}</p>
+    <p>{{ ts('kpi_soliditet', cur=fmt_pct(kpis.soliditet_pct.current), prior=fmt_pct(kpis.soliditet_pct.prior)) }}</p>
+    <p>{{ ts('kpi_anstallda', cur=fmt_pct(kpis.anstallda_snitt.current), prior=fmt_pct(kpis.anstallda_snitt.prior)) }}</p>
+    {% else %}
+    <p>Årligt återkommande intäkter (ARR) {{ fmt_change(kpis.arr.yoy_pct) }} till {{ fmt_msek(kpis.arr.current) }} MSEK ({{ fmt_msek(kpis.arr.prior) }}).</p>
+    {%- if 'arr_musd' in kpis %}
+    <p>Årligt återkommande intäkter (ARR) räknat i MUSD, den huvudsakliga valutan för intäkter, uppgick vid periodens utgång till {{ fmt_decimal(kpis.arr_musd.current, 1) }} ({{ fmt_decimal(kpis.arr_musd.prior, 1) }}).</p>
+    {%- endif %}
+    <p>Nettoomsättningen {{ fmt_change(kpis.nettoomsattning.yoy_pct) }} till {{ fmt_msek(kpis.nettoomsattning.current) }} ({{ fmt_msek(kpis.nettoomsattning.prior) }}) MSEK.</p>
     <p>Bruttomarginalen uppgick till {{ fmt_pct(kpis.bruttomarginal_pct.current) }}% ({{ fmt_pct(kpis.bruttomarginal_pct.prior) }}%).</p>
     <p>EBITDA låg på {{ fmt_pct(kpis.ebitda_pct.current) }}% ({{ fmt_pct(kpis.ebitda_pct.prior) }}%).</p>
     <p>SaaS 40 index uppgick till {{ fmt_pct(kpis.saas40_pct.current) }}%{% if kpis.saas40_pct.prior is not none %} ({{ fmt_pct(kpis.saas40_pct.prior) }}%){% endif %}.</p>
@@ -46,18 +99,38 @@
     <p>Resultat efter skatt per genomsnittligt antal aktier uppgick till {{ fmt_decimal(kpis.resultat_per_aktie.current, 2) }} ({{ fmt_decimal(kpis.resultat_per_aktie.prior, 2) }}) kr.</p>
     <p>Kassaflöde från den löpande verksamheten uppgick till {{ fmt_msek(kpis.kassaflode_loepande.current) }} ({{ fmt_msek(kpis.kassaflode_loepande.prior) }}) MSEK.</p>
     <p>Likvida medel uppgick vid periodens utgång till {{ fmt_msek(kpis.likvida_medel_eom.current) }} ({{ fmt_msek(kpis.likvida_medel_eom.prior) }}) MSEK.</p>
-    <p>Antalet aktiva betalande kunder ökade med +{{ fmt_pct(kpis.aktiva_betalande_kunder.yoy_pct) }}% till {{ fmt_int(kpis.aktiva_betalande_kunder.current) }} ({{ fmt_int(kpis.aktiva_betalande_kunder.prior) }}).</p>
+    <p>Antalet aktiva betalande kunder {{ fmt_change(kpis.aktiva_betalande_kunder.yoy_pct) }} till {{ fmt_int(kpis.aktiva_betalande_kunder.current) }} ({{ fmt_int(kpis.aktiva_betalande_kunder.prior) }}).</p>
     <p>Anskaffningskostnad per betalande kund (CAC) uppgick till {{ fmt_pct(kpis.cac_kr.current) }} kr ({{ fmt_pct(kpis.cac_kr.prior) }} kr).</p>
     <p>Soliditeten uppgick vid periodens utgång till {{ fmt_pct(kpis.soliditet_pct.current) }}% ({{ fmt_pct(kpis.soliditet_pct.prior) }}%).</p>
     <p>Genomsnittligt antal anställda i koncernen var {{ fmt_pct(kpis.anstallda_snitt.current) }} ({{ fmt_pct(kpis.anstallda_snitt.prior) }}).</p>
+    {%- endif %}
+  {% if meta.sekundart_block_sist %}{{ sekundart_block() }}{% endif %}
   </div>
 
+  {# AI-förordningen art. 50.5 — upplysning senast vid första exponeringen. Full upplysning
+     under Övrigt. Placerad direkt under nyckeltalen, som en not till sidans text. #}
+  {% if disclosures.ai_bildnot %}
+  <div class="ai-bildnot">{{ disclosures.ai_bildnot }}</div>
+  {% endif %}
+
+  {# AI-förordningen (EU) 2024/1689 art. 50.5: upplysningen ska ges senast vid tidpunkten för den
+     första exponeringen. Omslaget är första exponeringen, så noten kan inte ligga sist i
+     dokumentet — den här raden på sammandragssidan är den tidigaste plats där den ryms utan att
+     förstöra omslaget. Full upplysning finns under Övrigt (Henrik 2026-08-21). #}
   <div class="kpi-bands">
+    {# The tiles show HALF-YEAR figures while the page also carries a quarter block above, and
+       nothing said which period they belonged to. Sebastian Ahlskog (styrelsen) 2026-08-21 read
+       that as an unflagged deviation. The label removes the ambiguity without touching a
+       figure. #}
+    <div class="kpi-bands-label">{{ meta.period_label }}</div>
     <div class="kpi-band kpi-band-dark">
       {% for tile in kpi_tiles[:3] %}
       <div class="kpi-tile">
         <div class="label">{{ tile.label }}</div>
         <div class="value">{{ tile.value }}</div>
+        {#- A signed value is a change; say against what. A level (margin, SaaS40) carries no
+            sign and gets an empty caption so the band's figures stay on one line. #}
+        <div class="caption">{% if meta.kpi_band_jamforelse and tile.value[:1] in ['+', '-', '−'] %}{{ meta.kpi_band_jamforelse }}{% else %}&nbsp;{% endif %}</div>
       </div>
       {% endfor %}
     </div>
@@ -66,6 +139,9 @@
       <div class="kpi-tile">
         <div class="label">{{ tile.label }}</div>
         <div class="value">{{ tile.value }}</div>
+        {#- A signed value is a change; say against what. A level (margin, SaaS40) carries no
+            sign and gets an empty caption so the band's figures stay on one line. #}
+        <div class="caption">{% if meta.kpi_band_jamforelse and tile.value[:1] in ['+', '-', '−'] %}{{ meta.kpi_band_jamforelse }}{% else %}&nbsp;{% endif %}</div>
       </div>
       {% endfor %}
     </div>
@@ -78,7 +154,7 @@
     {% if assets.vd_banner_image %}
     <img src="file://{{ assets.vd_banner_image }}" alt="">
     {% endif %}
-    <div class="banner-label">VDs kommentarer</div>
+    <div class="banner-label">{{ t('vd_kommentarer', 'VDs kommentarer') }}</div>
   </div>
   <div class="vd-content">
     <div class="vd-title">{{ narrative.vd_kommentar_rubrik }}</div>
@@ -91,12 +167,26 @@
       </div>
     </div>
   </div>
+  {# Full-bleed photograph pinned to the foot of the VD letter's last page — same construction
+     as the verksamhet section's closing picture. The letter runs a page and a bit, so without
+     it the second page is six lines of text and a signature on an otherwise empty sheet
+     (Henrik 2026-08-21). #}
+  {% if assets and assets.vd_slutbild %}
+  <div class="section-banner-foot vd-slutbild{% if assets.vd_slutbild_helsida %} vd-slutbild-helsida{% endif %}">
+    <div class="photo-bleed"><img src="file://{{ assets.vd_slutbild }}" alt="">
+      {% if assets.vd_slutbild_text %}
+      <div class="banner-caption banner-caption-light">{{ assets.vd_slutbild_text }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </section>
 
 {# ==================================================== Page 4 — Affärsmodell #}
-<section class="affarsmodell section-break-before">
+<section class="affarsmodell section-break-before">{% if lang == 'en' %}
+  <div class="translation-inline">{{ notice.inline_short }}</div>{% endif %}
   <div class="body-block">
-    <div class="page-title">Affärsmodell</div>
+    <div class="page-title">{{ t('affarsmodell', 'Affärsmodell') }}</div>
     <div class="page-divider"></div>
     <div class="body-2col">
       {% for p in narrative.affarsmodell %}<p>{{ p }}</p>{% endfor %}
@@ -113,9 +203,146 @@
   </div>
 </section>
 
+{# ============================ Kommentarer kring verksamheten (Halvårsrapport) #}
+{# The tail of the verksamhet section — after-period blocks plus the outlook. Defined once as a
+   macro because it is emitted either inside the main column container or in a second one,
+   depending on whether full-width content has to sit between them (see below). #}
+{% macro efter_perioden_blocks() %}
+    {% if narrative.verksamhet_efter_perioden %}
+    <h2 class="subhead-red section-head">{{ t('verksamheten_efter_perioden', 'VERKSAMHETEN EFTER PERIODEN') }}</h2>
+    {% for b in narrative.verksamhet_efter_perioden %}
+      <div class="vp-block">
+        {% if b.rubrik %}<h3 class="block-rubrik">{{ b.rubrik }}</h3>{% endif %}
+        {% for p in b.text %}<p>{{ p }}</p>{% endfor %}
+        {% for g in ([b.graf] if b.graf is string else (b.graf or [])) %}
+          {% if chart_by_name.get(g) %}
+          <figure class="inline-chart"><img src="file://{{ chart_by_name[g] }}" alt="{{ b.rubrik or '' }}"></figure>
+          {% endif %}
+        {% endfor %}
+        {% if b.bild %}
+        <figure class="inline-photo"><img src="file://{{ b.bild }}" alt="{{ b.bildtext or b.rubrik or '' }}">
+          {% if b.bildtext %}<figcaption>{{ b.bildtext }}</figcaption>{% endif %}
+        </figure>
+        {% endif %}
+      </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if narrative.framtidsinformation %}
+    <h2 class="subhead-red section-head">{{ t('framtidsinformation', 'FRAMTIDSINFORMATION') }}</h2>
+    <div class="vp-block">
+      {% for p in narrative.framtidsinformation %}<p>{{ p }}</p>{% endfor %}
+    </div>
+    {% endif %}
+{% endmacro %}
+
+{% if narrative.verksamhet_under_perioden %}
+<section class="verksamhet section-break-before">
+  {# A full-bleed photographic band leading the section — the same device as the VD banner,
+     without a label. This section runs to three pages of unbroken text otherwise
+     (Henrik 2026-08-21). #}
+  {% if assets and assets.verksamhet_banner_image %}
+  <div class="section-banner"><img src="file://{{ assets.verksamhet_banner_image }}" alt=""></div>
+  {% endif %}
+  <div class="page-title">{{ t('kommentarer_kring_verksamheten', 'Kommentarer kring verksamheten') }}</div>
+  <div class="page-divider"></div>
+  <div class="body-2col">
+    {# Each rubrik + its paragraphs is wrapped so the gap between blocks lives on the
+       block's BOTTOM margin. A top margin on the heading is not truncated at a column
+       break in WeasyPrint, so a heading landing at the top of column 2 was pushed down
+       by its own margin while column 1 started flush (Henrik 2026-08-20). #}
+    <h2 class="subhead-red">{{ t('verksamheten_under_perioden', 'VERKSAMHETEN UNDER PERIODEN') }}</h2>
+    {% for b in narrative.verksamhet_under_perioden %}
+      <div class="vp-block">
+        <h3 class="block-rubrik">{{ b.rubrik }}</h3>
+        {% for p in b.text %}<p>{{ p }}</p>{% endfor %}
+        {# A block may name its own chart with a "graf" key in data.json — it then renders
+           inline, next to the text that discusses it, at column width. #}
+        {% for g in ([b.graf] if b.graf is string else (b.graf or [])) %}
+          {% if chart_by_name.get(g) %}
+          <figure class="inline-chart"><img src="file://{{ chart_by_name[g] }}" alt="{{ b.rubrik }}"></figure>
+          {% endif %}
+        {% endfor %}
+        {# A block may also name a photograph with a "bild" key — an absolute path. It breaks
+           up long runs of text at column width. Henrik 2026-08-21. #}
+        {% if b.bild %}
+        <figure class="inline-photo"><img src="file://{{ b.bild }}" alt="{{ b.bildtext or b.rubrik }}">
+          {% if b.bildtext %}<figcaption>{{ b.bildtext }}</figcaption>{% endif %}
+        </figure>
+        {% endif %}
+      </div>
+      {# A full-page-width photograph is emitted AT THIS POINT in the flow — the column
+         container is closed, the picture drawn, and a new container opened so the remaining
+         text keeps flowing after it. Placing it after the whole section instead (which is what
+         the old `bild_bred` loop below did) means it can only ever appear once the text has
+         run out, which is why it kept landing at the top of a near-empty page. Put it on the
+         block after which there is still room at the foot of a page, and the text that no
+         longer fits simply continues overleaf (Henrik 2026-08-21). #}
+      {% if b.bild_bred %}
+  </div>
+  <figure class="wide-photo">
+    <div class="photo-bleed"><img src="file://{{ b.bild_bred }}" alt="{{ b.bild_bred_text or '' }}"></div>
+  </figure>
+  <div class="body-2col">
+      {% endif %}
+    {% endfor %}
+
+    {# When no block asks for a full-width chart or table, there is nothing to render between
+       the two halves of this section — so they stay in ONE column container. Closing and
+       reopening .body-2col makes two stacked two-column bands: the first band's column 2 then
+       sits above the second band's column 1, and a paragraph broken across the boundary reads
+       as if a red section heading had been dropped into the middle of it. That is exactly what
+       happened to "Produktutveckling" once the head banner shifted the flow (Henrik
+       2026-08-21). With wide content present the split is still necessary and still applies. #}
+    {% set has_wide = (narrative.verksamhet_under_perioden | selectattr('graf_bred') | list)
+                      or (narrative.verksamhet_under_perioden | selectattr('tabell') | list) %}
+    {% if not has_wide %}{{ efter_perioden_blocks() }}
+  </div>
+  {% else %}
+  </div>
+
+  {# Tables run full width. WeasyPrint ignores column-span:all, and six columns do not fit
+     inside one ~77mm column of the 2-col flow, so the table sits outside it. #}
+  {# A block may replace its full-width table with a full-width chart (graf_bred). The
+     AKTIVA KUNDER table was one row of five month-ends stretched across the page; a chart
+     of the same measure over thirteen months says more in the same space. #}
+  {% for b in narrative.verksamhet_under_perioden if b.graf_bred and chart_by_name.get(b.graf_bred) %}
+  <figure class="wide-chart"><img src="file://{{ chart_by_name[b.graf_bred] }}" alt="{{ b.rubrik }}"></figure>
+  {% if b.graf_bred_fotnot %}<div class="footnotes"><div>{{ b.graf_bred_fotnot }}</div></div>{% endif %}
+  {% endfor %}
+
+  {% for b in narrative.verksamhet_under_perioden if b.tabell %}
+  <table class="mini-kpi">
+    <thead><tr><th>{{ b.tabell.rubrik }}</th>{% for c in b.tabell.columns %}<th>{{ bind_range_dash(c) }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for r in b.tabell.rows %}
+      <tr><td>{{ r.label }}</td>{% for v in r['values'] %}<td>{{ fmt_int(v) }}</td>{% endfor %}</tr>
+    {% endfor %}</tbody>
+  </table>
+  {% if b.tabell.fotnot %}<div class="footnotes"><div>{{ b.tabell.fotnot }}</div></div>{% endif %}
+  {% endfor %}
+
+  <div class="body-2col">
+    {{ efter_perioden_blocks() }}
+  </div>
+  {% endif %}
+
+  {# A second full-bleed band closing the section — used for the product shot, so the app the
+     text describes is actually shown. Sits outside the 2-col flow, page edge to page edge. #}
+  {% if assets and assets.verksamhet_slutbild %}
+  <div class="section-banner-foot">
+    <div class="photo-bleed"><img src="file://{{ assets.verksamhet_slutbild }}" alt="">
+      {% if assets.verksamhet_slutbild_text %}
+      <div class="banner-caption">{{ assets.verksamhet_slutbild_text }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
 {# ======================================================= Page 5 — Nyckeltal #}
 <section class="nyckeltal section-break-before">
-  <div class="page-title">Nyckeltal</div>
+  <div class="page-title">{{ t('nyckeltal', 'Nyckeltal') }}</div>
   <div class="page-divider"></div>
   <div class="nyckeltal-grid">
     {% for chart in charts %}
@@ -123,69 +350,111 @@
       <img src="file://{{ chart.path }}" alt="{{ chart.title }}">
     </div>
     {% endfor %}
-    <div class="kommentar-card">
-      <div class="heading">Kommentar till grafer</div>
-      {% for p in narrative.kommentar_till_grafer %}<p>{{ p }}</p>{% endfor %}
-    </div>
+  </div>
+  {# Outside the grid, not a seventh cell in it. As a grid item the note ran to eight lines in
+     one column and no longer fitted under the third chart row, so WeasyPrint moved the whole
+     row — the note alone — onto a page of its own. Spanning it across both columns with
+     grid-column collapsed the chart cards instead; WeasyPrint's grid does not handle the
+     span. A plain sibling block below the grid does (Henrik 2026-08-21). #}
+  <div class="kommentar-card">
+    <div class="heading">{{ t('kommentar_till_grafer', 'Kommentar till grafer') }}</div>
+    {% for p in narrative.kommentar_till_grafer %}<p>{{ p }}</p>{% endfor %}
   </div>
 </section>
 
 {# ========================================================= Page 6 — Övrigt #}
 <section class="ovrigt section-break-before">
-  <div class="page-title">Övrigt</div>
+  <div class="page-title">{{ t('ovrigt', 'Övrigt') }}</div>
   <div class="page-divider"></div>
   <div class="body-2col">
 
-    <h2 class="subhead-red">REDOVISNINGSPRINCIPER</h2>
+    {# Same column-top rule as the verksamhet section: heading margin-top is 0 and the
+       gap between disclosure blocks lives on the wrapper's bottom margin, so a heading
+       that lands at the top of column 2 sits flush. #}
+    <div class="ov-block">
+    <h2 class="subhead-red">{{ t('redovisningsprinciper', 'REDOVISNINGSPRINCIPER') }}</h2>
     {% for p in disclosures.redovisningsprinciper %}<p>{{ p }}</p>{% endfor %}
+    </div>
 
-    <h2 class="subhead-red">VÄSENTLIGA RISKER OCH OSÄKERHETSFAKTORER</h2>
+    {% if disclosures.ai_framtagande %}
+    <div class="ov-block">
+    <h2 class="subhead-red">{{ t('ai_och_rapportens_framtagande', 'AI OCH RAPPORTENS FRAMTAGANDE') }}</h2>
+    {% for p in disclosures.ai_framtagande %}<p>{{ p }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="ov-block">
+    <h2 class="subhead-red">{{ t('vasentliga_risker', 'VÄSENTLIGA RISKER OCH OSÄKERHETSFAKTORER') }}</h2>
     <p>{{ disclosures.vasentliga_risker }}</p>
+    {% if disclosures.likviditet %}<p>{{ disclosures.likviditet }}</p>{% endif %}
+    </div>
 
-    <h2 class="subhead-red">AKTIER OCH TECKNINGSOPTIONER</h2>
-    <p>Fakta om Sonetels aktie.</p>
+    {% if disclosures.handelser_efter_perioden %}
+    <div class="ov-block">
+    <h2 class="subhead-red">{{ t('handelser_efter_perioden', 'VÄSENTLIGA HÄNDELSER EFTER PERIODENS UTGÅNG') }}</h2>
+    {% for p in disclosures.handelser_efter_perioden %}<p>{{ p }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="ov-block">
+    <h2 class="subhead-red">{{ t('aktier_och_teckningsoptioner', 'AKTIER OCH TECKNINGSOPTIONER') }}</h2>
+    <p>{{ t('fakta_om_aktien', 'Fakta om Sonetels aktie.') }}</p>
     <div class="aktie-facts">
-      <div>Marknadsplats: {{ share_capital.marknadsplats }}</div>
-      <div>Kortnamn: {{ share_capital.kortnamn }}</div>
-      <div>ISIN kod: {{ share_capital.isin }}</div>
-      <div>LEI: {{ share_capital.lei }}</div>
-      <div>Antal aktier: {{ fmt_int(share_capital.antal_aktier) }}</div>
-      <div>Antal röster: {{ fmt_int(share_capital.antal_roster) }}</div>
-      <div>Kvotvärde: {{ fmt_decimal(share_capital.kvotvarde_kr, 2) }} kr.</div>
+      <div>{{ t('marknadsplats', 'Marknadsplats:') }} {{ share_capital.marknadsplats }}</div>
+      <div>{{ t('kortnamn', 'Kortnamn:') }} {{ share_capital.kortnamn }}</div>
+      <div>{{ t('isin', 'ISIN kod:') }} {{ share_capital.isin }}</div>
+      <div>{{ t('lei', 'LEI:') }} {{ share_capital.lei }}</div>
+      <div>{{ t('antal_aktier', 'Antal aktier:') }} {{ fmt_int(share_capital.antal_aktier) }}</div>
+      <div>{{ t('antal_roster', 'Antal röster:') }} {{ fmt_int(share_capital.antal_roster) }}</div>
+      <div>{{ t('kvotvarde', 'Kvotvärde:') }} {% if lang == 'en' %}SEK {{ fmt_decimal(share_capital.kvotvarde_kr, 2) }}.{% else %}{{ fmt_decimal(share_capital.kvotvarde_kr, 2) }} kr.{% endif %}</div>
     </div>
     <p style="margin-top: 6pt;">{{ share_capital.bemyndigande_text }}</p>
 
-    <h3 style="font-weight:700; font-size: 9.5pt; margin: 6pt 0 3pt 0;">Sammanställning</h3>
+    <h3 style="font-weight:700; font-size: 9.5pt; margin: 6pt 0 3pt 0;">{{ t('sammanstallning', 'Sammanställning') }}</h3>
     <table class="sammanstallning">
       {% for row in share_capital.sammanstallning %}
       <tr><td>{{ row.label }}</td><td class="num">{{ fmt_int(row.antal) }}</td></tr>
       {% endfor %}
     </table>
     {% if share_capital.optionsprogram_text %}<p>{{ share_capital.optionsprogram_text }}</p>{% endif %}
+    </div>
 
-    <h2 class="subhead-red">TRANSAKTIONER MED NÄRSTÅENDE</h2>
-    <p>{% if transaktioner_narstaende %}{{ transaktioner_narstaende }}{% else %}Inga transaktioner med närstående under perioden.{% endif %}</p>
-
-    <h2 class="subhead-red">KALENDARIUM</h2>
-    <table class="kalendarium">
-      {% for ev in kalendarium %}
-      <tr><td>{{ ev.event }}</td><td class="date">{{ ev.date }}</td></tr>
-      {% endfor %}
-    </table>
-    <p style="margin-top: 8pt;">Denna {{ meta.report_type|lower }} samt tidigare ekonomiska rapporter och pressmeddelanden finns på bolagets hemsida {{ disclosures.kontakt.hemsida }}</p>
-    <p>För ytterligare information kontakta:<br>
-    {{ disclosures.kontakt.vd_namn }}, {{ disclosures.kontakt.vd_titel }}, telefon {{ disclosures.kontakt.vd_telefon }}, {{ disclosures.kontakt.investor_email }}</p>
 
   </div>
 </section>
 
 {# =========================== Page 7 — Granskning + signing + Om Sonetel #}
-<section class="granskning-page section-break-before">
+<section class="granskning-page">
   <div class="granskning">
+    <div class="kontakt-info">
+    <div class="ov-2col">
+    <div class="ov-block ov-single">
+    <h2 class="subhead-red">{{ t('transaktioner_med_narstaende', 'TRANSAKTIONER MED NÄRSTÅENDE') }}</h2>
+    <p>{% if transaktioner_narstaende %}{{ transaktioner_narstaende }}{% else %}{{ t('inga_transaktioner', 'Inga transaktioner med närstående under perioden.') }}{% endif %}</p>
+    </div>
+
+    <div class="ov-block ov-single">
+    <h2 class="subhead-red">{{ t('kalendarium', 'KALENDARIUM') }}</h2>
+    <table class="kalendarium">
+      {% for ev in kalendarium %}
+      <tr><td>{{ ev.event }}</td><td class="date">{{ ev.date }}</td></tr>
+      {% endfor %}
+    </table>
+
+    </div>
+    </div>
+    <p>{% if lang == 'en' %}{{ ts('kalendarium_hemsida', report_type=meta.report_type|lower, hemsida=disclosures.kontakt.hemsida) }}{% else %}Denna {{ meta.report_type|lower }} samt tidigare ekonomiska rapporter och pressmeddelanden finns på bolagets hemsida {{ disclosures.kontakt.hemsida }}{% endif %}</p>
+    <p>{{ t('kontakt_intro', 'För ytterligare information kontakta:') }}<br>
+    {% if lang == 'en' %}{{ ts('kontakt_rad', namn=disclosures.kontakt.vd_namn, titel=disclosures.kontakt.vd_titel, telefon=disclosures.kontakt.vd_telefon, email=disclosures.kontakt.investor_email) }}
+    {% else %}{{ disclosures.kontakt.vd_namn }}, {{ disclosures.kontakt.vd_titel }}, telefon {{ disclosures.kontakt.vd_telefon }}, {{ disclosures.kontakt.investor_email }}{% endif %}</p>
+    </div>
     <p>{{ disclosures.granskning_status }}</p>
     <div class="declaration">
-      Avlämnande av {{ meta.report_type|lower }}<br>
-      {{ governance.vd_signing_location }} den {{ format_signing_date(governance.vd_signing_date) }}
+      {% if lang == 'en' %}{{ ts('avlamnande', report_type=meta.report_type|lower) }}<br>
+      {{ governance.vd_signing_location }}, {{ format_signing_date(governance.vd_signing_date) }}
+      <div class="translation-caveat">{{ notice.signature_caveat }}</div>
+      {% else %}Avlämnande av {{ meta.report_type|lower }}<br>
+      {{ governance.vd_signing_location }} den {{ format_signing_date(governance.vd_signing_date) }}{% endif %}
     </div>
   </div>
   <div class="signing-grid">
@@ -197,35 +466,88 @@
     {% endfor %}
   </div>
   <div class="om-sonetel">
-    <div class="heading">Om Sonetel AB (publ)</div>
+    <div class="heading">{{ t('om_sonetel', 'Om Sonetel AB (publ)') }}</div>
     <p>{{ disclosures.om_bolaget }}</p>
   </div>
 </section>
 
 {# ============================================== Page 8 — Resultaträkning koncernen #}
 <section class="section-break-before">
-  <div class="page-title">Resultaträkning koncernen</div>
+  <div class="page-title">{{ t('resultatrakning_koncernen', 'Resultaträkning koncernen') }}</div>
   <div class="page-divider"></div>
   {{ render_table(tables.resultatrakning_koncern, header_first_cell="SEK") }}
 </section>
 
 {# ===================================== Pages 9-10 — Balansräkning koncernen + fortsättning #}
 <section class="section-break-before">
-  <div class="page-title">Balansräkning koncernen</div>
+  <div class="page-title">{{ t('balansrakning_koncernen', 'Balansräkning koncernen') }}</div>
   <div class="page-divider"></div>
   {{ render_balansrakning(tables.balansrakning_koncern) }}
 </section>
 
 {# ====================================================== Page 11 — Kassaflöde #}
 <section class="section-break-before">
-  <div class="page-title">Kassaflöde i sammandrag för koncernen</div>
+  <div class="page-title">{{ t('kassaflode_koncernen', 'Kassaflöde i sammandrag för koncernen') }}</div>
   <div class="page-divider"></div>
   {{ render_table(tables.kassaflode_koncern, header_first_cell="") }}
 </section>
 
+{# ================================ Förändring i eget kapital koncernen #}
+{% if tables.forandring_eget_kapital_koncern %}
+<section class="section-break-before">
+  <div class="page-title">{{ t('forandring_ek_koncernen', 'Förändring i eget kapital koncernen') }}</div>
+  <div class="page-divider"></div>
+  {{ render_forandring_ek(tables.forandring_eget_kapital_koncern) }}
+</section>
+{% endif %}
+
+{# ================================================ Resultaträkning moderbolaget #}
+{% if tables.resultatrakning_moderbolag %}
+<section class="section-break-before">
+  <div class="page-title">{{ t('resultatrakning_moderbolaget', 'Resultaträkning moderbolaget') }}</div>
+  <div class="page-divider"></div>
+  {{ render_table(tables.resultatrakning_moderbolag, header_first_cell="SEK") }}
+</section>
+{% endif %}
+
+{# ================================================== Balansräkning moderbolaget #}
+{% if tables.balansrakning_moderbolag %}
+<section class="section-break-before">
+  <div class="page-title">{{ t('balansrakning_moderbolaget', 'Balansräkning moderbolaget') }}</div>
+  <div class="page-divider"></div>
+  {{ render_balansrakning(tables.balansrakning_moderbolag) }}
+</section>
+{% endif %}
+
+{# ============================== Förändring i eget kapital moderbolaget #}
+{% if tables.forandring_eget_kapital_moderbolag %}
+<section class="section-break-before">
+  <div class="page-title">{{ t('forandring_ek_moderbolaget', 'Förändring i eget kapital moderbolaget') }}</div>
+  <div class="page-divider"></div>
+  {{ render_forandring_ek(tables.forandring_eget_kapital_moderbolag) }}
+</section>
+{% endif %}
+
+{# ==================================================== Kassaflöde moderbolaget #}
+{% if tables.kassaflode_moderbolag %}
+<section class="section-break-before">
+  <div class="page-title">{{ t('kassaflode_moderbolaget', 'Kassaflöde i sammandrag för moderbolaget') }}</div>
+  <div class="page-divider"></div>
+  {{ render_table(tables.kassaflode_moderbolag, header_first_cell="") }}
+</section>
+{% endif %}
+
+{%- if lang == 'en' %}
+<section class="translation-note section-break-before">
+  <div class="page-title">Note on this translation</div>
+  <div class="page-divider"></div>
+  <p>{{ notice.full }}</p>
+</section>
+{%- endif %}
+
 {# ==================================================== Page 12 — Definitioner #}
 <section class="definitioner section-break-before">
-  <div class="page-title">Definitioner</div>
+  <div class="page-title">{{ t('definitioner', 'Definitioner') }}</div>
   <div class="page-divider"></div>
   <div class="body-2col">
     {% for d in definitioner %}

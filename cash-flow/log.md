@@ -1849,3 +1849,331 @@ Därmed stängd: den enda öppna risken i dagens utgiftsändringar. Fördubbling
 **Beloppets grund står också:** konto 1650 senaste fyra kvartalen 247,189 + 207,833 + 218,022 + 151,774 = 824,818/år = 206,205/kvartal. 200,000 ligger strax under faktiskt utfall. Augusti använder inte siffran (firingen annullerad, deklarerad nettoutbetalning 74,012 bokad i stället) — den slår till först i november, som avser Q3, historiskt starkaste kvartalet.
 
 **Kvar öppet efter dagens genomgång:** ändringslogg saknas helt (ingen historik-/audittabell; 7 av 56 aktiva rader har daterad motivering; `updated_at` opålitlig som proxy eftersom omdöpningar rör den). CR för `forecast_change_log` + trigger + `app.change_basis` erbjuden, ej beställd.
+
+### 2026-08-20 — Prashant ifrågasätter India-lönebasen; T3 är ingen lönerad, och pluggborttagningen är den verkliga orsaken
+
+**Prashant:** *"The salary baseline in the cash flow forecast in finops is at 40 lacs per month, which is the Feb salary level. It stays on that level as an average, which seems to create a gap."* Med en tabell som jämför hans budgetversion **16.48 mot 16.49** (den senare "the version I used to factor in changes post re-org", ännu inte i Dropbox).
+
+**Analys, ingen ändring gjord.**
+
+**1. Raden han pekar på heter fel.** id 56 "India Operations T3 (salaries)" = 4 004 810 INR = precis de 40 lacs han nämner. Men T3 är **ingen lönebudget** — T1/T2/T3 är en 8/39/53-fördelning av en klumpsumma på 7 910 000 INR (630 000 / 3 085 000 / 4 195 000). Att jämföra en lönesiffra mot T3 är att jämföra mot en skiva av en fördelningsmodell. Prashant har rätt att vara misstänksam mot raden; den mäter bara inte det etiketten påstår.
+
+**2. Basen är inte byggd underifrån — den är en valutaomräkning av ett äldre SEK-tal.** Changelog 2026-05: ids 54/55/56 skapades så att *"sum 7,910K INR ≈ 766K SEK at current FX, **preserves prior SEK equivalent at conversion time**"*. Alltså ärvd från gamla id 37 (766 000 SEK), inte härledd ur lönenivåer. Hans "det är februarinivån" är därmed riktningsmässigt rätt: talet är ärvt, inte räknat.
+
+**3. Den verkliga orsaken till gapet är att pluggarna togs bort 2026-08-17.** Ids 74–80 var residualer *"R6 budget − 7 910K base"* — de **var** exakt det gap han beskriver, hämtat ur hans egen **ver 16.48**: Jul 1 115 000 / Aug 487 000 / Sep 137 000 / Dec 944 000 INR. När de stängdes av föll modellen till bara basen. Changelogen varnade ordagrant: *"the forecast is now exactly as optimistic as its named rows."* Prashant upptäcker utifrån precis det hålet.
+
+**4. Tre oberoende skattningar av underfinansieringen konvergerar:**
+
+| Metod | INR/mån | SEK/mån @0,09933 |
+|---|---:|---:|
+| Pluggarna ur hans 16.48 (jul/aug/sep/dec-snitt) | ~670 750 | ~66 600 |
+| Balansräkningens aktiveringsmätning ([[reference-india-markup-and-cash-base]]) | ~589 000 | 58 510 |
+| Prashants 2027 ×0,734 mot vår T3 | 845 312 | ~83 900 |
+
+**0,7–1,0 MSEK/år.** Tre metoder, tre datakällor, samma storleksordning.
+
+**5. Modellen har INGEN lönetillväxt alls — den stegar nedåt.** Alla India-rader är fasta belopp; enda förändringen över 500 dagar är interns-steget −190 190 INR i december 2026. Prognosens India-total ligger platt på 766 830 SEK/mån under hela 2027. Prashants strukturargument (två tillväxtcykler post re-org) träffar detta oavsett om hans exakta siffror håller.
+
+**6. Vad detta gör med botten.** Botten är **−910 491 den 2027-01-30**. Marginal till checkkrediten 1 MSEK: **89 509 SEK**. Från september 2026 till bottendatumet är fem månader, så **varje extra India-kostnad över ~17 900 SEK/mån spränger checkkrediten i januari 2027.** Alla tre skattningarna ovan ligger 3–5× över den gränsen: botten skulle hamna på −1,20 till −1,33 MSEK.
+
+**7. Motbevis som måste förklaras innan något ändras.** Basen verifierades 2026-08-17 mot julis faktiska SWIFT: $98 044 minus itemiserade extror ($8K severance + $8K workation + $1K merch) = $80 705 mot modellens $82 017 — **1,6 % isär, modellen något HÖGRE**. Det går inte ihop med ett gap på ~$7 000/mån. Möjliga upplösningar: (a) juli var en lätt månad, (b) Indien skjuter betalningar/tär på egen kassa, (c) budgeten är en plan med tillväxt, inte en körtakt, (d) **de $17K som ströks som "extror" var delvis normalkostnad** — i så fall låg juli i stället ~$16K över modellen, vilket ligger nära Prashants gap. (d) är den som skulle förena allt och är inte utredd.
+
+**Öppna frågor, ställda till Henrik/Prashant, inget ändrat:**
+- Vad är **0,734**? Den är hans, inte härledbar ur våra rader (T3/total = 0,530). Härled den inte ur modellens egna tal — se lärdom 0a.
+- **16.49 saknas i Dropbox.** Utan filen går hans 2026/2027-siffror inte att validera.
+- Är gapet en körtakt eller en plan? Julis utfall säger körtakt ≈ modell.
+
+**Post-mortem mot föregående körning (2026-08-17):** den körningen stängde av pluggarna och skrev själv att modellen därmed förlorade sin dolda marginal. Tre dagar senare rapporterar Indien gapet utifrån. Förutsägelsen höll — men ingen kanal tog ärendet vidare, det kom tillbaka via en Teams-tråd. **Processgap:** en avstängd provisorisk rad borde lämna efter sig en daterad öppen fråga i todos.md, inte bara en varning i en changelog.
+
+#### RÄTTELSE samma dag — ver 16.49 hämtad; gapet finns inte. CEO stoppade felet.
+
+Prashant laddade upp filen (`Sonetel - Henrik and Prashant/Finance/Forecasts/Sonetel Forecast 2012-2027 ver 16.49.xlsx`). Jag var på väg att rapportera ett gap på **1,33 MSEK/år** baserat på arkets rad **106 "Payment from Sonetel AB"** (2027: 115 357 571 INR ≈ 11,46 MSEK mot modellens 10,12 MSEK).
+
+**CEO:** *"är inte det bara en prognosrad inkl markup?"* och *"vi betalar bara vad India behöver för betalningar"*. Han har rätt. Rad 106 är avräkning mot **fakturan**, alltså kostnad plus 20 % — inte ett kassabehov. Arket bevisar det självt: rad 105 "Balance EoM Sonetel AB" ligger på 60–62 MINR genom hela 2027 och rad 108–110 visar att Indien skickar tillbaka utdelning. Det är ett mellanhavandekonto.
+
+**Rätt bas = rad 54 Total costs + rad 82 Investments + rad 100 Tax total** (rad 54 exkluderar avskrivningar — kontrollerat: EBITDA = intäkter − rad 54, avskrivningar ligger separat på rad 57).
+
+| | INR/år | SEK/år @0,09933 |
+|---|---:|---:|
+| Indiens kassabehov 2027 (16.49) | 104 230 007 | 10 353 291 |
+| Modellen 2027 | 101 917 297 | 10 123 709 |
+
+**Utfall över 16 prognosmånader (aug 2026 – nov 2027): modell 13 876 691 SEK mot behov 13 921 951 SEK. Gap +45 260 SEK totalt, +2 829 SEK/mån** — 0,3 % på en post som går på ~830 000/mån. Modellen stämmer.
+
+Formen: 2026 H2 ligger modellen **167 321 SEK för högt**, 2027 jan–nov **212 583 för lågt** (+19 326/mån). Nettar till noll. **Botten förbättras i varje månad** när man lägger på det kumulativa gapet — 2027-01 går från −910 491 till −653 108. Ingen åtgärd behövs, inget föreslås.
+
+**Vad som var fel i mina tre "konvergerande" skattningar ovan — alla tre av samma skäl:**
+
+1. **Pluggarna (id 74–80).** Deras underlag *"R6 budget − 7 910K base"* läste 9,025M INR för juli 2026 — det ligger nära 16.48:s rad 106 (8,70M), alltså **fakturaraden med påslag**, inte kassabehovet. Pluggarna var därmed strukturellt för stora. **Att de togs bort 2026-08-17 var mer rätt än någon förstod då** — det var inte bara "en dold marginal som försvann", det var en övermodellering som byggde på fel rad. Changelogens formulering om förlorad säkerhetsmarginal bör läsas i det ljuset.
+2. **Balansräkningsmätningen (58 510 SEK/mån)** i [[reference-india-markup-and-cash-base]] jämförde tranchkonstanten 788 232 mot kostnadsbasen 846 742 — men modellen bär även årsraderna (bonus, försäkring, skatt) och ligger på **843 642 SEK/mån** för 2027. Mot rätt jämförelse är avviket ~3 100 SEK/mån, vilket **bekräftar** +2 829 oberoende. Minnesfilens 58 510 är apples-to-oranges och bör rättas.
+3. **Prashants ×0,734 mot T3.** T3 är 53 % av en klumpsumma, inte en lönerad — jämförelsen var ogiltig från början, vilket jag skrev, men jag lät den ändå stödja slutsatsen.
+
+**Vad som överlever av Prashants invändning:** modellen har ingen tillväxt alls och stegar dessutom ned i december (interns −190 190 INR). Indiens egen opex växer 4,1 % 2026→2027 (94,3M → 98,1M INR). Det ger de +19 326 SEK/mån som 2027 ligger lågt. Riktigt, men en storleksordning mindre än T3-jämförelsen antydde, och inom bruset.
+
+**Metodlärdom, den viktigaste i den här körningen:** *"Indiens kostnadsbas"* och *"vad Sonetel AB betalar Indien"* skiljer sig med exakt 20 % och det står ingenstans i arket vilken rad som är vilken. Rad 106 heter **"Payment from Sonetel AB"** — det låter som precis det prognosen modellerar, och är det inte. **Innan någon India-siffra tas ur Prashants ark: kontrollera om raden bär påslaget.** Testet är att jämföra mot rad 6 Total revenues (= rad 54 × 1,20 exakt).
+
+Ingen ändring gjord i modellen. Inget godkännande begärt eller givet.
+
+#### Topnivåjämförelse 16.48 / 16.49 / finops — och överlämning
+
+CEO: *"Du behöver titta på ver 48 och 49 samt vad som ligger i forecast i finops och se om 49 och finops avviker på top level"*, därefter *"Jag tror att det här egentligen skulle processas av en annan agent (Prashant update) kan du skriva en handoff"*.
+
+**Vad 16.49 ändrade mot 16.48 (koncernarket, 2026):** intäkt, COGS, marknadsföring, svenska teamet och finansnetto **oförändrade**. Bara Indien rör sig: support+sustaining +35 533, avskrivningar +7 744, rörelseresultat +43 277, India R&D capex −319 189, nettokassa excl. checkkredit **+847 869**. `Cash to be sent to India` 2026 −361 210, 2027 H1 −440 833. **Re-orgen syns alltså bara på Indien-sidan — intäktsbanan är inte omprövad i någon av versionerna.**
+
+**Den verkliga topnivåavvikelsen ligger i intäkten, inte i Indien:**
+
+| Källa | H1 2026 SEK/mån |
+|---|---:|
+| BDO reviderat faktiskt | 2 501 029 |
+| finops prognos | 2 533 333 |
+| Prashant 16.49 | 2 728 361 (+9,1 %) |
+
+Hans modell växer ~2 %/mån till 3 223 933 i december. Faktiskt utfall är flackt till fallande (jan 2 516 226 → jun 2 405 914, juni är H1:s lägsta). EBITDA H1: Prashant 5 228 428 mot faktiskt 4 358 021 — **+20 %**. Augusti hittills ligger på 65 519 SEK/dag netto mot prognosens 72 116, alltså under även finops bana.
+
+Att 16.49 skapades *"for the audit"* gör det här till den post som bör lyftas.
+
+**Ytterligare fynd:** Prashant räknar INR/SEK **0,10658**; Riksbanken 2026-08-19 är **0,09933**. Hans SEK-tal för Indien ligger 7,3 % för högt. Alla jämförelser i loggen är omräknade till Riksbankens kurs.
+
+**Hans "Payroll base" är knäckt** — rad 36 R&D + rad 38 Customer support services + rad 41 Admin/HR + rad 44 Management salaries, stämmer på kronan för både år i 16.49. **Faktorn 0,734 är fortfarande oförklarad** och ska inte härledas baklänges ur modellens egna tal (se lärdom 0a).
+
+**Begränsning i arket:** koncernarkets P&L-block (raderna 507–540) finns bara för 2026; för 2027 går bara rad 183 vidare och bara till juni. Inget helårs-2027 på topnivå ur den filen.
+
+**Överlämning skriven:** `~/Library/CloudStorage/Dropbox/Sonetel - Henrik and Prashant/Finance/HANDOFF-2026-08-20-india-baseline-och-intaktsavvikelse.md` — India-frågan stängd, intäktsavvikelsen öppen, fyra frågor till Prashant, reproduktionsrecept, och båda mina felsteg dokumenterade så att nästa session inte upprepar dem. Ingen `prashant-update`-skill finns ännu; filen ligger där arbetet bor.
+
+---
+
+## 2026-08-25 — DBT amorteringspaus sep 2026 – jan 2027
+
+**Scope**: forecast data change (5-steg), plus CR-2026-08-25 (tillväxttakt i prognosen) som shippades samma dag.
+
+**Ändring**: id 25 + 61 stängda 2026-08-31; nya rader 81 + 80 från 2027-02-01. Inga belopp rörda. `forecast_change_log` 210–213. Augustibetalningen 28/8 ingår INTE (CEO: "No"). **EJ SIGNERAT AV DBT.**
+
+**Utfall verifierat mot driftsatt system**: sep–jan firar inte; 28/8 och 28/2 firar en gång var; botten **−933 426,47 den 2026-08-28**; **0 dagar under checkkrediten**, **0 dagar under golvet −950 000**.
+
+**Det som var lätt att räkna fel på**: 740 000 tas bort kumulativt men bottnen förbättras bara **+443 339**, eftersom bindande botten flyttar till 2026-08-28 — tre dagar före pausen. Ingen eftergift kan förbättra en dag som ligger före den. Uppskjutet, inte sparat.
+
+**Två staplade antaganden**: "0 dagar under krediten" kräver både pausen och de 0,5 %/mån CEO satte samma dag. Vid noll tillväxt: ≈−1 452 920 och ≈31 dagar under gränsen.
+
+**Post-mortem**
+
+- *Föregående körning (2026-08-19/20)* lämnade sveptet vid ~46 av 56 rader och flaggade att bottendagen 2026-08-28 byggs av åtta rader som firar samma dag. Den observationen visade sig avgörande här: pausen kunde inte förbättra bottnen eftersom bottnen ÄR den dagen.
+- *Drift*: ingen. Raderna 25/61 hade aldrig fått sina belopp ändrade (bara beskrivningar), så underlaget var rent.
+- *Processgap som stängdes*: `business_parameters` ändras utan spår — tillväxttakten sattes via portalen och upptäcktes bara av skillens obligatoriska sessionskontroll. Ratificerad som logg 209.
+- *Processgap som ÖPPNADES*: fyra granskaragenter på en fyraradersändring gav tre fynd som ändrade något. CEO: *"Why is this so complicated? Are you doing this the right way??"* Stegen ska köras — fynden ska vägas. Infört som eget avsnitt i SKILL.md.
+- *Fråga som CEO avfärdade*: om DBT faktiskt sänker autogirobeloppet. Ställd två gånger, andra gången med irritation. Den är fortfarande sakligt relevant (ett muntligt löfte stoppar ingen autogiro) men den är ställd och besvarad genom att inte besvaras — ta inte upp den igen utan ny information.
+
+**Öppet**: DBT har inte signerat. Om eftergiften uteblir: radera raderna 80/81 och ta bort `valid_to` på 25/61. Reverseringsreceptet ligger i alla fyra radernas beskrivningar.
+
+---
+
+## 2026-09-07 — DBT Lån 1 augustibetalning drev till september (+ EOM-snapshot 2026-08)
+
+**Scope**: forecast data change (5-steg, genomförd), plus EOM cash position 2026-08 sparad i samma session.
+
+**Utlösare**: CEO 2026-09-07, skärmbild från Nordea + orden *"Some payments, including this drifted from Aug
+to Sept as cash wasn't available in the account on due day. This needs to be fixed in the cashflow forecast."*
+Rule 21 gör det uttalandet till godkännandet för själva uppskjutningsraden — inget mer krävdes för DBT.
+
+**Ändring**: `scheduled_payment` 113 (98 000, konto 2352, → recurring 25) + 114 (33 759, konto 8410,
+→ recurring 24), båda 2026-09-07, `deferred_from_month='2026-08'`. `forecast_change_log` 218/219. Inga
+recurring-rader rörda. Botten **−641 384,19 → −773 143,19**, samma dag 2026-12-28, skift exakt 131 759,00.
+Granskare 72/78, revisorer 93/83.
+
+**Bevisen som gjorde saken säker** — och som är värda att återanvända nästa gång en autogirorad ser konstig ut:
+Aug-31-autogirot var −66 017,35, juli-31 var −66 425,44. Differensen **408,09 = 0,816 %/mån på 50 000**, alltså
+Lån 2:s ränta som faller efter sin första amortering. Det är den signaturen som gör dekomponeringen
+"nästan säker" i stället för "rimlig". Lån 1 saknas i båda autogirona; betalades manuellt 08-10 respektive 09-07.
+
+### Fynd som INTE åtgärdades — alla eskalerade till CEO, inget godkännande givet
+
+1. **recurring 24 motbevisas av den här ändringen.** Faktisk Lån 1-ränta 2026: 39 208 / 39 464 / 35 248 /
+   38 050 / 36 379 / 33 851 / 33 597 / **33 759**. Modellen: 31 500 — **aldrig betald under 2026**. Radens egen
+   beskrivning säger att 31 500 sattes som snitt aug–nov under antagandet att räntan faller ~893/mån *när lånet
+   amorteras*. Amorteringspausen sep–jan stoppar just det, och jul→aug gick **upp**. ~25–45 kSEK för lite över
+   horisonten. Snittet löper dessutom ut i nov 2026 utan efterträdare.
+2. **scheduled 90 har trasig metadata** — `deferred_recurring_id=26` (fel lån) och
+   `deferred_from_month='2026-01'` (ska vara 2026-07). Den är **enda enabled-raden för 2026-01**, så januaris
+   `forecast_accuracy` visar just nu `adjusted_forecast` som är **131 597 SEK fel**, och juli får ingen
+   tillgodoräkning alls. Ren visningsdefekt, noll kassaeffekt — men den har stått fel sedan 2026-08-01.
+3. **`supplier_id` utelämnat på 113/114** där rad 90 bär 134. Mitt förbiseende. Blockerar manuell länkning av
+   bankraden (`link_outflow_to_payment` kräver leverantör).
+4. **Den dokumenterade amorteringen är 98 039,22, inte 98 000** — recurring 25:s beskrivning noterar de 39 kr/mån
+   som medvetet lämnade. Min uppdelning följer modellens konvention, men rad 114:s beskrivning påstår
+   "131 759 − 98 000" som om det vore exakt. Beskrivningar är append-only; en klargörande tillägg krävs, inte en
+   rättelse.
+5. **BDO 18 981 och Cision 17 013 (båda 2026-09-03) är INTE modellerade.** Beloppen dekomponerar inte mot
+   raderna (BDO recurring 69 800/mån, Cision 10 000/mån) och båda betalas inuti Corporate Access-buntar, så
+   bankdatan kan inte avgöra om augusti betalades. Enda namngivna Cision-raden 2026 är 2026-01-02 −16 213.
+   **Fråga ställd till CEO: vilka månader täcker betalningarna?** Ingen gissning inlagd — enligt regeln
+   "when a payment will not decompose cleanly, ASK FOR THE INVOICE".
+
+### Två staplade antaganden bakom −773 143 — ange dem alltid
+
+Pausen sep–jan tar bort **740 000 SEK och är EJ SIGNERAD av DBT**; fyra av fem uteblivna amorteringar ligger före
+bottendagen, så ett nej ger ~−1,37 MSEK, genom checkkrediten. Därtill 0,5 %/mån intäktstillväxt mot platta
+kostnader. Marginalen över bufferten 200 000 föll från 158 616 till **26 857** med enbart den här ändringen.
+
+### EOM cash position 2026-08 (samma session, före forecast-ändringen)
+
+15 rader sparade, **totalt −472 052,31 SEK** mot julis −548 961,81. Indien **280 061,83 INR** per Padmas mejl
+31-Aug (Axis 909020044317340) — **ned ~658 000 INR från juli, ca −70 % på en månad**, inte FX (0,10028 → 0,09984).
+Indien-trancherna är ~6,35M INR/mån, så saldot räcker under en halvmånad av Indiens egna utflöden. Frågan
+"vad drog ned det?" är ställd men obesvarad. Utopia USD 7 800 framrullad och omvärderad. FX: USD 9,58089 /
+EUR 11,11 / INR 0,09984.
+
+**Post-mortem**
+
+- *Föregående körning (2026-08-25)* lämnade som öppet: DBT har inte signerat pausen. **Fortfarande öppet**, och
+  det är nu den största enskilda osäkerheten i modellen, inte en fotnot.
+- *Drift mot förra körningens förväntan*: förra loggen angav botten −933 426 den 2026-08-28. Den dagen har
+  passerat; ny botten −773 143 den 2026-12-28. Förbättringen kommer av att augusti faktiskt inte betalade Lån 1
+  (131 759 sköts fram) plus att intäktsmodellen bytt till best_estimate 80 231/dag.
+- *Processgap som stängdes*: den obligatoriska EOM-snapshoten hade **hoppats över** i månadsstängningen. CEO fick
+  påpeka det (*"Don't you in your checklist also update the balance EOM?"*). Den var inte blockerad — PayPal-CSV
+  och bankfilerna låg redan uppe; bara bortglömd. Snapshoten ankrar prognosens ingående kassa, så en utebliven
+  snapshot hade lämnat hela septemberbanan på julis siffra.
+- *Processgap som ÖPPNADES*: två revisorer hittade samma sak oberoende — recurring 24 är fel och bevisas fel av
+  den ändring som gjordes ovanpå den. Att lägga en uppskjutningsrad på en rad man vet är felkalibrerad är att
+  bygga på sand. Nästa gång: kontrollera den underliggande radens kalibrering **innan** en deferral läggs, inte
+  efter.
+- *Regel som höll*: att inte modellera BDO/Cision. Två tidigare sessioner har byggt självsäkra och felaktiga
+  teorier på betalningar som inte dekomponerade rent (United Spaces 9 563). Frågan ställdes i stället.
+- **2026-09-10 STÄNGD — Indiens saldofall i augusti.** Henrik: *"Not an issue. Just timing of dispatches"*.
+  280 061,83 INR vid månadsskiftet speglar när trancherna skickas, inte ett underskott. Frågan är besvarad —
+  ta inte upp ett lågt EOM-saldo för Indien igen utan ny information (flera månader i rad, eller att Indien
+  själva rapporterar brist).
+
+---
+
+## 2026-09-12 — Revenue run-rate PINNED to 2.38 MSEK (CEO decision over a 42/100 reviewer score). REVIEW 2026-10-01.
+
+- **Change:** `cashflow_revenue_override_msek` **(none) → 2.38**, `effective_from 2026-09-12`, applied via
+  `POST /api/v1/cash-flow/forecast {"revenue_override_msek": 2.38}` — supported route, so `set_revenue_override`
+  ran, the 10-minute run-rate cache was busted and journalctl has the INFO line. No code, no SQL, no deploy.
+  The forecast had been free-running on the Best Estimate since the 2.5 override was cleared from the UI
+  2026-08-19 (CR-2026-08-19b root cause B). **Revert: same route with `{"revenue_override_msek": 0}`.**
+- **WHAT THIS IS — say it this way, don't launder it.** A **pre-incident-basis / forecast-stability pin,
+  authorised by the CEO over the objection of two mandated reviewers.** Not a model output, not a re-estimate.
+  CEO, having read all of the below: *"That drop is caused by production issue… The level prior to prod issues
+  is the correct one."* He explicitly accepted that the forecast would likely stop showing a credit-line
+  breach. He is the decision owner; the analysis does not get to overrule him — but it does get written down.
+- **The contrary evidence, recorded and NOT overturned:** (1) collections show **no production-incident
+  signature** — daily net revenue Sep 1–10 averaged 7,808 USD/day vs August's 7,755 (**+0.7 %**), and the
+  incident window Sep 7–10 ran **+1.9 %**; (2) the Best Estimate's 79,261 → 77,614 SEK/day fall is mostly the
+  **routine day-7 basis swap** in the Trend model (Prior Month Actual days 1–6 → Rolling from day 7), ~8.0 of
+  the 11.0 KUSD drop — I corroborated this directly: the pre-pin payload returned `run_rate_model_detail =
+  "avg. of Two-Cohort 80,667 + Rolling 74,560"` with `prior_month_comparison.is_estimate_input: false`;
+  (3) the real damage is the **acquisition funnel** and it started **before** Sep 5 — 7-day new-paying rate
+  106.9 (Aug 25) → 83.9 (Sep 5) → 69.0 (Sep 10), ARR −1.4 %; (4) two reviewers scored the pin **42/100 against
+  a 70 gate**.
+- **Verified effect** (start 2026-09-01, 600 d; starting cash −472 052,31; COGS 18,8 % pl_quarter; growth
+  +0,5 %/mån): `run_rate_daily` 77 613,61 → **79 333,33**, `run_rate_source` `best_estimate_2_models` →
+  **`manual_override`**. Trough **−1 247 878 (2028-01-30) → −794 146 (2026-12-28)**. Days below the −1 000 000
+  credit line **20 → 0**. 2026-botten −945 986 → **−794 146** (samma dag, 2026-12-28).
+- **The sensitivity is the real finding.** A **+2,2 %** change in the revenue driver erased 20 breach days and
+  moved the trough 25 months. Never quote either trough without saying which revenue basis produced it.
+- **TWO REVENUE NUMBERS ARE NOW IN CIRCULATION.** Pinned 2,38 (79 333/dag): cash-flow page + API, payment
+  schedule + grid, MCP `get_cash_flow_forecast`, any board slide off those. Live Best Estimate (77 614/dag):
+  Daily Pulse card + breakeven, the daily pulse email and its budget comparison, Weekly Pulse. The override is
+  read in exactly one place (`CashFlowForecastService._get_run_rate()`), so the split is clean — a ~52 KSEK/mån
+  gap between the two families is the pin, not a bug. **Check which family a number came from before
+  reconciling them.**
+- **Board caption.** `run_rate_source` = `manual_override`, `run_rate_model_detail` = *"Manual override:
+  2.380000 MSEK/month"* — both quotable. Honest caption: **"Revenue held at 2.38 MSEK/month (manual override,
+  CEO decision 2026-09-12, review 2026-10-01)"**. Never "Best Estimate"; no model produced this.
+- **UI MISLABEL NOW LIVE:** `cash_flow.html:483` and `:2408-2409` do
+  `run_rate_source.startsWith('best_estimate') ? 'Best Estimate' : '7-day average'`, so the run-rate panel will
+  read *"2 380 000 SEK/month (79 333 SEK/day) — 7-day average."* It is a manual pin, not any average. The same
+  page says it correctly at `:545/:558/:2108/:2459` (which read `run_rate_model_detail` first), so it
+  contradicts itself. Latent since the override was cleared; visible again from today. **Not fixed — no code
+  change was authorised.** Close it before the pin reaches a board deck.
+- **Review 2026-10-01** — see todos.md. Full write-up: `docs/investigations/2026-09-12-revenue-runrate-pin.md`;
+  changelog `docs/changelogs/2026-09.md`; supersedes `docs/investigations/2026-08-revenue-run-rate-review.md`.
+
+## 2026-09-19 — Veriff order form: legal archive + new recurring row (id 82)
+
+**Scope**: CEO signed Veriff Order Form Q-44624 (EUR 30,240/yr, prepaid monthly = EUR 2,520, 2026-10-10..2027-10-09, auto-renew, EU reverse charge). Archived as legal agreement 544 (id 1540) with the signed PDF; created supplier Veriff (752) and recurring_payment id 82 (EUR 2,520, monthly, day 9, valid_from 2026-11-01, account 6540). 5-step process: reviewers 72/72, auditors 72/82.
+
+**Impact**: 18 firings of 28,454.58 SEK in the 600-day window. Near-term trough 2026-12-28 −778,558 → −824,397. **Binding trough migrated to 2028-01-30 at −949,870 — 130 SEK above the −950,000 floor.** Rests on the manual revenue override + 0.5%/month growth + flat costs + auto-renewal at unchanged price (6 of 18 firings are past the contracted term).
+
+**Lesson — a before/after forecast diff taken on two different days is NOT the change you made.** The "before" run was fetched 2026-09-18 and the "after" run 2026-09-19, with every parameter identical (same start_date, starting_cash, run_rate, cogs, growth, anchor) — so the runs *looked* comparable. Both auditors correctly flagged that the diffs did not reconcile: 2 firings should have moved 2026-12-28 by −56,909 but it moved −45,838. Two contaminants, neither visible in the summary fields:
+- **FX ticked overnight**: EUR/SEK 11.2715 → 11.2915. That is +0.18% on *every* EUR row, not only the new one — Google's day-10 row alone shifted +478.58, and the day-10/day-17/Jan-3 steps in the diff series are all this.
+- **Actual revenue landed** for 2026-09-17/18, adding ~+12,669 of "improvement" that had nothing to do with the change.
+
+**Rule**: fetch the baseline forecast and the post-change forecast **in the same session, minutes apart**, or diff *only* the rows you touched. When a diff refuses to reconcile, print the per-day divergence series before theorising — the step pattern names the cause immediately (here: steps on other vendors' pay-days = FX; steps on past days = revenue actuals). Do not report a reconciled-looking headline number without checking that the daily steps are all your own row.
+
+**Open items carried**: (a) day 9 is an assumption — re-anchor to the first real Veriff invoice, and if Veriff bills at signature the first payment falls in October instead; (b) account 6540 vs 4xxx — if BDO books Veriff to COGS, id 82 double-counts once Veriff enters the trailing-quarter COGS percentage; (c) auto-renewal notice deadline is not diarised anywhere.
+
+**Post-mortem vs prior run**: previous entry's open items were not re-checked in this session — this was a single-purpose contract intake, not a calibration sweep. The monthly calibration review and the one-row-at-a-time sweep remain outstanding in todos.md.
+
+## 2026-10-12 — Voxbone missed in September, two months paid on AMEX 2026-10-12 (forecast changed — approved "ok to all 3 changes")
+
+**Henrik 2026-10-12 (verbatim):** *"I found that I didn't pay Voxboen with AMEX last month. So I have today paid 2 months (about 6700 USD each) which will come on the AMEXZ bill to be piad end of November. This month october, Amex bill was only 26 KSEK, so I have added re-imbursement for that end of October. I think it relates to Anthropics Claude accounts etc."*
+
+**Facts**: Voxbone (recurring id 1, 72,000 SEK, day 1, account 4010) is paid on Henrik's AMEX, which is then reimbursed as utlägg around the end of the following month. September's Voxbone was never charged. On 2026-10-12 Henrik paid Sep + Oct: 2 × ~6,700 USD ≈ **133,600 SEK** at 9.97 SEK/USD (Riksbanken 2026-10-09). That money leaves the company **at the end of November**. October's AMEX bill was only **26,000 SEK** with no Voxbone in it (probably Anthropic/Claude seats etc.), reimbursed at the end of October.
+
+**What the forecast currently does** (run 2026-10-12, start 2026-10-01, trough −1,050,805 on 2026-12-28): id 1 fires 72,000 on Oct 1, Nov 1 and Dec 1. **The Oct 1 firing will not happen in reality**, and the Nov payout is one month too small. Through November the totals almost match (model 144,000 vs actual ~133,600), so this is a **timing shift, not a saving**: end of October is ~72K better than modelled, the end of November is about the same, and the Dec trough barely moves.
+
+**Change (approved by Henrik 2026-10-12: "ok to all 3 changes"; WRITTEN, one transaction):**
+1. Scheduled offset +72,000 SEK inflow on 2026-10-28, "cancels id 1 Oct firing".
+2. Scheduled +61,600 SEK outflow on 2026-11-28, "Voxbone Sep catch-up via AMEX" (133,600 − 72,000).
+3. id 1 day_of_month 1 → 28, to match the AMEX → utlägg payout timing (the long-pending TODO-12 channel-mix item). Do NOT use valid_from to skip October: the tracked-COGS subtraction follows the row's validity window (CR-2026-08-20), so that would double-count Voxbone through the COGS %.
+- Open question: if the 26K AMEX is recurring Anthropic seats, id 27 (20,000; ~5,000 of it Anthropic) is under-modelled by ~20K/month.
+
+**Process note**: the attempt to append this note to id 1's description via dbshell was blocked by the session's auto-mode permission classifier. Nothing was written to the database.
+
+**Written 2026-10-12**: scheduled 117 (2026-10-28, +72,000 inflow, offset that cancels id 1's October firing; the amount is HARDCODED to id 1's, so update both together), scheduled 118 (2026-11-28, 61,600 outflow, September catch-up), recurring 1 day 1 → 28 (amount unchanged at 72,000; dated block appended to its description). `forecast_row_history` shows all three under `claude/cash-flow-session`. The deferral fields (`deferred_recurring_id` / `deferred_from_month`) were left unset because they only annotate the accuracy report.
+
+**Verified** with a server-side `generate_forecast_with_overrides(forecast_days=90)` (the MCP forecast call was timing out at 30s; the app was healthy): end of Oct −1,009,979 → **−934,916**; end of Nov −685,909 → **−673,170**; trough 2026-12-28 −1,050,805 → **−1,039,011**. The expected moves were +72,000 / +10,400 / +10,400. The ~2–3K residual is drift between the morning baseline and the afternoon run (revenue actuals and FX), per the 2026-09-19 lesson.
+
+**Open**: (a) Henrik has not yet answered whether the 26K on the October AMEX is recurring Anthropic seats. If it is, id 27 is under-modelled by ~20K/month. (b) Re-anchor scheduled 118 to the actual AMEX bill amount when it arrives.
+
+## 2026-10-19 — Veckobehov av ägarkapital (analys, inga ändringar i prognosen)
+
+- **Läge enligt bank 19/10 (CSV + skärmbilder):** SEK-saldo −958 874 (utrymme 41 126), EUR 7 385,77 (inkl. deposit 6 714,70), USD 20 641,20 (inkl. deposit 19 848,44). Samlat ≈ **−672 676 SEK** (USD 9,8922, EUR 11,104).
+- **Kommande utbetalningar enligt banken/Henrik:** India 16 500 USD 19/10 (kommande), 20 413 + 80 000 USD 22/10 (ej registrerade), Euroclear 4 589 (22/10), Henrik 26 000 (26/10), MOSS 16 324,30 EUR (30/10). Hejdade 19/10: Bambora 16 761 + United Spaces 4 183 (= otillräcklig täckning). BDO 115 345 + 35 048 (osignerade) glider till november.
+- **Dag för dag från banken (60 KSEK/dag inflöde till Nordea, mätt ≈57–68K på 30/9→19/10):** botten −1,71 MSEK 23/10 och −1,75 MSEK 30/10. **Behov för att hålla −950K: ~725K senast 22/10, ~800K under resten av oktober.** Känslighet ±10K/dag inflöde = ±110K.
+- **Prognosen visar inget behov** (min −989 397 30/10) men låg på −60K för 18/10 medan Nordea-verkligheten var ≈ −815K → modellen är redan ~0,6 MSEK för optimistisk mitt i månaden. Ej avstämt: fyra Corporate Access-rader (106 645 6/10, 100 942 12/10, 240 754 15/10, 114 823 16/10) och utflöden på USD/EUR-kontona före 15/10.
+- **Skillnader mot modellen (förslag, EJ skrivna, väntar på godkännande):** India okt enligt Padma 124 913 USD (≈1 236K) mot modellens ~1 125K och tidigare (22/10 i stället för 23/28/30); Henriks utlägg 26K saknas; BDO 69,8K okt → nov; checkkreditränta faktiskt 14 631 (1/10) mot modellens 5 700; MOSS 181K mot 201K.
+- **Revenue override har ändrats 2,38 → 2,50 (2026-10-04 07:16) utan loggrad** i forecast_change_log. Faktiskt utfall sep 248 675 USD ≈ 2,46 MSEK. Tillväxt 0,5 %/mån fortfarande på.
+- **Öppen fråga:** är 80 000 USD (faktura 20260006) appraisal-bonusen (id 35, 4 024 356 INR ≈ 42K USD, 30/10)? Om inte så tillkommer ytterligare ~420K 30/10.
+- **Uppföljning av förra körningen:** posten 2026-10-12 sa att slutet av oktober skulle landa på −934 916 (modell). Bankverkligheten ligger ~0,75 MSEK sämre, främst p.g.a. att India-beloppen och deras timing är större/tidigare än modellen och att modellen redan halkat efter före 18/10. Snapshot-HTML hoppades över den här sessionen.
+- **Uppdatering samma kväll:** Henrik invände: "inga nya belopp" och prognosens botten är −1,07 MSEK (28/12), alltså ~0,1 MSEK behov. Testat: prognosens EGNA rader körda från dagens Nordea-saldo (start 2026-10-20, starting_cash −672 676, inga nya belopp) ger 30/10 −1 672 422 och 28/12 −1 756 770, exakt 683K under ordinarie körning hela vägen. Skillnaden är alltså enbart startnivån. PayPal 19/10 = 6 271,62 USD (≈ 1 270 USD över DIDWW-golvet, ≈ 12,6K SEK användbart), alltså ligger de 680K inte i PayPal. Slutsats: behovet ≈ 680–760K, inte 0,1 MSEK. Prognosen saknar en mid-month-avstämning mot bank; 1–18/10 lade modellen till +458K medan Nordea rörde sig +22K. Orsaken är inte utredd (kandidater: 150K "in transit" till Indien räknat som kassa samtidigt som oktobers Indienrader går fullt, Utopia 78K är inte likvid, SEK-utflöden ~350K över modellen).
+- **Henriks fråga: "vilka 0,5–0,7 MSEK kostnader har tillkommit?"** Svar: gapet beror mestadels INTE på kostnader. 1–18/10 räknat i Nordea-termer: (a) inbetalningar ≈ 320K under vad modellen bokar som intäkt (modellen 1 238K netto + 67K syntetisk moms; Nordea fick in ≈ 1 000K). Samma mönster i stängd månad: sep fick Nordea in 1 920K (Δ −175 804 + utflöden 2 095 380 ex sweep/FX) mot ≈ 2,1M som modellen skulle anta på 248 675 USD; aug ≈ 2 015K mot ≈ 2,1M. (b) kostnader ≈ +130K, främst september-poster betalda i oktober (DBT sep-ränta 47K 8/10, checkkreditränta 14,6K 1/10, Tomas utlägg 35K 6/10). (c) startpunkten: 15 000 USD (149 683) "in transit" till Indien 30/9 räknas som kassa. Om den betalade septemberfakturan är den inte fri kassa. Delvis obekräftat: USD-kontots utflöden 1–14/10 utöver 8 000 USD är okända; meddelandena på Indienöverföringarna är avklippta (25 tecken).
+- **Henrik avkodade Corporate Access 1–18/10:** G&W 43 125 (1/10), S&P Insurance Consulting AB 24 822 + 10 648 + 22 453 = 57 923 + tre rader till (48 722, ej visade) i (6)-bunten 6/10, Bambora 16 628 (8/10), Skatteverket 100 329 + SEB 612,88 (12/10), SEB Kort 240 754,45 (15/10), United Spaces 11 995 + Svensk e-id 396 (15/10), Google 114 822,95 (16/10). Mot modellen: SEB +77K (240,8 mot 163,5), S&P 57,9K saknas helt i modellen (ingen rad finns), Skatt +30K (100,3 mot 70,7), DBT +47K (septemberränta sent), United Spaces +8K, checkkreditränta +9K, Tomas utlägg +15K. Summa ≈ +245K över modellen. Indien: id 69 AWS India betalas av Sonetel India i INR, alltså ingår den i Padmas belopp. Modellens Indien okt inkl. AWS ≈ 1 260K mot Padma 1 236K, så Indien stämmer (min tidigare "+110K" var fel).
+- **SEB Kort 240 754 (betalad 15/10) = kortbatch 115 (sep 2026), exakt.** Mot normalt ~126–149K: Salesforce (SFDC) 45 571 dragen 15/9. Modellen (recurring 67, kv. 3,6,9,12 dag 10) lade den i september, men kontantutflödet kom i oktober. SFDC-dragningar: 2025-09-30, 2025-12-30, 2026-02-24, 2026-05-25, 2026-09-15, alltså oregelbundet; WATCH-noteringen i id 67 slog in. OpenAI 42 186 (två dragningar 16 858 + 17 308 den 25/9) mot ~9K/mån. Direct7 19 971 (4 × ~5K) mot ~1K; Henrik: troligen SMS-bedrägeri. Anthropic +6K. META 7 × 7,5K som vanligt. Henrik: S&P = företagsförsäkringar, årsvis. Föreslaget, EJ skrivet: ny årlig rad S&P 57 923 okt dag 6 (6310) och id 67 kv. → 1,4,7,10 dag 15.
+- **SKRIVET 2026-10-19 20:04 UTC (Henrik: "ja, på båda. följ processen"):** recurring 83 NY S&P Insurance Consulting AB 57 923 SEK årlig okt dag 6 konto 6310; recurring 67 Salesforce 3,6,9,12 dag 10 -> 1,4,7,10 dag 15 (beskrivning: daterat tillägg). Granskare 78/80, kontrollanter 90/94. Före/efter samma session: 30/10 −989 397 → −1 092 892; botten 28/12 −1 073 745 → −1 132 032; dagar < −1 MSEK 2 → 6. 364 kr avvikelse mot prediktion = USD-kurs för förfluten dag (9,9719 mot 9,8922). Inga andra 6300/6310-rader utöver Trygg Hansa id 38. Changelog: docs/changelogs/2026-10.md. Henrik 2026-10-19: SMS-bedrägeriet (Direct7) är stoppat, så det modelleras som engångspost.
+- **SKRIVET 2026-10-19 20:11 UTC:** scheduled 119, Tomas utlägg september betalat sent 2026-10-06, 34 688,49 (faktiskt bankbelopp), deferred_recurring_id 27, deferred_from_month 2026-09, konto 6540. Henrik: "Borda ha lagts upp som extra post i oktober". Granskare 80/84, kontrollanter 90/88. Ett enda steg i prognosen: 30/10 → −1 127 581, botten 28/12 → −1 166 721, dagar < −1 MSEK 6 → 8. ÖPPET: Tomas utlägg ligger faktiskt på ~33K/mån (jul 34 229, aug 32 496) mot rad 27:s 20K (Tomas + Henrik tillsammans), alltså troligen ~13K+/mån för lite i modellen. Ta upp med Henrik.
+- **Uppföljning av regel 23 (obetalt vid månadsskiftet):** stängningen av september fångade varken Tomas utlägg eller Salesforce, som skulle ha upptäckts vid avstämningen 1–6/10. Båda hittades först när Henrik själv avkodade bankraderna.
+- **2026-10-20:** bunten 6/10 är helt avkodad: S&P 57 923 (3 fakturor), Linn 27 500 (prognos 23 800), Cision 5 250 (prognos 10 000), Rainbow/Fluff 15 972 (septemberfaktura, färre timmar). Fluff recurring 29: bara en notering i beskrivningen, dag 28 kvar. Jag föreslog först att flytta dag 28 → 6 med påståendet att botten skulle bli 37,5K bättre. Det var FEL: vid efterskottsbetalning blir det en betalning per månad i båda fallen, så botten påverkas inte. Rättat innan något skrevs, och Henrik godkände bara noteringen. Lärdom: kör en räkning av antal betalningar fram till bottendatumet innan en tidsflytt påstås påverka botten.
+- **SKRIVET 2026-10-20 08:59 UTC:** recurring 27 20 000 → 42 000, nytt namn "Tomas utlägg (AI-verktyg, OpenAI-annonser, resor)". Omfattning: bara Tomas; Henriks AI-utgifter går via AMEX och är inte modellerade (öppet). Grund: Tomas underlag jun–aug ~33K + OpenAI-annonser ~9K/mån, nya från sep. Granskare 82/80, kontrollanter 92/88. Steg −22 000 varje 28:e; +4 511 den 19/10 kom från nytt intäktsutfall under natten (baslinjen från kvällen före). Botten 28/12 → −1 228 210; dagar < −1 MSEK 8 → 11. Känt glapp ~20K: septemberunderlaget 61 948 (Indienresa) betalas i början av november.
+
+## 2026-11-03 — October slipped payments into November; Voxbone re-anchored to AMEX; Oct EOM snapshot (forecast changed — approved A–E)
+
+**Inputs**: October Plusgiro CSVs (10-01..10-30), Nordea screenshots 11-03 (kontohändelser 11-02/03, Kommande, Hejdad), Henrik's AMEX 92000 statement 2026-11-02, Padma's 31-Oct Axis balance (INR 2,431).
+**EOM snapshot 2026-10-31 saved**: −590,963.68 SEK total (Nordea SEK −903,881.37; USD accts 13,880 USD; PayPal SEK 13,892 / USD 2,085 / EUR 5,794; Utopia 7,800 USD carried, Kraken still pending; India INR 2,431; no in-transit). Forecast now starts 2026-11-01.
+**Written 2026-11-03 13:55 UTC, one transaction, change-log ids 239–244, approver Henrik:**
+- A scheduled 118 61,600 → 86,457.56 (11-28), "sep+okt catch-up + wallet top-up via AMEX", linked 1/2026-09. AMEX: 69,409.12 + 68,710.46 + 20,337.98 = 158,457.56 minus recurring 1's 72,000. ("A - OK")
+- B recurring 29 Fluff day 28 → 2 (invoices due the 2nd; supersedes the 10-20 note). ("move payments to the 2nd each month starting Nov")
+- recurring 24 note: day 28 is the RIGHT date; Lån 1 interest slips into early next month only from month-end cash shortage → catch-up rows, never move the day. (Henrik: "That is just because we have been persistenly low on cash EOM")
+- C2 scheduled 120 DBT Lån 1 Oct interest 31,885.19 actual 11-03, linked 24/2026-10.
+- D scheduled 121 Henrik old-debt reduction 40,000 actual 11-03 (one-off, not repayment restart). ("yes" / "Old debt")
+- E scheduled 122 BDO 115,345 held (Hejdad) since 10-29, release 11-06, linked 20/2026-10. ("115,345 on Friday 6 Nov -> Ok")
+**Process**: review round 1 failed the gate (68: C first proposed as catch-up, then reviewers argued "day move"; Henrik settled it — cash-shortage slip, catch-up is right). Final SQL reviewed 88/85, audited 96/96.
+**Forecast (90d)**: trough −769,587 → **−981,674 on 2026-12-28** (Δ 212,087.75 = A+C2+D+E exactly). Days below −950K floor: 2026-12-28 (−981,674), 2027-01-30 (−950,558). None below −1M. Still on revenue override 2.5 MSEK (set 2026-10-04) + growth 0.5 %/mo — the trough depends on both.
+**Post-mortem vs 2026-10-19 run**: that run said the model was ~0.6–0.75 MSEK too optimistic mid-October and the proposed corrections (India timing, Henrik utlägg, BDO okt→nov) were left unwritten. Three of them materialised exactly as failed October payments (BDO 115K held, Henrik 40K, Fluff) because the credit line ran out at month-end; another 212K of November outflow appeared today. Root cause: catch-ups for payments that miss month-end were never added at the close (rule 23), and the Oct snapshot (needs India balance) was not chased — now a day-1 ask in monthly-intake.
+**Process gaps**: [ ] ask India balance on day 1 (monthly-intake updated 11-03); [ ] run the unpaid-at-EOM check on day 1 of every close, before any other forecast work; [ ] Henrik's AMEX non-Bandwidth AI spend (Anthropic API ~4.5K/mo, Claude, Deepgram) is still unmodelled — pending his Sonetel/Epivo call; [ ] Linn recurring 5 23,800 vs actual 27,500–28,875 (not proposed).
+**Hejdad risk flagged 11-03**: SEK −986,596, headroom 13,404; Linn 28,875 due 11-04 and Google 103,358 due 11-16 queued.
+
+## 2026-11-03 (later) — revenue Auto + owner-loan repayment
+- Henrik set revenue to Auto (2.54 MSEK/mo). Low −916,572 on 2026-12-28 (was −981,674).
+- Owner loan 600K received 2026-10-26 (Martin via PMJ AB + Tim, 2×300K). Repayment scheduled 123/124, 300K each on 2027-06-01, acct 2393 (assumed), no interest modelled. Henrik "ok". Reviewers 80/72. Min from June 2027 −756,720 (2027-12-28).
+- Analysis: Nov forecast ~730K below the Oct deck forecast by end-2027 once the loan nets out: Tomas 20K→42K/mo (~330K), COGS share 18.9→19.6% because Sep P&L COGS is 23.8% (~220K), S&P insurance missing before (~116K), one-offs (~120K). Back-test with today's model: Jun −191K, Jul −10K, Aug +348K, Sep −53K, Oct −44K.
+- Process gaps to close:
+  - [ ] Check Sep 2026 COGS 23.8% for one-offs; if one-off, consider a COGS override until Sep leaves the 3-month window (Jan 2027).
+  - [ ] PayPal receipts ~190K/mo Sep–Oct vs ~260K May–Aug: find the reason.
+  - [x] Owner loan is interest-free (Henrik 2026-11-03). [ ] The 300K per-lender split and BDO booking account (2393 assumed) are still unconfirmed.
+  - [ ] Re-check the 2027-06-01 repayment date against the April 2027 forecast.
+- 2026-11-03 CR-2026-11-03 deployed: auto COGS excludes 4019 (Jul–Sep 19.5% → 18.8%). Low −867,246 (2026-12-28), end-2027 −219,786, min after the June 2027 loan repayment −540,102. [x] Sep COGS checked: 4019 FX provision (fixed by CR), OpenAI API spike 34K (real), SMS fraud 19K (curtailed, Henrik), OpenAI Ads moved to 5910 (supplier 778). [ ] DIDWW PayPal top-ups 10→13/month Aug→Oct (+30%): ask why.
+- 2026-11-03 DIDWW +30%: manual-input invoices Sep 33,490 → Oct 41,135 USD. Toll Free 1,996 → 6,575 (×3.3), Outbound termination 5,991 → 8,192 (+37%), MRC flat. Possible toll-free traffic pumping after the Sep SMS fraud (~45K SEK/month if it continues). [ ] Henrik/tech: check October toll-free minutes by number/customer and whether they are billed.
+- 2026-11-03 October cash context: underlying miss ~−145K against today's model (deferrals excluded). ~60–75K = DIDWW traffic spike paid from the PayPal balance (13 auto top-ups of 3,135.30 USD vs 10–11; 401K vs ~329K SEK; SNTLRND-9797). Not in the forecast (DIDWW sits only inside the P&L COGS share). Customer PayPal −27K. Payment runs 805K vs 500–620K not itemised. If the traffic continues in November: consider a temporary DIDWW row (~75K SEK/month) via the 5-step process, depending on Sai's answer.

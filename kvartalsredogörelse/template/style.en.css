@@ -1,0 +1,70 @@
+/* English-only overrides. Loaded AFTER style.css, so equal specificity resolves in this file's
+   favour. Never loaded for --lang sv, and it deliberately does NOT touch `string-set` — the
+   Swedish named-string defect is a separate matter (CR-2026-08-25-pipeline-tysta-fel) and the
+   Swedish output must stay byte-identical. */
+
+/* --- Footer marker on every page that can carry one ---------------------------------
+   The Swedish footer rides on `string-set`, which WeasyPrint discards (a missing comma in
+   template.html line 10). The English footer uses a literal instead, so it does not depend on
+   that mechanism and does not fix it either. */
+@page :right {
+  @bottom-right {
+    content: "UNOFFICIAL TRANSLATION  " counter(page);
+    font-family: 'Gotham SSm', sans-serif;
+    font-weight: 500;
+    font-size: 7.5pt;
+    color: var(--red);
+    letter-spacing: 0.6pt;
+  }
+}
+@page :left {
+  @bottom-left {
+    content: counter(page) "  UNOFFICIAL TRANSLATION";
+    font-family: 'Gotham SSm', sans-serif;
+    font-weight: 500;
+    font-size: 7.5pt;
+    color: var(--red);
+    letter-spacing: 0.6pt;
+  }
+}
+
+/* Cover and back cover generate a zero-height margin box (margin: 0), so anything placed there
+   is clipped across the cover photograph. Suppress it — the cover carries the note in the body
+   instead. `@page no-pagenum` is deliberately NOT overridden: those two pages carry bottom-anchored
+   full-bleed bands and their body-text marker does the work. */
+@page cover    { @bottom-right { content: none; } @bottom-left { content: none; } }
+@page backcover { @bottom-right { content: none; } @bottom-left { content: none; } }
+
+/* --- Body-text markers ------------------------------------------------------------- */
+.translation-cover-note {
+  margin-top: 4pt;
+  font-family: 'Gotham SSm', sans-serif;
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.3pt;
+  color: #FFFFFF;
+  background: rgba(0, 0, 0, 0.55);   /* scrim: white type over a pale photograph needs one */
+  display: inline-block;
+  padding: 2pt 5pt;
+}
+
+.translation-inline {
+  font-family: 'Gotham SSm', sans-serif;
+  font-size: 7.5pt;
+  font-weight: 500;
+  letter-spacing: 0.3pt;
+  color: var(--red);
+  margin: 0 0 5pt 0;
+}
+
+.translation-caveat {
+  margin-top: 4pt;
+  font-family: 'Gotham SSm', sans-serif;
+  font-size: 7.5pt;
+  font-style: italic;
+  color: #444444;
+}
+
+.translation-note p {
+  max-width: 150mm;
+}

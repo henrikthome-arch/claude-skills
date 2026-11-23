@@ -104,6 +104,28 @@ ______________________________
 - Action points: table with AP#, action, responsible, due — only if actions were assigned
 - Signatures: two-column (Chairman | Secretary), then Verifier below
 
+### Length & tone — hard limits
+
+- **Total length: 2–3 PDF pages MAX.** Includes everything from title through signatures. Non-negotiable.
+- **Each § section: 1–3 short sentences, or a compact bullet list.** No play-by-play, no quotes, no rhetorical scene-setting.
+- **Plain, easy-to-read language.** Short words. Short sentences. No filler ("the board discussed at length…").
+- Bullets > paragraphs when listing.
+
+**Do not duplicate the slide deck.** The deck carries the numbers, percentages, road-map detail, methodology breakdowns. The minutes record:
+
+- Decisions taken
+- Action points (owner + due)
+- The key conclusion per agenda item (1–2 sentences)
+- Formalities: chair, secretary, verifier, attendance, opening/closing
+
+**Do NOT include** in the minutes:
+- Slide-level detail (financial line items, percentage breakdowns, multi-step methodology)
+- Back-and-forth quotes or "X said Y, then Z said W"
+- "FYI" background context
+- Anything already in the deck
+
+If a § section runs longer than 3 sentences without containing a decision, a number tied to a decision, or an action point, cut it.
+
 ### Recurring roles
 
 | Name | Initials | Typical role |
@@ -181,20 +203,88 @@ Installed via `brew install --cask libreoffice`. More reliable than `docx2pdf` o
 
 ---
 
+## Two-agent review process
+
+After drafting ver 1 (markdown) and **before** generating the PDF, run a mandatory two-agent review. Both agents run **in parallel** (one message, two `Agent` tool calls).
+
+### The two reviewers
+
+**Agent A — Transcript faithfulness**
+- Compares every factual claim in the minutes against the source (VTT/transcript/notes)
+- Flags hallucinations (claims not supported by source)
+- Flags significant omissions (substantive items discussed but missing)
+- Verifies names, initials, numbers, dates, decisions, action attributions
+- Tools: Read, Grep, Glob (read-only)
+
+**Agent B — Format, length & board protocol**
+- Compares document against the SKILL.md format spec (title, meta block, participants table, §-numbering, Decisions block, AP table, signatures)
+- **Enforces the length & tone hard limits**: PDF ≤3 pages; each § = 1–3 short sentences or a compact bullet list; plain language; no slide duplication. **Any draft that exceeds 3 pages or duplicates slide-level detail is an automatic REVISE regardless of other quality.**
+- Checks completeness vs. `agenda/agenda.json` — every agenda item gets a brief §
+- Flags style drift, missing absent-member notes, AP-table mismatches with the body
+- Tools: Read, Grep, Glob, Bash (read-only; Bash needed to count PDF pages if a PDF exists)
+
+### What the reviewers return
+
+Each agent returns a structured report:
+
+```
+CONFIDENCE_SCORE: <integer 1–10>
+
+Critical issues (must fix):
+1. ...
+2. ...
+
+Suggested improvements (nice to have):
+1. ...
+2. ...
+
+Verdict: <PASS | REVISE>
+```
+
+**Scoring rubric** (both agents use the same scale):
+- **10** — Flawless. Send as-is.
+- **9** — Perfect substance; only polish opportunities.
+- **8** — Solid; one or two minor improvements possible.
+- **7** — Has 1–2 issues that should be addressed.
+- **≤6** — Multiple issues or one serious issue.
+
+### Pass threshold and cycles
+
+- **Pass threshold**: both agents must score **>8** (i.e., 9 or 10).
+- **Max cycles**: 2.
+  - **Cycle 1**: spawn both reviewers in parallel against the draft. If both pass (>8) → proceed to PDF.
+  - If either is ≤8 → consolidate critical issues, apply edits to the markdown, then run **cycle 2** (both reviewers again in parallel against the revised draft).
+  - If after cycle 2 either reviewer is still ≤8 → **escalate to the user**. Present: each reviewer's score, the remaining critical issues, your proposed resolution, and ask how to proceed. Do NOT silently ship a sub-threshold draft.
+- The review happens on **ver 1** (the first draft). Applying review fixes does **not** bump the version — ver 1 is what reaches the user.
+
+### Logging
+
+Append a brief note to `CHANGELOG.md` summarising the review outcome per cycle: scores, key issues found, what was changed. This is the audit trail for future signed-minutes references.
+
+---
+
 ## Versioning
 
-- `ver 1` = first draft
-- `ver 2`, `ver 3` = revisions before signing
-- Once signed: archive; create a new version only if corrections needed
-- Update `CHANGELOG.md` after writing or updating minutes
+**Hard rules — no exceptions:**
+
+- `ver 1` = first draft delivered to the user (after the two-agent review passes).
+- **Every change after a version exists on disk creates a new version number.** Never overwrite or reuse `ver N` — bump to `ver N+1`. Applies to all changes: user corrections, typo fixes, CRs, follow-up edits, anything. There is no exception for "small" changes.
+- The two-agent review cycles are internal to producing a single version — cycles 1 and 2 against the same draft do **not** bump the version, because the draft has not been delivered yet.
+- **Always generate the PDF alongside the markdown.** A versioned `.md` without a matching `.pdf` is broken state. Both files share the same `ver N` suffix and live side-by-side in `minutes/`.
+- Once signed: archive the signed PDF to `minutes/Signed/` inside the meeting folder. Filename convention: `Styrelseprotokoll YYYY MM DD (N).pdf` (Swedish — matches the eAvtal export). Drafts in `minutes/` are kept; only signed copies live in `Signed/`. Create a new version only if corrections are subsequently needed.
+- Update `CHANGELOG.md` after writing or updating minutes (one entry per version, and one entry when the signed copy is archived).
 
 ---
 
 ## Workflow
 
-1. Read `agenda/agenda.json`
-2. Read source (VTT, notes, or direct input)
-3. Draft `minutes/Minutes ... ver 1.md`
-4. Generate PDF using fpdf2
-5. Update `CHANGELOG.md`
-6. Present to Henrik for review
+1. Read `agenda/agenda.json`.
+2. Read source (VTT, notes, or direct input).
+3. Determine the next version number: look at existing `minutes/Minutes … ver N.{md,pdf}` files; pick `N+1` (or `1` for a brand-new meeting). **Never reuse an N that already exists on disk.**
+4. Draft `minutes/Minutes ... ver N.md`.
+5. **Run two-agent review (see "Two-agent review process" above)** — cycle until both reviewers score >8, max 2 cycles, then escalate if not converged. Reviews run on the same `ver N` draft and do not bump the number.
+6. **Generate the PDF** using fpdf2 with the matching `ver N` suffix. Markdown and PDF must always be produced together.
+7. Update `CHANGELOG.md` with a single entry per version (include review-cycle summary).
+8. Present to Henrik for review.
+
+**For any subsequent change** (Henrik's feedback, CR, follow-up edit): repeat the workflow from step 3 to produce `ver N+1` — never edit `ver N` in place.

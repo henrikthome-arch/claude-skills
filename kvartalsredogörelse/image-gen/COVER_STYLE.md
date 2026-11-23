@@ -17,6 +17,109 @@ This file forks the original `sonetel-image-generator-skill`'s `brand/visual-sty
 
 **Henrik's correction**: "the rule isn't 'always a woman in rain with cars'. No company wants nearly identical motifs every quarter."
 
+### One picture per report should meet the reader's eye (Henrik 2026-08-21)
+
+*"Det är bra om någon bild i varje rapport har något foto där personen tittar in i kameran."*
+Everything else in the set can be observed-from-outside; one frame should look back. It gives the
+report a person in it rather than a series of scenes. nb2 is the model for this — eye and
+expression detail is exactly what it is documented as being better at.
+
+### Variation applies WITHIN a report too, not only between quarters (Henrik 2026-08-21)
+
+The rule below was written about consecutive quarters, and reading it that narrowly produced the
+mistake it exists to prevent: the halvårsrapport jan–jun 2026 got a Faroe Islands photograph for
+the VD-ordet that was, next to its own cover, near-identical — **a lone woman standing beside a
+pickup with a phone in a vast empty landscape, muted palette**. Only the ground cover differed,
+sand for grass. Henrik: *"it is almost identical to cover page."*
+
+Before generating any picture, **lay out every other photograph in the same report** and check
+each axis separately. Two pictures may share at most one:
+
+| Axis | Ask |
+|---|---|
+| Subject | Same gender? Same rough age? Aim for a mix across the set |
+| Posture & action | Both standing? Both phone-to-ear? Vary it. **This axis got missed** on the halvårsrapport jan–jun 2026: the cover's woman and the VD-ordet's man both stood upright in profile with a phone, and Henrik caught it after the table above had already been written. Seating the man on a rock fixed it. Writing the checklist is not running it |
+| Gaze | Looking away, or into the lens? |
+| Hero prop | A vehicle in both? A counter in both? A vehicle is a *very* strong visual signature — do not repeat one |
+| Composition | Lone figure dwarfed by emptiness, versus structure and depth, versus a group, versus an interior |
+| Palette & light | Both cold and muted? Both warm and golden? |
+| Inside / outside | |
+
+Emptiness is the trap. A vast landscape with one small person is a strong, satisfying composition,
+which is exactly why it gets reached for twice.
+
+### The 5–20% framing rule is also what keeps the picture from looking AI-generated
+
+Henrik, 2026-08-21, on a Faroese picture with the subject at roughly half the frame height:
+*"something is off — AIish. Can't say what."* Enlarged, three things had broken, and all three
+break **only at close range**:
+
+- **Hands.** The hand resting on a pole merged into the wood with no thumb wrapping it. The hand
+  holding the phone was mush. Hands touching objects are the single most reliable failure.
+- **Repeating structures do not resolve.** The fish-drying racks passed through each other and
+  emerged from the face of a plank with no joint. Any dense lattice — racks, scaffolding,
+  railings, fences seen close — will fail somewhere.
+- **Objects hang from nothing.** Strings ran through the poles and stopped in mid-air; the fish
+  were attached to nothing.
+
+These break only at close range. The cure is distance, not prompt language: at 5–20% of frame
+height a hand is a few pixels and cannot be wrong.
+
+**When a picture reads as "off" but nobody can say why, crop into it at 3× and look at hands,
+joints and attachment points before regenerating.** Naming the defect gives you the corrective
+prompt; guessing gives you another bad picture.
+
+**BRIEF THE IMAGE MODEL SHORT. This is the most important line on this page.**
+
+Henrik, 2026-08-21, after a prompt that specified the exact grip: *"No one holds their phone like
+that. I think you are overengineering again, and micromanaging the skill instead of giving it more
+free reins."* He was right twice over — the picture *and* this guide had both been over-specified.
+
+Prescribing anatomy produces anatomy that is technically compliant and humanly wrong. "A simple
+relaxed closed fist, fingers together, curled around the phone, none touching the face" produced a
+man gripping his phone like a walkie-talkie. The fix was a **two-sentence brief**:
+
+> Editorial documentary photograph. A Faroese village of black timber houses with turf roofs on a
+> green slope above a fjord, basalt mountains disappearing into mist. A man in a worn jacket stands
+> on the grass taking a call on his mobile, looking out over the water. Overcast Nordic light.
+> No text or signage anywhere.
+
+That gave a natural grip, a legible phone and a better photograph, first try.
+
+**Say the subject, the place, the light, the photographic direction, and the one or two things that
+must not appear.** Nothing else.
+
+Photographic direction — *35mm at f/5.6, deep depth of field, natural light, one small figure in a
+large landscape* — is **style, and it belongs in the brief.** It is how the house tells the model
+what kind of photograph this is. Finger positions, grip descriptions and elbow angles are
+**micromanagement, and they belong nowhere.** The difference: direct the camera, never the body. This is the same rule that already governs briefing GPT-5 for the VD-ordet: give a skilled
+professional the material and the boundaries, not a list of conditions. Reach for more prompt only
+when a *specific named defect* has to be forbidden — and then add one clause, not a paragraph.
+
+**Keeping a setting is fine; keeping the setting's inhabitants is not.** When a picture is rejected
+for resembling another, the place usually is not the problem — Henrik kept the Faroes and asked for
+everything else to change. What actually made the two pictures twins was the triad he named:
+**"car + object + woman."** The fix was a man instead of a woman, no vehicle at all, timber drying
+racks and turf roofs filling the frame instead of open sky, and a phone held in the hand and looked
+at rather than pressed to an ear. Same islands, unmistakably a different photograph.
+
+### The business must be legible — lessons from the jul–sep 2026 cover (Henrik 2026-11-17)
+
+Eight rounds to one approved cover, and every rejection came down to one of four things:
+
+| Rejected because | Fix that worked |
+|---|---|
+| *"Why is she overweight and sloppy dressed … she can just as well be a shopper ordering too much"* — the brief named no attire and no business, so the model chose both | State the role **and** the dress in the brief: *"the owner of an online shop … in a tailored suit"* |
+| A packing table **in the road / on the lawn** — *"why stand in the middle of the road packaging boxes?"* | Give the work a plausible place: a garage converted into a stockroom, door open. Flux ignored "on the porch" three times out of three |
+| The garage read as household storage, not a business | Name what makes it a business: *"rows of shelving with neatly stacked product boxes, a packing table with a tape dispenser and shipping supplies, outgoing parcels"* |
+| *"Ganska tråkig"* at 5–20% frame height | Henrik overrode the distance rule for this cover: subject at ~⅓–½ of frame height, smiling toward the camera, street receding beside her. The approved cover is closer than this guide's default — the guide's rule is a default, the person reviewing decides |
+
+Two recurring Flux defects on a "business call" brief: **a second phone in the other hand** (5 of 9
+takes) and **a visible Apple logo** on a laptop. One clause each fixed them: *"one phone held to her
+ear"*, *"no brand marks on any device"*. Also: the cover title sits over the lower ~15% of the page —
+when the subject stands full-figure there, render the candidates as actual covers before choosing
+(`omslag-jamforelse-*.png` in the period's `bilder-utkast/`).
+
 ### Variation requirements (every quarter must differ from the last)
 
 - **Geography**: pick a different continent / city per quarter. Rotate through Sonetel's 170-country reach.
@@ -34,6 +137,41 @@ The subject should read clearly as **an entrepreneur or small-business owner usi
 - **In their workspace** (café they own, atelier, market stall, fishing dock, repair shop, design studio, kitchen, farm) — not in some unrelated tourist setting
 - **The phone is naturally part of the moment** — checking inventory, taking a customer call, glancing at a notification, dictating a note — not posed-with-phone
 - **Real-world props**: open laptop nearby, scattered receipts, half-drunk coffee, tools, samples, paperwork, food, kids' drawings on the wall, plants, hand-written signs — the texture of actual work
+
+
+## SETTINGS: GO FURTHER THAN SHOPS AND OFFICES (Henrik, 2026-08-19)
+
+**Henrik's steer, verbatim: _"Butiker och kontor är rätt gammaldags."_**
+
+The approved-settings list below skews to cafés, shops, ateliers and market stalls. That is too
+safe and too domestic. The product is that a business is reachable **anywhere** — so the setting
+should make that point, not merely provide a backdrop. Extreme, remote or vivid environments say
+more about Sonetel than a well-lit café ever will.
+
+Settings Henrik proposed, all sanctioned:
+
+| | |
+|---|---|
+| A desert — vast dunes, a folding table, a pickup | Used for the halvårsrapport jan–jun 2026 cover |
+| An auto-rickshaw in India, working from the cab | Used for that report's affärsmodell image |
+| The Faroe Islands — fish-drying racks among turf-roofed timber houses | Used for the halvårsrapport jan–jun 2026 VD-ordet closing photograph. Chosen because the other three pictures were desert, South Asia and Latin America — **no Western-recognisable setting at all**, in a report whose two largest markets are the USA and Canada. Check the whole set against the audience-balance rule, not just the cover/affärsmodell pair. The *setting* survived two attempts; the first take had to be thrown out because its **subject, prop and composition** copied the cover (see the within-report rule above) |
+| A colour festival in India | |
+| The Siberian tundra | |
+| The Faroe Islands | |
+| An artisan cooperative in Guatemala | |
+| A beekeeper in the Greek mountains | |
+| A jungle | |
+| An endless construction site | |
+| A futuristic environment | Watch the guide's existing cyberpunk/neon anti-trope |
+
+**What does NOT change:** the framing discipline. Wide environmental shot, the setting as
+protagonist, the person at 5–20% of frame height, 28–35mm at f/4–5.6, deep depth of field, clear
+lower third, no text. The halvårsrapport cover works precisely because the emptiness of the dunes
+is the subject and the woman is a small deliberate mark within it. Boldness belongs in the
+*choice of place*, not in moving the camera closer.
+
+**Audience-balance rule still applies** — at least one Western-recognisable setting per pair. The
+Faroes, Greek mountains and Siberian tundra all satisfy it while being far from a café window.
 
 ### Approved variety palette (rotate, don't repeat consecutive quarters)
 
@@ -73,6 +211,29 @@ The previous quarter's image should never share the same **city** or same **weat
 **Avoid**: an entire quarter where ALL images are non-Western — readers may perceive the company as "exotic outsourced" rather than "Swedish capital-light SaaS with global customers".
 
 ### AI-image anatomy quality control (mandatory check before slotting)
+
+**Repetition is a tell, and it shows up in the SCENE as well as in hands.** Henrik, 2026-08-21:
+*"husen i bilden ser perfekt likformiga ut. Liknar AI."* The model had drawn one house and
+repeated it across the whole village.
+
+**But the cure is fewer words, not more.** Answering that note with a sentence specifying every
+variation — *"black tarred timber beside white and ochre and deep red, turf beside corrugated iron
+and slate, small old cottages beside larger newer houses"* — produced a catalogue of house types
+arranged like a sample chart. Henrik: *"Now it looks like a cluttered sample view of houses. Can
+you let the model free?"*
+
+What worked was deleting almost everything:
+
+> Editorial documentary photograph, 35mm at f/5.6. A village on the Faroe Islands above a fjord.
+> A man stands on the grass talking on his phone. Overcast light. No text.
+
+Three takes from that brief, pick the best one. The village came out varied and settled because
+that is what villages look like and the model knows it — it only produced a module when told to
+produce a module, and a catalogue when told to produce a catalogue.
+
+**The pattern to recognise in yourself:** each critique tempts you to add a clause. Six rounds of
+that is how the picture got worse and the guide got longer. When a picture is wrong, first try
+saying *less*, and generate three. Only name a defect explicitly when it survives that.
 
 AI image generators (Flux, NB2) frequently fail on:
 
@@ -175,4 +336,20 @@ Other aspects (4:5, 1:1, 16:9) are available in `generate-image.mjs` but not app
 ## Model selection
 
 - **Flux 2 Pro** (`--model flux`) is the default — better at wider environments and atmosphere, which is exactly the cover use case.
-- **Nano Banana 2** (`--model nb2`) is for portraits with strong eye/expression detail — wrong tool for distance shots. Don't use for cover unless a specific test calls for it.
+- **Nano Banana 2** (`--model nb2`) is for portraits with strong eye/expression detail — wrong tool
+  for distance shots. Don't use for cover unless a specific test calls for it.
+
+**ASK WHICH CASE YOU ARE IN BEFORE YOU GENERATE (Henrik 2026-08-21).** The two lines above are the
+whole decision and they were skipped for six straight attempts on the halvårsrapport jan–jun 2026
+VD-ordet picture, because `flux` is the CLI default and the default was never questioned. The
+picture needed a *gesture to be readable* — a man visibly on a phone — which is the portrait case,
+not the wide-environment case. Flux produced six unnatural grips in a row; **nb2 got it right on
+the first try, with a shorter prompt.**
+
+The tell that you are in the portrait case: **a hand, a face or an object being held has to read.**
+If the picture works as a silhouette in a landscape, use flux. If the viewer must see what the
+person is *doing*, use nb2.
+
+Trade-off to know: nb2 returns about **928×1152** against Flux's 1536×1920 — roughly 112 dpi at
+210mm width versus 186. Acceptable for a screen-read PDF (the cover has always run near 130), but
+Flux is the better choice whenever the picture is a landscape and no gesture has to carry.

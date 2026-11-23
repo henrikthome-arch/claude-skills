@@ -2,6 +2,28 @@
 
 Living todo list of cash flow forecast model improvements. Created 2026-05-08. Updated as items complete or new ones surface. Future agents: read this in addition to SKILL.md, log.md, and the Calibration Registry.
 
+## DATERADE OMPRÖVNINGAR — kolla datumet först i varje session
+
+- [ ] **2026-10-01 — OMPRÖVA intäktspinnen `cashflow_revenue_override_msek = 2.38`.**
+  Satt 2026-09-12 av Henrik som en **pre-incident-basis / prognosstabilitetspinne, mot två
+  granskares invändning (42/100 mot grind 70)**. Den är ingen modellutdata. Den tar bort
+  kreditlimitbrottet: botten gick −1 247 878 (2028-01-30) → **−794 146 (2026-12-28)**, dagar under
+  −1 000 000 gick **20 → 0**, på +2,2 % i intäktsdrivaren.
+  **Vid omprövningen:** (a) september är stängd — höll faktiska inbetalningar 2,38 MSEK, eller nådde
+  förvärvstappet kassan med sedvanlig eftersläpning (7-dagars nya betalande 106,9 den 25 aug → 69,0
+  den 10 sep)? (b) döljer prognosen fortfarande ett kreditlimitbrott som Best Estimate skulle visa —
+  i så fall säg det rakt ut till styrelsen, citera inte bara den pinnade botten; (c) ligger SEK/USD
+  mer än ~3 % från 9,55?
+  **Besluta om — låt den inte rulla vidare oreflekterat.**
+  Återställ: `POST /api/v1/cash-flow/forecast {"revenue_override_msek": 0}` (samma route, aldrig
+  handredigerad DB-rad — det är `set_revenue_override` som spränger 10-minuterscachen och skriver
+  INFO-raden i journalctl). Full text: `docs/investigations/2026-09-12-revenue-runrate-pin.md`.
+- [ ] **Följdärende från samma beslut (kodändring, ej auktoriserad 2026-09-12):**
+  `portal/templates/analytics/cash_flow.html:483` och `:2408-2409` etiketterar allt som inte är
+  `best_estimate*` som **"7-day average"** — så körningspanelen visar nu *"2 380 000 SEK/month
+  (79 333 SEK/day) — 7-day average"* för en manuell pinne. Samma sida skriver rätt på
+  `:545/:558/:2108/:2459`. Stäng detta **innan pinnen når ett styrelsedäck.**
+
 ## ÖPPNA BESLUT OCH LÖSA TRÅDAR (2026-08-18, väntar på Henrik eller på nästa session)
 
 ### Väntar på Henrik

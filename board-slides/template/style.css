@@ -180,7 +180,7 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 24mm 28mm;
+  padding: 16mm 28mm;
   border-left: none;
 }
 .section-number {
@@ -284,11 +284,20 @@ html, body {
 }
 .agenda-table .col-presenter {
   color: var(--swa-text-secondary);
-  width: 70mm;
+  /* 48mm, not 70: the Start + Min columns (2026-09-12) squeezed the title column until the
+     longest item titles wrapped and the agenda clipped. Names need ~35mm at this size. */
+  width: 48mm;
   font-size: var(--fs-body-md);
 }
+.agenda-table .col-min {
+  width: 14mm;
+  text-align: right;
+  color: var(--swa-text-secondary);
+  font-size: var(--fs-body-md);
+}
+.agenda-table .sub-row .col-min { color: var(--swa-text-secondary); }
 .agenda-table .col-time {
-  width: 24mm;
+  width: 20mm;
   text-align: right;
   color: var(--swa-text-secondary);
   font-size: var(--fs-body-md);
@@ -319,6 +328,48 @@ html, body {
   color: var(--swa-text-secondary);
   font-size: var(--fs-body-md);
 }
+
+/* Dense agenda — 12+ rows would otherwise spill to a second page.
+   A board slide spilling to a header-less page 2 is a layout bug. */
+.slide-agenda.dense {
+  padding: 12mm 28mm 12mm 28mm;
+}
+.slide-agenda.dense .slide-title {
+  font-size: var(--fs-headline-lg);
+  margin-bottom: 4mm;
+}
+.slide-agenda.dense .agenda-table th {
+  padding: 3pt 10pt 3pt 0;
+}
+.slide-agenda.dense .agenda-table td {
+  padding: 2.6pt 10pt 2.6pt 0;
+}
+.slide-agenda.dense .agenda-table .col-title {
+  font-size: var(--fs-body-md);
+}
+.slide-agenda.dense .agenda-table .sub-row td {
+  padding-top: 1.4pt;
+  padding-bottom: 1.4pt;
+}
+.slide-agenda.dense .agenda-table .total-row td {
+  padding-top: 5pt;
+}
+
+/* A third tier, for 16+ rows. Ten agenda items with sub-items reaches it.
+   Past ~19 rows, cut items instead — this is the last notch that stays legible. */
+.slide-agenda.denser {
+  padding: 10mm 26mm 10mm 26mm;
+}
+.slide-agenda.denser .slide-title {
+  font-size: var(--fs-headline-lg);
+  margin-bottom: 3mm;
+}
+.slide-agenda.denser .agenda-table th { padding: 2pt 10pt 2pt 0; }
+.slide-agenda.denser .agenda-table td { padding: 1.5pt 10pt 1.5pt 0; }
+.slide-agenda.denser .agenda-table .col-title { font-size: var(--fs-body-md); }
+.slide-agenda.denser .agenda-table .sub-row td { padding-top: 0.9pt; padding-bottom: 0.9pt; }
+.slide-agenda.denser .agenda-table .sub-row .col-title { font-size: var(--fs-body-sm); }
+.slide-agenda.denser .agenda-table .total-row td { padding-top: 3.5pt; }
 
 /* --- Content slides ------------------------------------------------- */
 
@@ -380,6 +431,12 @@ html, body {
   height: 1px;
   background: var(--swa-solid-3);
 }
+/* dense variant for content-heavy bullet slides (7+ items) so they stay one page */
+.slide-bullets.dense {
+  font-size: var(--fs-body-md);
+  line-height: 1.4;
+}
+.slide-bullets.dense li { margin-bottom: 3mm; }
 .slide-notes {
   font-size: var(--fs-body-sm);
   color: var(--swa-text-tertiary);
@@ -463,6 +520,17 @@ html, body {
   flex: 1;
 }
 .two-col .slide-bullets { flex: 1; }
+.two-col-side { flex: 1; }
+.two-col-title {
+  margin: 0 0 4mm 0;
+  font-size: var(--fs-label-md);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--swa-text-tertiary);
+  padding-bottom: 2mm;
+  border-bottom: 1px solid var(--swa-solid-3);
+}
 
 /* --- Quote ---------------------------------------------------------- */
 
@@ -484,6 +552,16 @@ html, body {
   background: var(--swa-text-primary);
   margin-bottom: 8mm;
 }
+.slide-quote { padding: 16mm 28mm 16mm 28mm; }
+.slide-quote .slide-title { font-size: var(--fs-headline-xl); margin: 0 0 2mm 0; }
+.slide-quote .slide-title + blockquote.clauses { margin-top: 2mm; }
+.slide-quote blockquote.clauses {
+  font-size: var(--fs-headline-md);
+  line-height: 1.28;
+  margin-top: 4mm;
+}
+.slide-quote blockquote.clauses p { margin: 0 0 4mm 0; }
+.slide-quote blockquote.clauses p:last-of-type { margin-bottom: 0; }
 .slide-quote blockquote footer {
   font-size: var(--fs-label-md);
   letter-spacing: var(--ls-wide);
@@ -710,7 +788,14 @@ html, body {
   font-variant-numeric: tabular-nums;
   color: var(--swa-text-primary);
   font-weight: var(--fw-regular);
+  white-space: nowrap;
 }
+.saas40-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-top: 4pt; }
+.saas40-table th { text-align: right; color: #888; font-weight: 500; padding: 3pt 5pt; border-bottom: 1px solid #E0E0E0; }
+.saas40-table th:first-child { text-align: left; }
+.saas40-table td { padding: 4.5pt 5pt; border-bottom: 1px solid #EFEFEF; text-align: right; font-variant-numeric: tabular-nums; color: #222; white-space: nowrap; }
+.saas40-table td.saas40-period { text-align: left; }
+.saas40-table td.saas40-total { font-weight: 600; }
 .pnl-table .section-header-row td {
   font-weight: var(--fw-semibold);
   color: var(--swa-text-primary);
@@ -724,8 +809,55 @@ html, body {
   border-top: 1px solid var(--swa-solid-7);
   border-bottom: 1px solid var(--swa-solid-3);
 }
-.pnl-table .variance-negative { color: var(--swa-status-critical); }
-.pnl-table .variance-positive { color: #2a8a3a; }
+/* 6–7 column P&L (e.g. + YTD + Δ YTD): tighten padding + font so it fits 16:9 width */
+.pnl-table.cols-many { font-size: 8.5pt; }
+.pnl-table.cols-many th { padding: 3pt 4pt; }
+.pnl-table.cols-many td { padding: 2.5pt 4pt; }
+.pnl-table td.col-num.variance-negative { color: var(--swa-status-critical); }
+.pnl-table td.col-num.variance-positive { color: #2a8a3a; }
+
+/* --- Generic data table (price tables, comparisons, sensitivity) ---- */
+
+.slide-datatable { padding: 11mm 28mm 10mm 28mm; }
+.slide-datatable .slide-header { margin-bottom: 4mm; }
+.slide-datatable .slide-title { font-size: var(--fs-headline-xl); margin: 0 0 2mm 0; }
+.slide-datatable .slide-subtitle { margin: -1mm 0 3mm 0; }
+.slide-datatable .slide-notes {
+  margin-top: 5mm;
+  padding-top: 2mm;
+  font-size: 9.5pt;
+  line-height: 1.35;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body-lg);
+  margin-top: 2mm;
+}
+.data-table th {
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-label-sm);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--swa-text-tertiary);
+  border-bottom: 1px solid var(--swa-solid-3);
+  padding: 3pt 8pt;
+}
+.data-table td {
+  padding: 7pt 8pt;
+  border-bottom: 1px solid var(--swa-solid-2);
+  vertical-align: baseline;
+  line-height: var(--lh-tight);
+  color: var(--swa-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.data-table th.dt-left,   .data-table td.dt-left   { text-align: left; }
+.data-table th.dt-right,  .data-table td.dt-right  { text-align: right; white-space: nowrap; }
+.data-table th.dt-center, .data-table td.dt-center { text-align: center; }
+.data-table tr.dt-emphasis td { font-weight: var(--fw-semibold); }
+.data-table.dense { font-size: var(--fs-body-md); }
+.data-table.dense td { padding: 3.5pt 8pt; }
 
 /* --- KPI grid (Finops Monthly Pulse style) -------------------------- */
 
@@ -829,6 +961,7 @@ html, body {
 .be-row span { opacity: 0.75; }
 .be-row strong { font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
 .be-row.gap { border-bottom: 1px solid currentColor; border-color: inherit; }
+.be-scope { margin-top: 5mm; font-size: var(--fs-body-md); font-weight: var(--fw-semibold); line-height: 1.3; }
 
 /* --- Cash position slide ------------------------------------------- */
 
@@ -851,7 +984,11 @@ html, body {
   padding: 3mm 3mm 2mm 3mm;
 }
 .cash-chart-card img {
-  width: 100%;
+  /* fixed mm, NOT 100%: in this flex row WeasyPrint sized the ROW from the image's
+     unscaled height — the grid measured 884.9mm while its cards were 80mm and 45mm,
+     so check_fit flagged a slide that painted fine (SKILL.md §60, same family as §46).
+     127mm = the rendered width at 100%; the cash, saas40 and chart_comment cards share it. */
+  width: 127mm;
   height: auto;
   display: block;
 }
@@ -862,8 +999,9 @@ html, body {
   border: 0.4pt solid #E5E5E5;
   border-radius: 2mm;
   padding: 4mm 5mm;
-  display: flex;
-  flex-direction: column;
+  /* block: title + table need no flex. With flex-column plus two-line driver labels the
+     last row hung outside the card (2026-09-10); block + one-line labels painted correctly. */
+  display: block;
 }
 .cash-drivers-title {
   font-size: var(--fs-label-sm);
@@ -941,7 +1079,7 @@ html, body {
 .cashflow-body {
   display: flex;
   gap: 6mm;
-  margin-bottom: 8mm;
+  margin-bottom: 4mm;   /* was 8mm: with the items panel + a two-line rationale the slide ran 1.2mm over (2026-10-07) */
   align-items: flex-start;
 }
 .cashflow-chart-card {
@@ -1024,6 +1162,19 @@ html, body {
   margin-top: 3mm;
   margin-bottom: 4mm;
 }
+.trends-grid.cols-1 { grid-template-columns: 1fr; }
+.trends-grid.cols-1 .trend-card img { width: 246mm; }
+.trends-grid.cols-2 .trend-card img { width: 118mm; }
+/* 4 charts (2x2) are height-capped, so a full-width image is 3.5:1 and flattens the trend.
+   88mm keeps the same ~44mm height at a 2:1 aspect (render.py sets figsize to match). */
+/* 2x2: the row height caps the chart at ~34mm, so a 118mm-wide image is 3.5:1 and flattens the
+   trend. Neither auto margins nor flex centring move a fixed-width image inside the card here
+   (measured: card 112.2mm, image 88mm, still flush left), so narrow the COLUMNS to fit the chart
+   and centre the grid instead. 90mm x 33.8mm = 2.7:1. */
+.trends-grid.cols-2.rows-2 { grid-template-columns: 94mm 94mm; justify-content: center; }
+.trends-grid.cols-2.rows-2 .trend-card img { width: 88mm; }
+.trends-grid.cols-2 { grid-template-columns: 1fr 1fr; }   /* 2 or 4 charts -> even 2-up / 2x2 */
+.trends-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
 .trend-card {
   display: block;
   min-width: 0;
@@ -1165,3 +1316,440 @@ html, body {
   text-transform: uppercase;
   color: var(--swa-solid-5);
 }
+
+
+/* ---- Action-log table (§44) ---- */
+.actionlog-table { width: 100%; border-collapse: collapse; margin-top: 4mm; }
+.actionlog-table tr { border-bottom: 0.4pt solid #ECECEC; }
+.actionlog-table td { padding: 1.5mm 3mm 1.5mm 0; vertical-align: top; }
+.al-num { width: 6mm; color: var(--swa-text-tertiary); font-size: var(--fs-body-sm); font-variant-numeric: tabular-nums; }
+.al-action { font-size: var(--fs-body-sm); font-weight: 600; width: 46%; line-height: 1.22; }
+.al-status { font-size: var(--fs-body-sm); color: var(--swa-text-secondary); line-height: 1.22; }
+.al-status-text { margin-left: 2.5mm; }
+
+
+/* Action-log slide: tighter padding + smaller title so all 10 rows fit one page */
+.slide-actionlog { padding: 15mm 24mm 12mm 24mm; }
+.slide-actionlog .slide-header { margin-bottom: 2mm; }
+.slide-actionlog .slide-title { font-size: var(--fs-headline-xl); margin-bottom: 1mm; }
+.slide-actionlog .slide-subtitle { margin-bottom: 0; }
+.slide-actionlog .actionlog-table { margin-top: 2.5mm; }
+
+
+.slide-two-col { padding: 15mm 28mm 13mm 28mm; }
+.slide-two-col .slide-title { font-size: var(--fs-headline-xl); margin: 0 0 3mm 0; }
+.slide-two-col .slide-bullets { font-size: var(--fs-body-md); }
+.slide-two-col .slide-bullets li { margin-bottom: 3mm; }
+
+/* The default 34pt title measures ~35mm on two lines. These three types carry
+   a diagram or big figures below it and cannot afford that. */
+.slide-statrow .slide-title,
+.slide-layers .slide-title,
+.slide-matrix .slide-title {
+  font-size: var(--fs-headline-xl);
+  margin: 0 0 3mm 0;
+}
+
+/* --- stat_row: a few big figures, for a number that IS the point ------ */
+.slide-statrow .slide-header { margin-bottom: 4mm; }
+.stat-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6mm;
+  margin-top: 6mm;
+}
+.stat-card {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--swa-solid-1);
+  border-radius: 3mm;
+  padding: 7mm 6mm;
+  text-align: center;
+}
+.stat-card.tone-primary { background: #E8F1F1; }
+.stat-card.tone-warn    { background: #FBECEC; }
+.stat-value {
+  font-size: 42pt;
+  font-weight: var(--fw-semibold);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: var(--swa-text-primary);
+}
+.stat-card.tone-warn .stat-value { color: #B03A3A; }
+.stat-label {
+  margin-top: 4mm;
+  font-size: var(--fs-body-md);
+  color: var(--swa-text-secondary);
+  line-height: 1.35;
+}
+.stat-note {
+  margin-top: 2.5mm;
+  font-size: 9pt;
+  color: var(--swa-text-tertiary);
+  line-height: 1.3;
+}
+.stat-arrow {
+  align-self: center;
+  font-size: 24pt;
+  color: var(--swa-text-tertiary);
+  padding: 0 1mm;
+}
+
+/* --- layers: a stacked product/architecture diagram ------------------- */
+.slide-layers { padding: 15mm 28mm 14mm 28mm; }
+.slide-layers .slide-header { margin-bottom: 3mm; }
+.layer-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2.2mm;
+  margin-top: 2mm;
+}
+.layer-band {
+  display: flex;
+  align-items: center;
+  gap: 6mm;
+  border-radius: 2.5mm;
+  padding: 2.4mm 7mm;
+  background: var(--swa-solid-1);
+  border-left: 2mm solid #C9C9C9;
+}
+.layer-band.tone-primary { background: #E8F1F1; border-left-color: #3D7B81; }
+.layer-band.tone-accent  { background: #F1EDE6; border-left-color: #B08A4A; }
+.layer-tag {
+  flex: 0 0 26mm;
+  font-size: var(--fs-label-sm);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--swa-text-tertiary);
+  font-weight: var(--fw-medium);
+}
+.layer-body { flex: 1 1 auto; min-width: 0; }
+.layer-name {
+  font-size: var(--fs-body-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--swa-text-primary);
+}
+.layer-detail {
+  margin-top: 1.2mm;
+  font-size: var(--fs-body-sm);
+  color: var(--swa-text-secondary);
+  line-height: 1.3;
+}
+.layer-metric {
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: var(--fs-body-md);
+  color: var(--swa-text-secondary);
+  white-space: nowrap;
+}
+
+/* --- orbit: capabilities by distance from the number ------------------
+   Ring radius encodes the strategy's own distance metric — a call is zero hops
+   from the number we own, an online meeting is one. Inline SVG, which WeasyPrint
+   renders reliably (unlike CSS grid, §51). */
+.slide-orbit { padding: 11mm 24mm 9mm 24mm; }
+.slide-orbit .slide-header { margin-bottom: 2mm; }
+.slide-orbit .slide-title { font-size: var(--fs-headline-xl); margin: 0 0 1.5mm 0; }
+.orbit-wrap { display: flex; gap: 6mm; align-items: center; margin-top: 1mm; }
+.orbit-svg { flex: 0 0 82mm; width: 82mm; height: 82mm; display: block; }
+.orbit-key { flex: 1 1 auto; min-width: 0; }
+.orbit-ring { margin-bottom: 2.6mm; }
+.orbit-ring:last-child { margin-bottom: 0; }
+.orbit-ring-head { display: flex; align-items: baseline; gap: 2.5mm; margin-bottom: 1.2mm; }
+.orbit-dot {
+  flex: 0 0 auto;
+  width: 5mm; height: 5mm;
+  border-radius: 50%;
+  color: #FFFFFF;
+  font-size: 8pt;
+  font-weight: var(--fw-semibold);
+  text-align: center;
+  line-height: 5mm;
+}
+.orbit-ring-name {
+  font-size: var(--fs-body-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--swa-text-primary);
+}
+.orbit-ring-hops { font-size: 9pt; color: var(--swa-text-tertiary); }
+.orbit-items { display: flex; flex-wrap: wrap; gap: 1.4mm 2mm; padding-left: 7.5mm; }
+.orbit-item {
+  font-size: 9.5pt;
+  border-radius: 1.5mm;
+  padding: 0.9mm 2.4mm;
+  line-height: 1.2;
+}
+.orbit-item.st-shipped { background: #E4EFEF; color: #23484A; }
+.orbit-item.st-september { background: #FBF0DC; color: #6B4E14; }
+.orbit-item.st-gap { background: #FBE7E7; color: #8A2F2F; }
+.orbit-item.st-later { background: #F0F0F0; color: #555555; }
+
+/* --- growth_waterfall: today, each lever, where we land, on ONE axis ---
+   Replaces a stacked block chart. The stack floated with no baseline and its
+   minimum block height drew the smallest lever ~50% oversize. Here the
+   requirement/zero is the origin, so every difference that matters is the
+   largest visual quantity on the slide. */
+.slide-waterfall { padding: 14mm 26mm 12mm 26mm; }
+.slide-waterfall .slide-header { margin-bottom: 2mm; }
+.slide-waterfall .slide-title { font-size: var(--fs-headline-xl); margin: 0 0 2mm 0; }
+.waterfall-card {
+  display: block;
+  background: var(--swa-solid-1);
+  border-radius: 3mm;
+  padding: 4mm 5mm;
+  margin-top: 3mm;
+}
+.waterfall-card img { width: 235mm; height: auto; display: block; margin: 0 auto; }
+
+/* --- growth_stack: block SIZE is the growth ---------------------------
+   The slide answers one question: which opportunity is big. So magnitude is
+   carried by block height and nothing else. An earlier version drew dials whose
+   angles encoded nothing — Henrik, 2026-08-31: "There is no way for the reader
+   to understand what matters." Labels sit INSIDE the blocks: a parallel label
+   column has its own minimum content height and ends up driving the slide
+   height instead of the data. */
+.slide-gstack { padding: 13mm 28mm 11mm 28mm; }
+.slide-gstack .slide-header { margin-bottom: 2mm; }
+.slide-gstack .slide-title { font-size: var(--fs-headline-xl); margin: 0 0 1.5mm 0; }
+.gstack-cap {
+  font-size: var(--fs-body-md);
+  color: var(--swa-text-secondary);
+  margin-bottom: 3mm;
+}
+.gstack-cap strong { color: var(--swa-text-primary); font-size: var(--fs-body-lg); }
+.gstack-col { display: flex; flex-direction: column; }
+.gstack-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5mm;
+  border-bottom: 0.5mm solid #FFFFFF;
+  background: #7BC4C4;
+  overflow: hidden;
+}
+.gstack-block.tone-primary { background: #2F6E74; }
+.gstack-block.tone-strong  { background: #4E9AA0; }
+.gstack-block.tone-neutral { background: #7BC4C4; }
+.gstack-block.tone-muted   { background: #BFDEDE; }
+.gstack-block:first-of-type { border-radius: 2mm 2mm 0 0; }
+.gstack-name {
+  font-size: var(--fs-body-lg);
+  font-weight: var(--fw-medium);
+  color: #FFFFFF;
+  line-height: 1.15;
+}
+.gstack-step {
+  font-size: 10pt;
+  font-weight: var(--fw-regular);
+  opacity: 0.85;
+}
+.gstack-pct {
+  font-size: 15pt;
+  font-weight: var(--fw-semibold);
+  color: #FFFFFF;
+  white-space: nowrap;
+  padding-left: 4mm;
+}
+.gstack-block.tone-muted .gstack-name,
+.gstack-block.tone-muted .gstack-pct { color: #23484A; }
+.gstack-base {
+  border-top: 0.7mm solid var(--swa-text-primary);
+  padding-top: 1.5mm;
+  font-size: 9.5pt;
+  color: var(--swa-text-secondary);
+}
+
+/* --- knob_row: growth levers as amplifier dials ----------------------- */
+.slide-knobs { padding: 14mm 26mm 12mm 26mm; }
+.slide-knobs .slide-header { margin-bottom: 2mm; }
+.slide-knobs .slide-title { font-size: var(--fs-headline-xl); margin: 0 0 2mm 0; }
+.knob-row { display: flex; gap: 5mm; margin-top: 4mm; }
+.knob-card {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  background: var(--swa-solid-1);
+  border-radius: 3mm;
+  padding: 3mm 3mm 3.5mm;
+}
+.knob-card.tone-primary { background: #E8F1F1; }
+.knob-card.tone-muted   { background: #F7F7F7; }
+.knob-dial { width: 26mm; height: 26mm; display: block; margin: 0 auto 0.5mm; }
+.knob-gain {
+  font-size: 21pt;
+  font-weight: var(--fw-semibold);
+  color: var(--swa-text-primary);
+  line-height: 1.05;
+}
+.knob-name {
+  margin-top: 2mm;
+  font-size: var(--fs-body-md);
+  font-weight: var(--fw-medium);
+  color: var(--swa-text-primary);
+  line-height: 1.25;
+}
+.knob-step {
+  margin-top: 1.5mm;
+  font-size: 9pt;
+  color: var(--swa-text-tertiary);
+  line-height: 1.25;
+}
+.knob-total {
+  margin-top: 3mm;
+  text-align: center;
+  font-size: var(--fs-body-lg);
+  font-weight: var(--fw-medium);
+  color: var(--swa-text-primary);
+}
+
+/* --- flow_hub: inputs -> the store -> outputs, with an AI connector ---- */
+.slide-flowhub { padding: 12mm 24mm 10mm 24mm; }
+.slide-flowhub .slide-header { margin-bottom: 2mm; }
+.slide-flowhub .slide-title { font-size: var(--fs-headline-xl); margin: 0 0 2mm 0; }
+.flow-main { display: flex; align-items: center; gap: 4mm; margin-top: 2mm; }
+.flow-col { flex: 1 1 0; min-width: 0; }
+.flow-coltitle {
+  font-size: var(--fs-label-sm);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--swa-text-tertiary);
+  margin-bottom: 2mm;
+}
+.flow-chip {
+  background: var(--swa-solid-1);
+  border-radius: 2mm;
+  padding: 2mm 3.5mm;
+  margin-bottom: 1.6mm;
+  font-size: var(--fs-body-md);
+  color: var(--swa-text-primary);
+}
+.flow-out .flow-chip { background: #F1EDE6; }
+.flow-arrow { flex: 0 0 auto; font-size: 20pt; color: var(--swa-text-tertiary); }
+.flow-hub {
+  flex: 0 0 72mm;
+  background: #E8F1F1;
+  border: 1mm solid #3D7B81;
+  border-radius: 3mm;
+  padding: 4.5mm 5mm;
+  text-align: center;
+}
+.flow-hub-name {
+  font-size: var(--fs-headline-md);
+  font-weight: var(--fw-semibold);
+  color: var(--swa-text-primary);
+  line-height: 1.15;
+}
+.flow-hub-detail {
+  margin-top: 2mm;
+  font-size: var(--fs-body-md);
+  color: var(--swa-text-secondary);
+  line-height: 1.3;
+}
+.flow-hub-badge {
+  display: inline-block;
+  margin-top: 3mm;
+  background: #3D7B81;
+  color: #FFFFFF;
+  border-radius: 6mm;
+  padding: 1.6mm 4mm;
+  font-size: 9.5pt;
+  font-weight: var(--fw-medium);
+}
+.flow-sink-wrap { text-align: center; margin-top: 2mm; }
+.flow-down { font-size: 16pt; color: var(--swa-text-tertiary); line-height: 1; }
+.flow-sink {
+  display: inline-block;
+  margin-top: 1mm;
+  border: 0.5mm dashed #B08A4A;
+  border-radius: 2.5mm;
+  padding: 2.4mm 6mm;
+  background: #FBF7F0;
+}
+.flow-sink-name {
+  font-size: var(--fs-body-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--swa-text-primary);
+}
+.flow-sink-detail {
+  margin-left: 3mm;
+  font-size: var(--fs-body-md);
+  color: var(--swa-text-secondary);
+}
+
+/* --- matrix_2x2: four cards on two axes ------------------------------
+   Built on nested flex, NOT CSS grid + writing-mode: WeasyPrint gave uneven
+   rows that content overflowed, and rendered the rotated axis label mirrored
+   and overlapping. The quadrant names carry both axes, so the axis labels were
+   redundant anyway. (board-slides SKILL.md lesson 3.) */
+.slide-matrix { padding: 13mm 28mm 12mm 28mm; }
+.slide-matrix .slide-header { margin-bottom: 1mm; }
+.matrix-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5mm;
+  margin-top: 1mm;
+}
+.matrix-row { display: flex; gap: 3mm; }
+.matrix-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--swa-solid-1);
+  border-radius: 2.5mm;
+  padding: 2.5mm 5.5mm;
+}
+.matrix-cell.tone-primary { background: #E8F1F1; }
+.matrix-cell.tone-warn    { background: #FBECEC; }
+.matrix-cell.tone-muted   { background: #F7F7F7; }
+.matrix-cell-head { margin-bottom: 1mm; }
+.matrix-key {
+  font-size: var(--fs-label-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--swa-text-tertiary);
+  letter-spacing: var(--ls-wide);
+  margin-right: 2.5mm;
+}
+.matrix-name {
+  font-size: var(--fs-body-md);
+  font-weight: var(--fw-semibold);
+  color: var(--swa-text-primary);
+}
+.matrix-headline {
+  font-size: 14pt;
+  font-weight: var(--fw-semibold);
+  color: var(--swa-text-primary);
+  line-height: 1.1;
+  margin-bottom: 1.5mm;
+}
+.matrix-facts { display: flex; flex-direction: column; gap: 0.5mm; }
+.matrix-fact {
+  font-size: 8.5pt;
+  color: var(--swa-text-secondary);
+  line-height: 1.18;
+}
+
+/* chart_comment slide: chart (left, reuses .cash-chart-card) + board commentary (right) */
+.comment-panel { flex: 1 1 0; min-width: 0; align-self: center; }
+.comment-list { list-style: none; padding: 0; margin: 0; }
+.comment-list li { font-size: var(--fs-body-sm); line-height: 1.38; margin-bottom: 4mm; padding-left: 5mm; position: relative; color: var(--swa-text-primary); }
+.comment-list li:last-child { margin-bottom: 0; }
+.comment-list li::before { content: "—"; position: absolute; left: 0; color: var(--swa-text-tertiary); }
+
+/* P&L grouped header (§65): period group over plain column labels, gap between groups */
+.pnl-table .group-row th {
+  text-transform: none; letter-spacing: 0; font-size: 11pt;
+  font-weight: var(--fw-semibold); color: var(--swa-text-primary);
+  text-align: center; border-bottom: none; padding: 0 0 0 6mm;
+}
+.pnl-table .group-row th.col-label { padding: 0; }
+.pnl-table .group-row th span { display: block; border-bottom: 1px solid var(--swa-solid-6); padding-bottom: 2pt; }
+.pnl-table .group-row + tr th { text-transform: none; letter-spacing: 0; font-size: 9pt; padding-top: 3pt; }
+.pnl-table th.group-start, .pnl-table td.group-start { padding-left: 6mm; }
+.slide-pnl .pnl-table.cols-many { font-size: 9.5pt; }
+
+/* image_row — a row of stills (e.g. video ads). Fixed mm widths: % widths
+   are unreliable for <img> in WeasyPrint (board-slides §16, §46). */
+.slide-images .slide-title { font-size: var(--fs-headline-xl); }
+.image-row { display: flex; gap: 4mm; justify-content: center; margin-top: 2mm; }
+.image-card { margin: 0; }
+.image-card img { display: block; height: auto; border-radius: 2mm; }
+.image-card figcaption { font-size: 9pt; line-height: 1.25; margin-top: 2mm; color: var(--text-secondary, #555); }

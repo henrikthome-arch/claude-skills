@@ -26,7 +26,11 @@
 </section>
 
 {% elif s.type == "agenda" %}
-<section class="slide slide-agenda">
+{% set sub_rows = s.agenda_items|map(attribute="subitems")|map("length")|sum %}
+{% set all_rows = s.agenda_items|length + sub_rows + (1 if s.total_minutes else 0) %}
+{% set show_subs = all_rows <= 18 %}
+{% set agenda_rows = all_rows if show_subs else (all_rows - sub_rows) %}
+<section class="slide slide-agenda{% if agenda_rows > 11 %} dense{% endif %}{% if agenda_rows > 15 %} denser{% endif %}">
   <h1 class="slide-title">{{ s.title }}</h1>
   <table class="agenda-table">
     <thead>
@@ -34,7 +38,8 @@
         <th class="col-num">#</th>
         <th class="col-title">Item</th>
         <th class="col-presenter">Presenter</th>
-        {% if s.show_time %}<th class="col-time">Time</th>{% endif %}
+        {% if s.show_time %}<th class="col-time">Start</th>
+        <th class="col-min">Min</th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -43,14 +48,16 @@
         <td class="col-num">{{ item.number }}</td>
         <td class="col-title">{{ item.title }}</td>
         <td class="col-presenter">{{ item.presenter or "" }}</td>
-        {% if s.show_time %}<td class="col-time">{% if item.duration_minutes %}{{ item.duration_minutes }} min{% endif %}</td>{% endif %}
+        {% if s.show_time %}<td class="col-time">{{ item.start_time or "" }}</td>
+        <td class="col-min">{% if item.duration_minutes %}{{ item.duration_minutes }}{% endif %}</td>{% endif %}
       </tr>
-      {% for sub in item.subitems %}
+      {% for sub in (item.subitems if show_subs else []) %}
       <tr class="sub-row">
         <td class="col-num"></td>
         <td class="col-title sub-title">{{ sub.title }}</td>
         <td class="col-presenter">{{ sub.presenter or "" }}</td>
-        {% if s.show_time %}<td class="col-time">{% if sub.duration_minutes %}{{ sub.duration_minutes }} min{% endif %}</td>{% endif %}
+        {% if s.show_time %}<td class="col-time">{{ sub.start_time or "" }}</td>
+        <td class="col-min">{% if sub.duration_minutes %}{{ sub.duration_minutes }}{% endif %}</td>{% endif %}
       </tr>
       {% endfor %}
       {% endfor %}
@@ -59,7 +66,8 @@
         <td></td>
         <td><strong>Total</strong></td>
         <td></td>
-        {% if s.show_time %}<td><strong>~{{ s.total_minutes }} min</strong></td>{% endif %}
+        {% if s.show_time %}<td class="col-time"><strong>{% if s.end_time %}ends {{ s.end_time }}{% endif %}</strong></td>
+        <td class="col-min"><strong>{{ s.total_minutes }}</strong></td>{% endif %}
       </tr>
       {% endif %}
     </tbody>
@@ -91,13 +99,13 @@
 {% elif s.type == "bullets" %}
 <section class="slide slide-content">
   <div class="slide-header">
-    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+    <span class="slide-eyebrow">{% if s.agenda_number is not none %}{{ s.agenda_number }} · {% endif %}{{ s.agenda_title }}</span>
   </div>
   {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
   {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
   {% if s.bullets %}
-  <ul class="slide-bullets">
-    {% for b in s.bullets %}<li>{{ b }}</li>{% endfor %}
+  <ul class="slide-bullets{% if (s.bullets|length) > 6 or s.dense %} dense{% endif %}">
+    {% for b in s.bullets %}<li>{% if b.label %}<strong>{{ b.label }}.</strong> {% endif %}{{ b.text }}</li>{% endfor %}
   </ul>
   {% endif %}
   {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
@@ -142,13 +150,37 @@
   {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
   {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
   <div class="two-col">
-    <ul class="slide-bullets col-left">
-      {% for b in s.left or [] %}<li>{{ b }}</li>{% endfor %}
-    </ul>
-    <ul class="slide-bullets col-right">
-      {% for b in s.right or [] %}<li>{{ b }}</li>{% endfor %}
-    </ul>
+    <div class="two-col-side">
+      {% if s.left_title %}<p class="two-col-title">{{ s.left_title }}</p>{% endif %}
+      <ul class="slide-bullets col-left">
+        {% for b in s.left or [] %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
+    <div class="two-col-side">
+      {% if s.right_title %}<p class="two-col-title">{{ s.right_title }}</p>{% endif %}
+      <ul class="slide-bullets col-right">
+        {% for b in s.right or [] %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
   </div>
+</section>
+
+{% elif s.type == "image_row" %}
+<section class="slide slide-content slide-images">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="image-row">
+    {% for im in s.images %}
+    <figure class="image-card" style="width: {{ s.image_width_mm or 36 }}mm">
+      <img src="{{ im.src }}" style="width: {{ s.image_width_mm or 36 }}mm" alt="{{ im.caption }}">
+      {% if im.caption %}<figcaption>{{ im.caption }}</figcaption>{% endif %}
+    </figure>
+    {% endfor %}
+  </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
 </section>
 
 {% elif s.type == "quote" %}
@@ -156,8 +188,9 @@
   <div class="slide-header">
     <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
   </div>
-  <blockquote>
-    {{ s.quote }}
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  <blockquote{% if s.quote_lines %} class="clauses"{% endif %}>
+    {% if s.quote_lines %}{% for l in s.quote_lines %}<p>{{ l }}</p>{% endfor %}{% else %}{{ s.quote }}{% endif %}
     {% if s.attribution %}<footer>— {{ s.attribution }}</footer>{% endif %}
   </blockquote>
 </section>
@@ -169,12 +202,23 @@
   </div>
   {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
   {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
-  <table class="pnl-table">
+  <table class="pnl-table{% if s.pnl_columns and (s.pnl_columns|length) >= 7 %} cols-many{% endif %}">
     <thead>
+      {% if s.pnl_column_groups %}
+      {# Group starts get a left gap so each period reads as its own block (§65). #}
+      {% set starts = namespace(i=0, idx=[]) %}
+      {% for g in s.pnl_column_groups %}{% set starts.idx = starts.idx + [starts.i] %}{% set starts.i = starts.i + g.span %}{% endfor %}
+      <tr class="group-row">
+        <th class="col-label"></th>
+        {% for g in s.pnl_column_groups %}
+        <th class="col-group" colspan="{{ g.span }}"><span>{{ g.label }}</span></th>
+        {% endfor %}
+      </tr>
+      {% endif %}
       <tr>
-        <th class="col-label">Line item</th>
+        <th class="col-label">{% if not s.pnl_column_groups %}Line item{% endif %}</th>
         {% for c in s.pnl_columns or ["Actual", "Budget", "Variance"] %}
-        <th class="col-num">{{ c }}</th>
+        <th class="col-num{% if s.pnl_column_groups and loop.index0 in starts.idx %} group-start{% endif %}">{{ (s.pnl_column_labels or {}).get(c, c) }}</th>
         {% endfor %}
       </tr>
     </thead>
@@ -185,13 +229,55 @@
         {% else %}
         <tr class="{% if r.summa %}summa-row{% endif %}">
           <td class="col-label">{{ r.label }}</td>
-          <td class="col-num">{% if r.actual is not none %}{{ "{:,.0f}".format(r.actual).replace(",", " ") }}{% else %}—{% endif %}</td>
-          <td class="col-num">{% if r.budget is not none %}{{ "{:,.0f}".format(r.budget).replace(",", " ") }}{% else %}—{% endif %}</td>
-          <td class="col-num{% if r.variance_pct and r.variance_pct < 0 %} variance-negative{% elif r.variance_pct and r.variance_pct > 0 %} variance-positive{% endif %}">
-            {% if r.variance_pct is not none %}{{ "{:+.1f}".format(r.variance_pct) }}%{% else %}—{% endif %}
-          </td>
+          {% for c in (s.pnl_columns or ["Actual", "Budget", "Variance"]) %}
+            {% set gs = " group-start" if (s.pnl_column_groups and loop.index0 in starts.idx) else "" %}
+            {% if c == "Prior year" %}
+          <td class="col-num{{ gs }}">{% if r.prior_year is not none %}{{ "{:,.0f}".format(r.prior_year).replace(",", " ") }}{% else %}—{% endif %}</td>
+            {% elif c == "Budget" %}
+          <td class="col-num{{ gs }}">{% if r.budget is not none %}{{ "{:,.0f}".format(r.budget).replace(",", " ") }}{% else %}—{% endif %}</td>
+            {% elif c == "Δ YoY" %}
+          <td class="col-num{{ gs }}{% if r.variance_yoy_pct and r.variance_yoy_pct < 0 %} variance-negative{% elif r.variance_yoy_pct and r.variance_yoy_pct > 0 %} variance-positive{% endif %}">{% if r.variance_yoy_pct is not none %}{{ "{:+.1f}".format(r.variance_yoy_pct) }}%{% else %}—{% endif %}</td>
+            {% elif c == "YTD" %}
+          <td class="col-num{{ gs }}">{% if r.ytd is not none %}{{ "{:,.0f}".format(r.ytd).replace(",", " ") }}{% else %}—{% endif %}</td>
+            {% elif c == "Δ YTD" %}
+          <td class="col-num{{ gs }}{% if r.variance_ytd_yoy_pct and r.variance_ytd_yoy_pct < 0 %} variance-negative{% elif r.variance_ytd_yoy_pct and r.variance_ytd_yoy_pct > 0 %} variance-positive{% endif %}">{% if r.variance_ytd_yoy_pct is not none %}{{ "{:+.1f}".format(r.variance_ytd_yoy_pct) }}%{% else %}—{% endif %}</td>
+            {% elif c in ["Δ vs budget", "Δ", "Variance"] %}
+          <td class="col-num{{ gs }}{% if r.variance_pct and r.variance_pct < 0 %} variance-negative{% elif r.variance_pct and r.variance_pct > 0 %} variance-positive{% endif %}">{% if r.variance_pct is not none %}{{ "{:+.1f}".format(r.variance_pct) }}%{% else %}—{% endif %}</td>
+            {% else %}
+          <td class="col-num{{ gs }}">{% if r.actual is not none %}{{ "{:,.0f}".format(r.actual).replace(",", " ") }}{% else %}—{% endif %}</td>
+            {% endif %}
+          {% endfor %}
         </tr>
         {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "data_table" %}
+<section class="slide slide-content slide-datatable">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <table class="data-table{% if s.dense %} dense{% endif %}">
+    <thead>
+      <tr>
+        {% for c in s.columns or [] %}
+        <th class="dt-{{ c.align or 'right' }}">{{ c.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in s.rows or [] %}
+      <tr class="{% if r.emphasis %}dt-emphasis{% endif %}">
+        {% for cell in r.cells %}
+        {% set col = s.columns[loop.index0] if s.columns and loop.index0 < (s.columns|length) else none %}
+        <td class="dt-{{ (col.align if col else none) or 'right' }}">{{ cell }}</td>
+        {% endfor %}
+      </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -243,13 +329,49 @@
         {% if b.status == "ok" %}✓{% elif b.status == "warn" %}⚠{% elif b.status == "critical" %}✗{% endif %}
         {{ b.label }}
       </div>
+      {% if b.rows %}
+      {% for r in b.rows %}<div class="be-row{% if loop.last %} gap{% endif %}"><span>{{ r[0] }}</span><strong>{{ r[1] }}</strong></div>{% endfor %}
+      {% else %}
       <div class="be-row"><span>Target</span><strong>{{ "{:.1f}".format(b.target_msek) }} MSEK</strong></div>
       <div class="be-row"><span>Actual</span><strong>{{ "{:.1f}".format(b.actual_msek) }} MSEK</strong></div>
       <div class="be-row gap"><span>Gap</span><strong>{{ "{:+.1f}".format(b.gap_msek) }} MSEK ({{ "{:+.0f}".format(b.gap_pct) }}%)</strong></div>
+      {% endif %}
+      {% if b.scope %}<div class="be-scope">{{ b.scope }}</div>{% endif %}
     </div>
     {% endfor %}
   </div>
   {% if s.breakeven_note %}<p class="slide-notes">{{ s.breakeven_note }}</p>{% endif %}
+</section>
+
+{% elif s.type == "saas40" %}
+<section class="slide slide-content slide-cash">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="cash-grid">
+    <div class="cash-chart-card">
+      {% if s.saas40_chart_path %}<img src="file://{{ s.saas40_chart_path }}" alt="SaaS40 trend">{% endif %}
+    </div>
+    <div class="cash-drivers-card">
+      <div class="cash-drivers-title">{{ s.components_title or "Components per period" }}</div>
+      <table class="saas40-table">
+        <thead><tr><th>Period</th><th>Growth</th><th>Margin</th><th>SaaS40</th></tr></thead>
+        <tbody>
+        {% for p in s.periods or [] %}
+          <tr>
+            <td class="saas40-period">{{ p.label }}</td>
+            <td class="saas40-num">{{ "{:+.0f}".format(p.growth_pct) }}%</td>
+            <td class="saas40-num">{{ "{:.0f}".format(p.margin_pct) }}%</td>
+            <td class="saas40-num saas40-total">{{ "{:.0f}".format(p.saas40_pct) }}%</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
 </section>
 
 {% elif s.type == "cash_position" %}
@@ -290,6 +412,25 @@
   </div>
 </section>
 
+{% elif s.type == "chart_comment" %}
+<section class="slide slide-content slide-cash">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="cash-grid">
+    <div class="cash-chart-card">
+      {% if s.trends and s.trends[0].image_path %}<img src="file://{{ s.trends[0].image_path }}" alt="">{% endif %}
+    </div>
+    <div class="comment-panel">
+      <ul class="comment-list">
+        {% for b in s.comment or [] %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+
 {% elif s.type == "trends_grid" %}
 <section class="slide slide-content slide-trends">
   <div class="slide-header">
@@ -297,7 +438,8 @@
   </div>
   {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
   {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
-  <div class="trends-grid">
+  {% set n = (s.trends or [])|length %}
+  <div class="trends-grid cols-{{ 1 if n == 1 else (2 if n == 2 or n == 4 else 3) }}{{ ' rows-2' if n == 4 else '' }}">
     {% for t in s.trends or [] %}
     <div class="trend-card">
       <div class="trend-title">{{ t.title }}</div>
@@ -305,6 +447,236 @@
     </div>
     {% endfor %}
   </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "stat_row" %}
+<section class="slide slide-content slide-statrow">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="stat-row cols-{{ (s.stats or [])|length }}">
+    {% for st in s.stats or [] %}
+    <div class="stat-card{% if st.tone %} tone-{{ st.tone }}{% endif %}">
+      <div class="stat-value">{{ st.value }}</div>
+      <div class="stat-label">{{ st.label }}</div>
+      {% if st.note %}<div class="stat-note">{{ st.note }}</div>{% endif %}
+    </div>
+    {% if not loop.last and s.connector %}<div class="stat-arrow">{{ s.connector }}</div>{% endif %}
+    {% endfor %}
+  </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "layers" %}
+<section class="slide slide-content slide-layers">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="layer-stack">
+    {% for l in s.layers or [] %}
+    <div class="layer-band tone-{{ l.tone or 'neutral' }}">
+      <div class="layer-tag">{{ l.tag }}</div>
+      <div class="layer-body">
+        <div class="layer-name">{{ l.name }}</div>
+        {% if l.detail %}<div class="layer-detail">{{ l.detail }}</div>{% endif %}
+      </div>
+      {% if l.metric %}<div class="layer-metric">{{ l.metric }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "matrix_2x2" %}
+<section class="slide slide-content slide-matrix">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="matrix-rows">
+    {% for row in (s.quadrants or [])|batch(2) %}
+    <div class="matrix-row">
+      {% for q in row %}
+      <div class="matrix-cell tone-{{ q.tone or 'neutral' }}">
+        <div class="matrix-cell-head">
+          <span class="matrix-key">{{ q.key }}</span><span class="matrix-name">{{ q.name }}</span>
+        </div>
+        <div class="matrix-headline">{{ q.headline }}</div>
+        <div class="matrix-facts">
+          {% for f in q.facts or [] %}<span class="matrix-fact">{{ f }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "orbit" %}
+<section class="slide slide-content slide-orbit">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="orbit-wrap">
+    <svg class="orbit-svg" viewBox="0 0 184 184" xmlns="http://www.w3.org/2000/svg">
+      {% for r in (s.rings or [])|reverse %}
+      <circle cx="{{ s.cx }}" cy="{{ s.cy }}" r="{{ r.r }}"
+              fill="{{ r.fill }}" stroke="#FFFFFF" stroke-width="1.2"/>
+      {% endfor %}
+      <circle cx="{{ s.cx }}" cy="{{ s.cy }}" r="{{ s.core_r }}"
+              fill="#1F5C62" stroke="#FFFFFF" stroke-width="1.2"/>
+      <text x="{{ s.cx }}" y="{{ s.cy }}" text-anchor="middle" dy="-1"
+            font-size="8.5" font-weight="600" fill="#FFFFFF">{{ s.core_line1 }}</text>
+      <text x="{{ s.cx }}" y="{{ s.cy }}" text-anchor="middle" dy="9"
+            font-size="8.5" font-weight="600" fill="#FFFFFF">{{ s.core_line2 }}</text>
+      {% for r in s.rings or [] %}
+      <text x="{{ s.cx }}" y="{{ r.label_y }}" text-anchor="middle"
+            font-size="7.5" font-weight="600" fill="{{ r.ink or '#33555A' }}">{{ r.index }}</text>
+      {% endfor %}
+    </svg>
+    <div class="orbit-key">
+      {% for r in s.rings or [] %}
+      <div class="orbit-ring">
+        <div class="orbit-ring-head">
+          <span class="orbit-dot" style="background: {{ r.fill }}">{{ r.index }}</span>
+          <span class="orbit-ring-name">{{ r.name }}</span>
+          <span class="orbit-ring-hops">{{ r.hops }}</span>
+        </div>
+        <div class="orbit-items">
+          {% for f in r.features or [] %}
+          <span class="orbit-item st-{{ f.status }}">{{ f.name }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "growth_waterfall" %}
+<section class="slide slide-content slide-waterfall">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="waterfall-card">
+    {% if s.chart_path %}<img src="file://{{ s.chart_path }}" alt="{{ s.title }}">{% endif %}
+  </div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "growth_stack" %}
+<section class="slide slide-content slide-gstack">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  <div class="gstack-cap">{{ s.cap or "All four together" }} <strong>{{ s.stack_total }}</strong></div>
+  <div class="gstack-col">
+    {% for b in s.blocks or [] %}
+    <div class="gstack-block tone-{{ b.tone or 'neutral' }}" style="height: {{ b.height_mm }}mm">
+      <span class="gstack-name">{{ b.name }}{% if b.step %} <span class="gstack-step">— {{ b.step }}</span>{% endif %}</span>
+      <span class="gstack-pct">{{ b.pct_label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="gstack-base">{{ s.baseline_label or "Today" }}</div>
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "knob_row" %}
+<section class="slide slide-content slide-knobs">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="knob-row">
+    {% for k in s.knobs or [] %}
+    <div class="knob-card{% if k.tone %} tone-{{ k.tone }}{% endif %}">
+      <svg class="knob-dial" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <path d="{{ k.track_path }}" fill="none" stroke="#DFDFDF" stroke-width="7" stroke-linecap="round"/>
+        <path d="{{ k.fill_path }}" fill="none" stroke="{{ k.color or '#3D7B81' }}" stroke-width="7" stroke-linecap="round"/>
+        <circle cx="40" cy="40" r="19" fill="#FFFFFF" stroke="#DFDFDF" stroke-width="1.5"/>
+        <line x1="40" y1="40" x2="{{ k.needle_x }}" y2="{{ k.needle_y }}"
+              stroke="{{ k.color or '#3D7B81' }}" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+      <div class="knob-gain">{{ k.gain }}</div>
+      <div class="knob-name">{{ k.name }}</div>
+      {% if k.step %}<div class="knob-step">{{ k.step }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% if s.total %}<div class="knob-total">{{ s.total }}</div>{% endif %}
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "flow_hub" %}
+<section class="slide slide-content slide-flowhub">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <div class="flow-main">
+    <div class="flow-col flow-in">
+      <div class="flow-coltitle">{{ s.inputs_title }}</div>
+      {% for i in s.inputs or [] %}<div class="flow-chip">{{ i }}</div>{% endfor %}
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-hub">
+      <div class="flow-hub-name">{{ s.hub.name }}</div>
+      {% if s.hub.detail %}<div class="flow-hub-detail">{{ s.hub.detail }}</div>{% endif %}
+      {% if s.hub.badge %}<div class="flow-hub-badge">{{ s.hub.badge }}</div>{% endif %}
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-col flow-out">
+      <div class="flow-coltitle">{{ s.outputs_title }}</div>
+      {% for o in s.outputs or [] %}<div class="flow-chip">{{ o }}</div>{% endfor %}
+    </div>
+  </div>
+  {% if s.sink %}
+  <div class="flow-sink-wrap">
+    <div class="flow-down">↓</div>
+    <div class="flow-sink">
+      <span class="flow-sink-name">{{ s.sink.name }}</span>
+      {% if s.sink.detail %}<span class="flow-sink-detail">{{ s.sink.detail }}</span>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% if s.notes %}<p class="slide-notes">{{ s.notes }}</p>{% endif %}
+</section>
+
+{% elif s.type == "action_log" %}
+<section class="slide slide-content slide-actionlog">
+  <div class="slide-header">
+    <span class="slide-eyebrow">{{ s.agenda_number }} · {{ s.agenda_title }}</span>
+  </div>
+  {% if s.title %}<h1 class="slide-title">{{ s.title }}</h1>{% endif %}
+  {% if s.subtitle %}<p class="slide-subtitle">{{ s.subtitle }}</p>{% endif %}
+  <table class="actionlog-table">
+    {% for a in s.actions or [] %}
+    <tr>
+      <td class="al-num">{{ a.n }}</td>
+      <td class="al-action">{{ a.action }}</td>
+      <td class="al-status">
+        {% if a.badge %}<span class="badge badge-{{ a.badge_tone or 'neutral' }}">{{ a.badge }}</span>{% endif %}
+        {% if a.status %}<span class="al-status-text">{{ a.status }}</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
 </section>
 
 {% elif s.type == "cash_flow_forecast" %}
@@ -316,11 +688,11 @@
   {% if s.cashflow_summary %}
   <p class="cashflow-summary">
     Assumed revenue
-    <strong>{{ "{:.1f}".format(s.cashflow_summary.assumed_revenue_msek_month or 0) }} MSEK/month</strong>
-    {% if s.cashflow_summary.actuals_through_date %}· Revenue actuals through {{ s.cashflow_summary.actuals_through_date }}{% endif %}
+    <strong>{{ "{:.2f}".format(s.cashflow_summary.assumed_revenue_msek_month or 0) }} MSEK/month</strong>{% if s.cashflow_summary.revenue_growth_pct_monthly is not none %}, <strong>growing {{ ("%g" % s.cashflow_summary.revenue_growth_pct_monthly) }}% a month</strong> from {{ s.cashflow_summary.growth_anchor_label }}{% elif s.cashflow_summary.assumed_revenue_sek_day %} ({{ "{:,.0f}".format(s.cashflow_summary.assumed_revenue_sek_day).replace(",", " ") }} SEK/day){% endif %}
+    {% if s.cashflow_summary.actuals_through_date %}&nbsp;· Revenue actuals through {{ s.cashflow_summary.actuals_through_date }}{% endif %}
   </p>
   {% if s.cashflow_summary.revenue_assumption_rationale %}
-  <p class="cashflow-rationale"><strong>Revenue assumption rationale:</strong> {{ s.cashflow_summary.revenue_assumption_rationale }}</p>
+  <p class="cashflow-rationale">{{ s.cashflow_summary.revenue_assumption_rationale }}</p>
   {% endif %}
   {% endif %}
   <div class="cashflow-body">
@@ -337,7 +709,7 @@
         <div class="cashflow-item-row-main">
           <div class="cashflow-item-label">{{ item.label }}</div>
           <div class="cashflow-item-meta">
-            {% if item.expected_date and item.kind != 'assumption' %}{{ item.expected_date }} · {% endif %}{{ (item.kind or "")|replace("_", " ") }}
+            {% if item.expected_date and item.kind != 'assumption' %}{{ item.expected_date }}{% if item.note or item.kind %} · {% endif %}{% endif %}{% if item.note %}{{ item.note }}{% else %}{{ (item.kind or "")|replace("_", " ") }}{% endif %}
           </div>
         </div>
         <div class="cashflow-item-amount {% if item.kind == 'assumption' %}is-assumption{% elif (item.amount_sek or 0) < 0 %}is-negative{% else %}is-positive{% endif %}">

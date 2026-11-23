@@ -55,7 +55,13 @@
 
 @page {
   size: A4;
-  margin: 18mm 18mm 18mm 18mm;
+  /* 20mm, inte 18mm. body hade webbläsarens standardmarginal om 8px (~2,1mm) kvar, så
+     textytan låg i praktiken 20mm in medan varje fullblödande element räknade med 18mm och
+     lämnade en 2mm vit remsa längs sidorna — på omslaget också. body nollställs nedan och
+     sidmarginalen tar över de 2mm, så texten står kvar oförändrad medan bilderna faktiskt
+     når kanten (Henrik 2026-08-21). Sidled blir därför 20mm och bleed-offset -20mm; höjdled
+     står kvar på 18mm, annars tappar varje sida 4mm och rapporten växer en sida. */
+  margin: 18mm 20mm 18mm 20mm;  /* höjd som förut, 2mm extra på sidorna */
 }
 
 @page :right {
@@ -93,6 +99,7 @@
 /* --- Body --------------------------------------------------------------- */
 
 body {
+  margin: 0;  /* se @page ovan — 8px default lämnade en vit remsa vid varje bleed */
   font-family: 'Gotham SSm', sans-serif;
   font-weight: 300;
   font-size: 9pt;
@@ -136,9 +143,13 @@ a { color: var(--ink); text-decoration: none; }
   letter-spacing: 0.8pt;
   color: var(--red);
   text-transform: uppercase;
-  margin: 6pt 0 4pt 0;
+  /* Generous space above so a subhead reads as a new section in flowing text, not as another
+     line of body copy (Henrik 2026-08-20). ~1.5 blank lines at 8.5pt/1.5 body. */
+  margin: 16pt 0 5pt 0;
   page-break-after: avoid;
 }
+/* No leading gap when the subhead opens its container — the container's own margin applies. */
+.subhead-red:first-child { margin-top: 0; }
 
 /* Two-column body layout — generous column gap for breathing room (consistent across document) */
 .body-2col {
@@ -208,7 +219,7 @@ a { color: var(--ink); text-decoration: none; }
 
 .sammandrag {
   position: relative;
-  height: 261mm;  /* explicit fixed height = A4 minus top/bottom margins */
+  height: 261mm;  /* A4 297mm minus 18mm top + 18mm bottom */
   page-break-after: always;
   page: no-pagenum;  /* KPI bands sit at page bottom — suppress page number */
 }
@@ -233,11 +244,53 @@ a { color: var(--ink); text-decoration: none; }
   break-inside: avoid;
   font-weight: 300;
 }
+
+/* Headings inside the summary column flow. Both the quarter block and the period block sit in
+   one .kpi-paragraphs container so the columns run continuously across the boundary; these
+   rules keep a heading attached to the lines it introduces instead of stranding it at a
+   column foot. */
+.sammandrag .kpi-paragraphs h3.subhead-red {
+  break-after: avoid;
+  break-inside: avoid;
+  /* Top margin must be set HERE, not only on .subhead-red — this selector is more specific
+     and previously zeroed it, so raising the base rule had no effect at all. */
+  margin: 20pt 0 4pt 0;
+}
+.sammandrag .kpi-paragraphs h3.subhead-red:first-child { margin-top: 0; }
+.sammandrag .kpi-paragraphs h3.subhead-red + p { break-before: avoid; }
+
 .sammandrag .kpi-bands {
   position: absolute;
   bottom: -18mm;  /* full-bleed past page bottom margin */
-  left: -18mm;
-  right: -18mm;
+  left: -20mm;
+  right: -20mm;
+}
+
+/* Discreet AI image notice. It belongs to the text above it, not to the KPI band below, so it
+   hugs the paragraphs under a hairline instead of floating in the gap. Three separate blocks
+   stacked in that whitespace read as clutter (Henrik 2026-08-21). */
+.sammandrag .ai-bildnot {
+  font-size: 6.5pt;
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--muted);
+  max-width: 120mm;
+  margin: 3mm 0 0 0;
+  padding-top: 2mm;
+  border-top: 0.4pt solid var(--rule-soft);
+}
+
+/* Period label above the tile bands. Sits inside the absolutely-positioned .kpi-bands wrapper,
+   which is anchored by its bottom edge, so adding it here grows the box upward and leaves the
+   bands where they are. Left padding matches the bands' own 18mm so label and first tile share
+   an edge. */
+.sammandrag .kpi-bands-label {
+  padding: 0 18mm 1.5mm 18mm;
+  font-weight: 700;
+  font-size: 8.5pt;
+  letter-spacing: 1pt;
+  color: var(--red);
+  text-transform: uppercase;
 }
 
 /* KPI tile bands — full-bleed horizontal rows */
@@ -269,11 +322,21 @@ a { color: var(--ink); text-decoration: none; }
   line-height: 1;
   letter-spacing: -1pt;
 }
+/* Under a signed value only: what the change is measured against (Henrik 2026-11-18). Levels
+   carry an empty caption so every figure in a band sits on the same line. */
+.kpi-tile .caption {
+  margin-top: 4pt;
+  font-weight: 300;
+  font-size: 7.5pt;
+  letter-spacing: 0.3pt;
+  line-height: 1.2;
+  opacity: 0.85;
+}
 
 /* --- VD-ordet (page 3) ------------------------------------------------- */
 
 .vd-banner {
-  margin: -18mm -18mm 6mm -18mm;  /* full-bleed top */
+  margin: -18mm -20mm 6mm -20mm;  /* full-bleed top */
   height: 65mm;
   position: relative;
   overflow: hidden;
@@ -295,6 +358,7 @@ a { color: var(--ink); text-decoration: none; }
   font-size: 26pt;
   letter-spacing: -0.3pt;
   text-shadow: 0 1px 10px rgba(0,0,0,0.5);
+  white-space: nowrap;  /* keep "VDs kommentarer" on a single line */
 }
 
 .vd-content .vd-title {
@@ -330,7 +394,7 @@ a { color: var(--ink); text-decoration: none; }
 
 .affarsmodell {
   position: relative;
-  height: 261mm;  /* explicit fixed height = A4 minus top/bottom margins */
+  height: 261mm;  /* A4 297mm minus 18mm top + 18mm bottom */
   page-break-after: always;
   page: no-pagenum;  /* image band sits at page bottom — suppress page number */
 }
@@ -345,15 +409,22 @@ a { color: var(--ink); text-decoration: none; }
   font-weight: 300;
   margin-bottom: 6pt;
 }
+/* Lead-in: the sentence that says what the company sells carries the same Medium (500) as the
+   VD-ordet's opening paragraph. It is the one line a new reader must not skim past
+   (Henrik 2026-08-21). */
+.affarsmodell .body-2col > p:first-of-type { font-weight: 500; }
 .affarsmodell .body-block strong {
   font-weight: 400;
 }
 .affarsmodell-image {
   position: absolute;
   bottom: -18mm;  /* full-bleed past page bottom margin */
-  left: -18mm;
-  right: -18mm;
-  height: 95mm;
+  left: -20mm;
+  right: -20mm;
+  /* 118mm = 210mm paper width / 1.79, the aspect of a 16:9-ish generated image, so the whole
+     frame shows. 95mm cropped the bottom fifth and cut the motorbike in jul–sep 2026
+     (Henrik 2026-11-17). Text above ends near mid-page, so the space is free. */
+  height: 118mm;
   overflow: hidden;
 }
 .affarsmodell-image img {
@@ -369,10 +440,12 @@ a { color: var(--ink); text-decoration: none; }
 
 /* --- Nyckeltal (page 5) ------------------------------------------------ */
 
+/* Rows are implicit so the grid absorbs a sixth chart without the last cell being
+   clipped. Fixing three rows silently dropped anything beyond six cells. */
 .nyckeltal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto;
+  grid-auto-rows: auto;
   gap: 6mm;
   margin-top: 4mm;
 }
@@ -383,17 +456,25 @@ a { color: var(--ink); text-decoration: none; }
   page-break-inside: avoid;
 }
 .chart-card img {
-  width: 100%;
+  /* 90%, not 100%: at full width the three chart rows left too little room for a
+     six-line Kommentar till grafer, which then took a page of its own (jul-sep 2026,
+     Henrik 2026-11-18). */
+  width: 90%;
+  margin: 0 auto;
   height: auto;
   display: block;
 }
 .kommentar-card {
   background: var(--card);
   border-radius: 0;
-  padding: 6mm 5mm;
+  /* 3mm/1.4 instead of 4mm/1.5: a six-line comment (jul-sep 2026) otherwise moved the whole
+     card onto a page of its own (Henrik 2026-11-18). */
+  padding: 3mm 5mm;
   page-break-inside: avoid;
   font-size: 9pt;
-  line-height: 1.5;
+  line-height: 1.4;
+  /* Sits below the grid at full page width — see the note in template.html. */
+  margin-top: 4mm;
 }
 .kommentar-card .heading {
   font-weight: 700;
@@ -401,13 +482,21 @@ a { color: var(--ink); text-decoration: none; }
   color: var(--ink);
   margin: 0 0 5pt 0;
 }
-.kommentar-card p { margin: 0 0 6pt 0; }
+.kommentar-card p { margin: 0 0 4pt 0; }
 .kommentar-card p:last-child { margin-bottom: 0; }
 
 /* --- Övrigt (page 6) --------------------------------------------------- */
 
-.ovrigt h2.subhead-red { margin-top: 12pt; }
-.ovrigt p { margin-bottom: 6pt; font-weight: 300; }
+/* Column-top spacing rule — see the note in the .verksamhet section. The gap between
+   disclosure blocks is carried by the wrapper's bottom margin so a heading that lands at
+   the top of a column sits flush with the column top. */
+/* 15pt, inte 20pt: AI-upplysningen lade till ett block och sköt tre rader kontaktuppgifter
+   till en egen, i övrigt tom sida. Tätare blockavstånd tar tillbaka dem utan att sidan blir
+   trång — Övrigt är korta stycken under egna rubriker (Henrik 2026-08-21). */
+.ovrigt .ov-block { margin: 0 0 10pt 0; }
+.ovrigt .ov-block > p:last-child { margin-bottom: 0; }
+.ovrigt h2.subhead-red { margin-top: 0; }
+.ovrigt p { margin-bottom: 4.5pt; font-weight: 300; }
 .ovrigt li { font-weight: 300; }
 .ovrigt strong { font-weight: 400; }
 .aktie-facts { font-size: 9.5pt; line-height: 1.5; }
@@ -430,8 +519,9 @@ a { color: var(--ink); text-decoration: none; }
 
 /* --- Signing block + Om Sonetel (page 7) ------------------------------ */
 
+.granskning-page { break-inside: avoid; page-break-inside: avoid; }
 .granskning {
-  margin-top: 18mm;
+  margin-top: 12mm;
   font-size: 9.5pt;
   line-height: 1.45;
 }
@@ -471,7 +561,11 @@ table.fin thead th {
   font-weight: 500;
   color: var(--navy);
   border-bottom: 0.8pt solid var(--ink);
-  padding: 6pt 4pt 5pt 4pt;
+  /* 3pt sides, not 4pt: binding the en dash to the date before it (bind_range_dash) made
+     "2026-01-01 –" the narrowest a period column can be, and at 4pt that squeezed the label
+     column enough to wrap one more line in the group income statement — putting it back onto
+     two pages. The padding buys the width back (Henrik 2026-08-21). */
+  padding: 6pt 3pt 5pt 3pt;
   text-align: right;
   font-size: 8.5pt;
   vertical-align: bottom;
@@ -482,7 +576,11 @@ table.fin thead th:first-child {
   font-weight: 500;
 }
 table.fin tbody td {
-  padding: 1.8pt 4pt;
+  /* 1.8pt left koncernens resultaträkning one row short of a page, so a single wrapped
+     label ("Genomsnittligt antal aktier efter utspädning") became an orphan on its own
+     page with a repeated header above it. Tightening the row saves ~1pt per row, which
+     is enough to pull the whole statement onto one page (Henrik 2026-08-20). */
+  padding: 1.2pt 4pt;
   text-align: right;
   vertical-align: top;
   font-variant-numeric: tabular-nums;
@@ -491,7 +589,20 @@ table.fin tbody td:first-child {
   text-align: left;
   font-variant-numeric: normal;
 }
+/* A figure must never wrap. "29 457 171" was breaking after the thousands group in the
+   förändring-i-eget-kapital Summa column, printing as two lines that read like two numbers.
+   Labels still wrap — only the value cells are held on one line. Column headers are left alone:
+   the date ranges and component names must still break across lines (Henrik 2026-08-21). */
+table.fin tbody td + td { white-space: nowrap; }
 table.fin tr { page-break-inside: avoid; }
+/* A förändring-i-eget-kapital block runs from ingående to utgående balans and is one
+   statement — splitting it mid-movement leaves the closing balance stranded on the next
+   page under a repeated header. Each period block is its own table, so keeping the whole
+   table together moves it wholly to the next page instead (Henrik 2026-08-20). */
+table.fin.ek { break-inside: avoid; page-break-inside: avoid; }
+/* Balansräkning, second page: one row too long in jul-sep 2026 (Henrik 2026-11-18). */
+.bal-cont table.fin tbody td { padding-top: 0.7pt; padding-bottom: 0.7pt; }
+.bal-cont table.fin tr.section td { padding-top: 3pt; }
 table.fin tr.section td {
   font-weight: 500;
   color: var(--navy);
@@ -508,7 +619,8 @@ table.fin tr.summa-bold td {
   border-top: 0.6pt solid var(--ink);
   font-weight: 700;
   color: var(--navy);
-  padding-top: 3pt;
+  /* No extra padding-top. The rule above the row is separation enough, and with 43 total rows
+     across the eight tables, 3pt each pushed the group income statement onto a second page. */
 }
 table.fin .indent-1 { padding-left: 6pt !important; }
 table.fin .indent-2 { padding-left: 14pt !important; }
@@ -567,3 +679,192 @@ table.fin.tint-current thead th:nth-child(2) {
   width: 100%;
   display: block;
 }
+
+
+/* --- Kommentarer kring verksamheten (Halvårsrapport) ------------------------------- */
+.verksamhet .body-2col p { margin: 0 0 5pt 0; }
+
+/* Column-top spacing rule (Henrik 2026-08-20): a subhead that lands at the top of a
+   column must sit flush with the column top, exactly like the first column does.
+   CSS has no "first in fragment" selector and WeasyPrint does not truncate margins at
+   an unforced column break, so a top margin on the heading survives the break and
+   pushes the heading down. The fix is structural: every heading carries margin-top 0
+   and the inter-block gap lives on the WRAPPER's bottom margin, which falls at the end
+   of the previous column where it is invisible. */
+.verksamhet .vp-block { margin: 0 0 12pt 0; }
+/* Inline chart inside a narrative block — column width, never split across a column break. */
+.verksamhet .inline-chart {
+  margin: 6pt 0 0 0;
+  padding: 3mm 3mm 1mm 3mm;
+  border: 0.5pt solid var(--rule);
+  border-radius: 3mm;
+  break-inside: avoid;
+}
+.verksamhet .inline-chart img { width: 100%; height: auto; display: block; }
+/* Full-bleed photographic band at the head of a section — page edge to page edge, negative
+   margins cancelling the @page margin, exactly as .vd-banner does. Not greyscaled: the VD
+   banner is a portrait and reads as editorial, this one is a customer scene and carries the
+   brand's colour (Henrik 2026-08-21). */
+.section-banner {
+  margin: -18mm -20mm 10mm -20mm;
+  height: 62mm;
+  overflow: hidden;
+  background: #1A1A1A;
+}
+.section-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The closing photograph of the section — same absolutely-positioned construction as
+   .wide-photo above, and for the same reason: a flowed box cannot paint below the text area.
+   The wrapper claims exactly the space left on the last page; the image inside bleeds 18mm
+   past it to the paper edge. No break-after — it is last in the flow anyway. */
+/* Per-report heights: each closing photograph claims exactly what is left on its page, so the
+   value is measured, not guessed. See the note on .wide-photo. */
+.vd-slutbild { height: 208mm !important; }
+/* Full-page variant (assets.vd_slutbild_helsida = true): the picture gets a page of its own,
+   paper edge to paper edge on all four sides. The wrapper fills the text area of a fresh page and
+   the absolutely positioned bleed box escapes the 18/20mm margins — a flowed box cannot paint
+   below the text area, an absolute one can (Henrik 2026-11-17, jul–sep 2026 London picture). */
+.vd-slutbild.vd-slutbild-helsida {
+  height: 261mm !important;
+  margin: 0 !important;
+  break-before: page;
+  page: no-pagenum;
+}
+.vd-slutbild.vd-slutbild-helsida .photo-bleed { top: -18mm; bottom: -18mm; }
+.section-banner-foot {
+  position: relative;
+  height: 176mm;
+  margin: 12mm 0 0 0;
+  break-inside: avoid;
+  overflow: visible;
+  background: none;
+}
+
+/* Caption set INTO the picture, bottom-left, aligned with the text margin. A full-bleed
+   photograph has no room under it for a caption line — putting one there would push the picture
+   off the paper edge again (Henrik 2026-08-21). Light pictures take the ink colour; a dark
+   picture needs .banner-caption-light. */
+.photo-bleed .banner-caption {
+  position: absolute;
+  left: 20mm;
+  right: 20mm;
+  bottom: 13mm;
+  font-size: 7.5pt;
+  font-weight: 400;
+  color: var(--muted);
+  margin: 0;
+}
+.photo-bleed .banner-caption-light { color: #FFFFFF; text-shadow: 0 1px 6px rgba(0,0,0,0.55); }
+/* A photograph inside a text block. No frame — a chart is data and earns a border, a
+   photograph is not and reads better bled to the column edge (Henrik 2026-08-21). */
+.verksamhet .inline-photo {
+  margin: 8pt 0 0 0;
+  break-inside: avoid;
+}
+.verksamhet .inline-photo img { width: 100%; height: auto; display: block; border-radius: 2mm; }
+.verksamhet .inline-photo figcaption {
+  font-size: 7.5pt;
+  font-weight: 300;
+  color: var(--muted, #6b6b6b);
+  margin-top: 3pt;
+}
+.verksamhet .vp-block > p:last-child { margin-bottom: 0; }
+.verksamhet h3.block-rubrik {
+  font-weight: 500;
+  font-size: 9pt;
+  color: var(--ink);
+  margin: 0 0 3pt 0;
+  break-after: avoid;
+  break-inside: avoid;
+}
+/* Section heads (VERKSAMHETEN EFTER PERIODEN, FRAMTIDSINFORMATION) sit between blocks;
+   their leading space also comes from the preceding wrapper, never from margin-top. */
+.verksamhet .body-2col > h2.subhead-red { margin: 0 0 6pt 0; }
+.verksamhet .body-2col > h2.subhead-red.section-head { margin-top: 0; }
+.verksamhet table.mini-kpi {
+  /* WeasyPrint ignores column-span:all, so the table must fit inside one column of the
+     2-col flow. Kept compact (7pt, tight padding, short headers) so the month columns do
+     not wrap. */
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8pt;
+  margin: 8pt 0 2pt 0;
+  break-inside: avoid;
+}
+.verksamhet table.mini-kpi th {
+  text-align: right;
+  font-weight: 700;
+  border-bottom: 0.6pt solid var(--rule);
+  padding: 1.5pt 1.5pt;
+}
+.verksamhet table.mini-kpi th:first-child { text-align: left; }
+.verksamhet table.mini-kpi td { text-align: right; padding: 1.5pt 1.5pt; }
+.verksamhet table.mini-kpi td:first-child { text-align: left; }
+
+/* Full-width chart standing in for a full-width table inside .verksamhet. */
+.verksamhet .wide-chart {
+  margin: 8pt 0 2pt 0;
+  padding: 3mm 3mm 1mm 3mm;
+  border: 0.5pt solid var(--rule);
+  border-radius: 3mm;
+  break-inside: avoid;
+}
+.verksamhet .wide-chart img { width: 100%; height: auto; display: block; }
+/* KONVENTION: fotografier går alltid i FULL SIDBREDD, papperskant till papperskant — aldrig i
+   textbredd, aldrig i spaltbredd. Diagram är motsatsen: de är data, går i textbredd eller
+   spaltbredd och har ram.
+
+   VIKTIGT om bottenkanten: WeasyPrint låter INTE ett flödande element måla nedanför textytan.
+   En negativ toppmarginal bleedar uppåt, men en negativ bottenmarginal gör ingenting — bilden
+   stannar 18mm över papperskanten oavsett hur hög den görs, och blir den högre än utrymmet
+   flyttas den till nästa sida. Enda sättet ut ur textytan nedåt är ABSOLUT positionering, vilket
+   är precis varför affärsmodellbilden och KPI-banden fungerar.
+
+   Därför: wrappern ligger i flödet och tar exakt det utrymme som är kvar på sidan (`height`,
+   satt per rapport — mät genom att rendera och läsa gapet), och bilden ligger absolut inuti den
+   med bottom: -18mm så att den målar hela vägen ut. break-after: page gör bilden till det sista
+   på sin sida (Henrik 2026-08-21). */
+.verksamhet .wide-photo {
+  position: relative;
+  height: 146mm;
+  margin: 10mm 0 0 0;
+  break-inside: avoid;
+  break-after: page;
+}
+/* The bleed box is a DIV, not the img. WeasyPrint ignores object-fit on an absolutely
+   positioned replaced element — it sizes the picture from its intrinsic dimensions and the
+   result was a wild zoom into one corner. Position the div, then let the image fill it. */
+.verksamhet .wide-photo .photo-bleed,
+.section-banner-foot .photo-bleed {
+  position: absolute;
+  top: 0;
+  bottom: -18mm;
+  left: -20mm;
+  right: -20mm;
+  overflow: hidden;
+}
+.verksamhet .wide-photo .photo-bleed img,
+.section-banner-foot .photo-bleed img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.verksamhet .wide-photo figcaption {
+  font-size: 7.5pt;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 4pt;
+}
+
+/* Website + contact lines: single column at top of the signing page (Annika 2026-11-20) */
+.kontakt-info { margin-bottom: 8mm; }
+.kontakt-info p { margin-bottom: 6pt; }
+
+/* Transaktioner med närstående + Kalendarium: single column at top of the signing page (Sebastian/Annika 2026-11-22) */
+.kontakt-info .ov-single { margin: 0 0 10pt 0; }
+.kontakt-info .ov-single h2.subhead-red { margin-top: 0; }
+.kontakt-info p { font-weight: 300; }
+
+/* Transaktioner + Kalendarium on the signing page: two flowing columns, like the Övrigt page (Henrik 2026-11-23) */
+.kontakt-info .ov-2col { column-count: 2; column-gap: 8mm; margin-bottom: 10pt; }
+.kontakt-info .ov-2col .ov-single { break-inside: avoid-column; }

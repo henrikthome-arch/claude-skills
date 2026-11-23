@@ -197,6 +197,51 @@ doc.save("ver_new.docx")
 
 ---
 
+## Datering och underskrifter (ÅRL 2 kap. 7 § — nytt krav från 2024)
+
+**This is a hard requirement Bolagsverket enforces, and it is easy to miss because it did not exist before.**
+
+Årsredovisningslagen 2 kap. 7 § was amended (in force **1 July 2024**) to read:
+
+> *"Årsredovisningen ska dateras och innehålla uppgift om den dag då den undertecknades."*
+
+It applies **first time to the räkenskapsår that begins immediately after 30 June 2024** — for Sonetel that was the extended FY **2024-07-01 – 2025-12-31**, so **FY 24-25 was the very first ÅR covered.** Every ÅR from here on is covered.
+
+The rule requires **two distinct dates**, both of which must be unambiguous in the filed document:
+
+| Date | Meaning | Where it lives |
+|------|---------|----------------|
+| **Datering / färdigställande** | The day the board agreed on the final content and the report was ready for signing ("gjordes klar") | An explicit dated line on the underskrifter page |
+| **Undertecknandedatum** | The date each person actually signed | Next to each signature (paper) or in the Penneo verifikatsida/logg (electronic) |
+
+### What to put on the underskrifter page — do this every year
+
+The old template used a single `Stockholm den DD månad ÅÅÅÅ` line above the signatures. **That line alone is ambiguous** under the new rule — Bolagsverket read it as a signing date and issued a föreläggande that the *färdigställande* date was missing (see lesson below). Make the finalization date **explicit and separate**.
+
+**Order matters: the *färdigställande* line comes FIRST, then the `Stockholm den …` påskrift line, then the signatures** — the report is finalized, *then* signed. (Bolagsverket confirmed this ordering by phone 2026-07-03.) Recommended layout above the signature block:
+
+```
+Årsredovisningen färdigställdes den 26 mars 2026.
+
+Stockholm den 26 mars 2026
+
+[signature block: names + roles]
+
+Vår revisionsberättelse har lämnats den 26 mars 2026.
+```
+
+The datering and the signing date **may be the same date** (BFN: it is an advantage to sign in close connection to the datering). If all signatures land on the same day, one date carries both — but still state the *färdigställande* explicitly so it cannot be misread as only a signing date.
+
+### Electronic signing (Penneo)
+
+With Penneo, each signatory's date comes automatically in the signature log. Bolagsverket accepts a *"logg, verifikatsida eller något annat bevis"* when the signing dates are not visible in the document body itself. **Therefore: when filing an electronically signed ÅR, the Penneo verifikatsida/appendix MUST be included in what is sent to Bolagsverket** — do not strip it. Confirm the appendix pages are present in the final PDF before filing.
+
+### Hard-learned lesson (2026-07, Bolagsverket föreläggande on FY 24-25)
+
+Bolagsverket issued a föreläggande claiming the FY 24-25 ÅR *"saknar uppgift om datum när den gjordes klar."* The signed report **did** carry `Stockholm den 26 mars 2026` above the signatures and Penneo timestamps — but the single line was ambiguous under the then-brand-new ÅRL 2:7, and FY 24-25 was the first report the rule applied to. Fix going forward: always add the explicit *färdigställandedatum* line and always include the Penneo verifikatsida in the filing. If a föreläggande arrives, note the response deadline immediately and call Bolagsverket if it is tight — the deadline on this one was missed.
+
+---
+
 ## Versioning conventions
 
 - **ver 0.1** — First automated draft (Claude merge)
@@ -233,8 +278,11 @@ Always save as a new version, never overwrite.
 - [ ] Vinstdisposition matches board proposal
 - [ ] **Uttalande från företagsledningen** signed by CEO (Henrik) and CFO/authorised signatory (Sebastian) → store in `Påskriven/`
 - [ ] Revisionsberättelse received from Forvis Mazars (Jonas Helleklint) → insert into ÅR (see section above)
-- [ ] Underskrifter page has correct board member names and dates
+- [ ] Underskrifter page has correct board member names and roles
+- [ ] **Datering (ÅRL 2:7):** explicit *färdigställande* date line present, placed **before** the `Stockholm den …` påskrift line and above the signatures — not just a `Stockholm den …` line (see "Datering och underskrifter" section)
+- [ ] **Signing dates present:** either next to each signature, or via the Penneo verifikatsida included in the final PDF
 - [ ] Final PDF exported (Word → File → Save As → PDF)
+- [ ] Penneo verifikatsida/appendix confirmed present in the PDF that will be filed with Bolagsverket
 - [ ] Signed ÅR PDF stored in `Påskriven/`
 - [ ] Published via Cision → appears on sonetel.com under Rapporter
 

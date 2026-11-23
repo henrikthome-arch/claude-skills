@@ -1,0 +1,44 @@
+{
+  "_metadata": {
+    "purpose": "Chart source data for agenda items 3 (Growth) and 4 (Vision 2029).",
+    "generated": "2026-08-29",
+    "sources": {
+      "customers_per_day": "financial-ops: docs/reports/00-ANSWER-customer-influx-growth-2026-08.md; identical series in Strategy/2026 08 Vision 2029/VISION.md. Report basis.",
+      "requirements": "financial-ops: python3 scripts/influx_growth_model.py answers (run 2026-08-29). Exit basis, report-basis per day.",
+      "lever_value": "same `answers` run — WHAT ONE UNIT IS WORTH, annual basis.",
+      "top20_sensitivity": "same `answers` run — THE TOP 20 ACCOUNTS."
+    },
+    "rules": [
+      "104/day and 113/day must always appear together. 104 alone is right as a figure and wrong as a conclusion.",
+      "The churn lever counts SUBSCRIPTIONS, not payers. Measured payer attrition is 4.75%/mo against the 8.98% the levers use. Comparative use only.",
+      "Per-unit lever values must not be summed. They total +5.84%, which is not the +18% package.",
+      "The top-20 rungs are a disclosure of what an assumption is worth, not a forecast."
+    ]
+  },
+  "series": {
+    "new_customers_per_day": [
+      {"month": "2025-10", "value": 185, "tone": "muted"},
+      {"month": "2025-11", "value": 127, "tone": "muted"},
+      {"month": "2025-12", "value": 114, "tone": "muted"},
+      {"month": "2026-01", "value": 143, "tone": "muted"},
+      {"month": "2026-02", "value": 111, "tone": "muted"},
+      {"month": "2026-03", "value": 116, "tone": "muted"},
+      {"month": "2026-04", "value": 107, "tone": "neutral"},
+      {"month": "2026-05", "value": 94, "tone": "neutral"},
+      {"month": "2026-06", "value": 100, "tone": "neutral"},
+      {"month": "2026-07", "value": 102, "tone": "neutral"}
+    ],
+    "lever_value": [
+      {"label": "More new customers  +10/day", "value": 2.37},
+      {"label": "Premium share of the base  +1 point", "value": 1.85, "tone": "primary"},
+      {"label": "Churn  −0.5 points/month", "value": 1.16},
+      {"label": "Premium share of new customers  +1 point", "value": 0.46}
+    ],
+    "top20_sensitivity": [
+      {"label": "Stay flat — what the model assumes", "value": 104, "tone": "primary"},
+      {"label": "Age like a mature cohort", "value": 109},
+      {"label": "Decline like an average customer", "value": 115},
+      {"label": "Keep declining at their recent rate", "value": 119, "tone": "warn"}
+    ]
+  }
+}

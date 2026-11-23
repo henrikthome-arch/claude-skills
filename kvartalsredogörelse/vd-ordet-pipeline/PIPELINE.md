@@ -34,7 +34,37 @@ Full audit trail in `<period>/vd-ordet/`:
 
 Note: whole-report inputs (BDO numbers, management cost-action material) live at the **period root** in `Underlag från BDO/` and `Underlag från ledning/`, NOT inside `vd-ordet/`. The `vd-ordet/` folder holds only VD-ordet-specific material.
 
-## Workflow
+## STANDARDFLÖDE (Henrik 2026-11-18): Henrik kör briefen i ChatGPT
+
+Gäller före allt annat i det här dokumentet. API-pipelinen nedan (draft/revise/kritiker) är bara reserv när Henrik ber om den.
+
+1. **Claude skriver briefen** i `<period>/vd-ordet/briefs/brief-for-drafter.md`. Första raden ska ange perioden, t.ex. "VD-ordet — kvartalsredogörelse juli–september 2026". Innehållet:
+   - Henriks ord om ton och avsikt.
+   - Sammanhängande bakgrund: vad som hänt och *varför det spelar roll*, skrivet som löpande text och inte som lösa punkter. Lösa fakta ger ett brev som läses som en lista.
+   - Rättelser av inspelningen.
+   - Vad som inte får sägas.
+   - Henriks inspelning, ordagrant.
+
+   Inget styckeschema och inga krav på vad som måste vara med. Läsaren känner inte till Sonetel. Upprepa inte siffror som redan står i sammanfattningen.
+2. **Exportera briefen till Hämtade filer:** `python3 ~/.claude/skills/kvartalsredogörelse/vd-ordet-pipeline/scripts/draft_vd_ordet.py chatgpt-export '<period folder>' "Q3 2026"`. Kommandot skriver `~/Downloads/VD-ord <period> brief.md` med systemprompten från §10 först, sedan briefen och sist exempelbreven, eftersom ChatGPT saknar systemprompt. Kopiera inte bara briefen: utan systemprompten saknas skribentrollen, kravet att bara använda briefens fakta och rubrikformatet. Ge Henrik filnamnet. Lämna inte en annan periods brief öppen i editorn: 2026-11-18 klistrade Henrik in Q1-briefen eftersom den låg öppen.
+3. **Henrik kör briefen i ChatGPT.** Claude ger Henrik de här stegen tillsammans med filnamnet:
+   1. Öppna en **ny** chatt i ChatGPT, så att inget från tidigare trådar påverkar.
+   2. Välj tänkande modell (Thinking) och sätt tankenivån till **max**.
+   3. Öppna `~/Downloads/VD-ord <period> brief.md` och kontrollera att första raden anger rätt period.
+   4. Klistra in hela filen, eller bifoga den. Ingen extra uppmaning behövs, eftersom briefen innehåller allt.
+   5. Kopiera svaret, rubrik och brödtext, och skicka det till Claude.
+4. **Claude:**
+   - faktagranskar mot briefen och påpekar avvikelser för Henrik, utan att skriva om texten själv;
+   - lägger in texten i `data.json`, med rubriken i `narrative.vd_kommentar_rubrik` och styckena i `narrative.vd_kommentar`;
+   - renderar en ny PDF och kontrollerar att brevet ryms (cirka 420 ord);
+   - kör läsartestet (`lasartest.md`);
+   - visar Henrik de gemensamma problemen. Läsarnas önskemål är underlag, inte order.
+5. **Ändringar:** Henrik gör dem i samma ChatGPT-tråd. Claude kan föreslå en kort rättelse att klistra in, med fakta och inga färdiga meningar.
+6. **När texten är godkänd:** spara den som `drafts/vd-ordet-draft-vN.md`, kör `promote-final` och gör MAR-kontrollen (steg 8–10 nedan).
+
+**Varför:** Q3 2026 krävde mer än 20 varv genom API-pipelinen (GPT-5, revise, kortningar) och resultatet var ändå styckat. Halvårsrapporten och Q1-texten gick betydligt bättre när Henrik körde briefen i ChatGPT.
+
+## Workflow (API-reserv)
 
 ### Step 0 — Initialize folder skeleton
 
@@ -61,22 +91,15 @@ This pulls the verbatim Swedish system prompt from style guide §10 into `briefs
 
 ### Step 2 — Compose the structured brief
 
+**BINDANDE REGEL (Henrik 2026-11-18): ge skribenten minimalt med instruktioner.** Briefen är material och spärrar: vad perioden handlade om, verifierade fakta, en kort lista på vad som inte får sägas. Inga formler, inga styckeanvisningar, inga ordlistor, inga färdiga meningar — inte heller i revisionsbriefer. Detaljstyrning förstör kvaliteten. Enda innehållsregeln: upprepa inte siffror som redan står i sammanfattningen på sidan före (Henrik 2026-11-18). Systemprompten i stilguidens §10 är medvetet kort; bygg inte ut den.
+
 Claude (this session) reads:
 - `<period>/vd-ordet/transcript.txt` — Henrik's brain-dump
 - `<period>/Underlag från ledning/` — management material relevant to this quarter's narrative (cost-actions, framing matrices, etc.)
 - `<period>/Underlag från BDO/` — for numeric anchors when needed
 - The style guide for voice rules
 
-…and writes `<period>/vd-ordet/briefs/brief-for-drafter.md` — a structured user message covering:
-
-- **Period context** (which quarter, publication target)
-- **Key narrative threads** extracted from the transcript (3–6 themes)
-- **Numeric scaffold** (rough KPI direction; exact numbers from the period's nyckeltal table)
-- **Quarter-specific framing** (e.g. cost-actions per the framing matrix, structural YoY headwinds)
-- **Explicit fact-anchors** that must appear (units after percentages, named periods, named entities like "Indien" not "India")
-- **Things to avoid** beyond the style guide §7 generic list (any quarter-specific traps)
-
-See `2026/Quarter/Q1/Kvartalsredogörelse/vd-ordet/briefs/brief-for-drafter.md` as a worked example.
+…and writes `<period>/vd-ordet/briefs/brief-for-drafter.md` enligt STANDARDFLÖDE punkt 1 ovan. Mall: `2026/Quarter/Q3/Kvartalsredogörelse/vd-ordet/briefs/brief-for-drafter.md`. Q1-briefen är *inte* en mall längre: den har styckeschema och färdiga formuleringar.
 
 ### Step 3 — Draft v1
 
@@ -86,6 +109,8 @@ python3 ~/.claude/skills/kvartalsredogörelse/vd-ordet-pipeline/scripts/draft_vd
 ```
 
 Produces `drafts/vd-ordet-draft-v1.md` and `pipeline/draft-v1.log`. Target length 380–460 svenska ord.
+
+**STANDARD (Henrik 2026-11-18): läsartest med tre virtuella svenska investerare efter varje utkast som visas för Henrik — se `vd-ordet-pipeline/lasartest.md`.**
 
 ### Step 4 — Critic round (in parallel via Claude Agent tool)
 

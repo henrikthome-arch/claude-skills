@@ -49,7 +49,7 @@ If you're a future agent reading this skill for the first time, work through thi
 | Identifying drift / variances | ❌ No (but if you propose a fix, that's a change) |
 | Editing `recurring_payment` table | ✅ Yes — even for typo in description |
 | Editing `scheduled_payment` table | ✅ Yes |
-| Editing `business_parameters` row `cashflow_cogs_percent` or `cashflow_revenue_override_msek` | ✅ Yes |
+| Editing `business_parameters` row `cashflow_cogs_percent`, `cashflow_revenue_override_msek` or `cashflow_revenue_growth_pct_monthly` | ✅ Yes |
 | Updating SKILL.md or log.md | ❌ No — documentation |
 | Code changes to `cash_flow_forecast_service.py` etc. | Use real CR file in `docs/plans/` |
 
@@ -260,7 +260,7 @@ Reference: see `~/.claude/skills/cash-flow/snapshots/2026-05-09-cashflow.html` f
 
 ---
 
-## MANDATORY rule — surface the revenue run-rate override EVERY session (CEO 2026-06-03)
+## MANDATORY rule — surface the revenue run-rate override AND the growth rate EVERY session (CEO 2026-06-03; growth added CR-2026-08-25)
 
 **The forecast's revenue run-rate can be a hardcoded manual override (`business_parameters.cashflow_revenue_override_msek`, in MSEK/month) that does NOT self-update. A stale override silently makes the whole forecast optimistic or pessimistic. Every session, the skill MUST surface the current override and ask the user whether to keep / change / remove it — do not let it sit unexamined.**
 
@@ -270,6 +270,15 @@ SELECT parameter_value FROM business_parameters WHERE parameter_name = 'cashflow
 ```
 - **If set (> 0):** the forecast is on a STATIC manual run-rate. Compute the **prior-month actual** for comparison and present BOTH to the user, then ask: **keep / change / remove (→ auto Best Estimate model)?**
 - **If 0 / absent:** the forecast uses the auto "Best Estimate" model (avg of two-cohort ARR forecast + rolling trailing avg + prior-month actual, FX-repriced each run). Note this and move on.
+
+**Then do the same for the GROWTH rate (CR-2026-08-25).** It is a strictly worse instance of the same hazard, because it **compounds**: a stale 0.5 %/month adds ~9 % of revenue over 19 months and can turn a projected credit-line breach into a comfortable-looking dip.
+```sql
+SELECT parameter_value FROM business_parameters WHERE parameter_name = 'cashflow_revenue_growth_pct_monthly';
+```
+- **If set (non-zero):** the forecast is compounding revenue every month from the current month onward, while **costs are held flat**. Surface the rate, the resulting end-of-horizon monthly revenue (`revenue_last_month_gross_sek` in the forecast response), and ask: **keep / change / remove?** Do not present a forecast trough or capital-need figure without stating the growth rate that produced it.
+- **If 0 / absent:** revenue is flat for the whole horizon. Note it and move on — flat is not neutral at a 19-month horizon either, it is just the conservative direction.
+- The rate also silently colours `/analytics/payment-schedule` and `/analytics/payment-schedule-grid`, which have no growth control of their own.
+- Note: `forecast_revenue_summary.daily_rate_net_sek` is deliberately NOT redefined by that CR, so once growth is on it describes the **first** month only. Read `revenue_last_month_gross_sek` for the end state.
 
 **Default base = the prior month's actual revenue.** Per CEO 2026-06-03: *"Using prior months level as a base is usually a good idea."* Compute it from the same source the auto model uses:
 ```sql
@@ -645,6 +654,136 @@ Fyra detaljer som är nödvändiga, inte kosmetiska:
 
 Både portalen och `dbshell` kopplar upp som RDS-masteranvändaren som äger tabellerna. `session_replication_role = replica` och `ALTER TABLE ... DISABLE TRIGGER` kringgår loggningen. TRUNCATE och direkt redigering av loggen är blockerade. **Skyddet är mot glömska och slarv, inte mot en aktör som medvetet stänger av det** — vilket kräver ett avsiktligt beslut, inte ett misstag.
 
+## Vad DBT-pausen lärde (2026-08-25) — läs innan nästa strukturändring
+
+### Beskrivningar är LOGGADE, inte skyddade — lägg alltid till, skriv aldrig över
+
+Triggern sparar hela gamla raden (`old_row = to_jsonb(OLD)`), så en överskriven beskrivning
+går att gräva fram. Men **inget hindrar överskrivningen**, och `forecast_row_history` —
+vyn man naturligt slår i — exponerar bara `amount`, `enabled`, `is_internal_transfer` och
+`basis`. **Beskrivningen finns inte i vyn alls.** För att återställa förlorad text måste man
+veta att man ska fråga:
+
+```sql
+SELECT changed_at, actor, old_row->>'description' AS gammal_text
+FROM forecast_change_log
+WHERE table_name='recurring_payment' AND row_id = :id AND 'description' = ANY(changed_fields)
+ORDER BY changed_at DESC;
+```
+
+Raderna bär verifieringsrecept (id 25:s `2352 = 26 042 + 98 039,22`, id 26:s femårsavstämning)
+och CEO-beslut ordagrant. **Lägg till ett daterat block, som varje tidigare ändring gjort.**
+En plan som säger "uppdatera beskrivningarna med rättelser" läses som omskrivning — skriv
+"append" explicit i planen.
+
+CEO 2026-08-25 om detta: *"Overwriting should be almost impossibel to do. Isn't this
+guearded?"* Svaret är nej. En spärr är föreslagen men inte byggd: avvisa en
+description-UPDATE där nya texten inte börjar med den gamla, med samma break-glass-mönster
+som migration 105. Kräver en migration → CR, inte en forecast-dataändring.
+
+### Anropa ALDRIG generate_forecast() inne i en skrivtransaktion
+
+`cash_flow_forecast_service.py` har ett tiotal `except: self.db.rollback()` i
+prognosvägen (`:2396, 2410, 2436, 2742, 2883, 2931, 3155, 3218`). I en läsförfrågan är det
+ofarligt. Inne i en skrivtransaktion **kastar en enda sådan hela transaktionen** — alla
+väntande skrivningar OCH `app.change_basis` / `change_actor` / `change_approved_by`, som är
+transaktionslokala.
+
+Värre: `db_session()` committar vid **normalt** blockslut. En kontroll skriven i husets stil
+— `if not ok: logger.error(...); return False` — lämnar blocket normalt och **committar
+skrivningarna ändå**. En kontroll måste `raise`, aldrig `return`.
+
+**Ordning som fungerar:** skriv → kontrollera strukturellt i ren SQL → commit → verifiera
+prognosen mot API:t efteråt, med en färdigskriven revert.
+
+### En steg-par-kontroll mot prognosens utdata är TEATER
+
+`outflow_details` innehåller `amount_sek, description, frequency, recipient, type` — **inget
+rad-id**. Ett steg-par (stängd rad + återupptagen rad) har med flit identisk `recipient` och
+identiskt belopp. Prognosen för återupptagningsmånaden blir därför **bit-identisk oavsett om
+ändringen tog eller tyst rullades tillbaka**.
+
+Verifiera i stället: (a) `SELECT` på de berörda raderna, (b) räkna raderna som transaktionen
+skrev i `forecast_change_log` — och kom ihåg att en **no-op-UPDATE inte loggar något alls**
+(migration 104: `v_fields IS NULL → RETURN NEW`), så en beskrivning som råkar vara identisk
+försvinner utan fel och utan loggrad.
+
+### psql sager att en misslyckad sats lyckades — lat databasen doma, inte echo-ordningen
+
+`\echo` ar ett psql-metakommando och skrivs ut **oavsett** om SQL:en dessforinnan gick igenom.
+Ett testskript byggt som `UPDATE ...; \echo 'accepterad'` rapporterar darfor "accepterad" aven
+nar UPDATE:n kastade och transaktionen redan ar avbruten — och sjalva felmeddelandet dyker upp
+langre ner, under nasta rubrik, eftersom stderr och stdout buffras olika.
+
+Det intraffade 2026-08-25 vid valideringen av migration 106: skyddet fungerade perfekt och
+rapporterades som TRASIGT. Ett fungerande skydd hade nastan rivits ut.
+
+**Lagg pass/fail inne i ett `DO`-block** med `BEGIN ... EXCEPTION WHEN OTHERS` per fall och
+`RAISE NOTICE` for utfallet. Da ar det databasen som avgor, inte utskriftsordningen. Avsluta
+med `RAISE EXCEPTION` for att rulla tillbaka hela testet, och verifiera raden efterat.
+
+Samma familj som `ON_ERROR_STOP`-regeln ovan: **psql pastar att en tillbakarullad transaktion
+lyckades om man inte tvingar den att bevisa motsatsen.**
+
+### `cashflow_review_checklist` finns inte
+
+`get_review_checklist()` (`cash_flow_forecast_service.py:2727-2755`) returnerar 7 hårdkodade
+poster när raden saknas — och den saknas i produktion (verifierat 2026-08-25). En naiv
+"lägg till en rad" gör antingen ingenting (UPDATE träffar 0 rader) eller **ersätter alla 7**.
+Metoden sväljer dessutom fel i ett `except` → `rollback()` → tyst fall tillbaka till
+default. Ytan är också dold bakom en "Show"-knapp med texten "Checks are not persisted".
+**Fel hem för en viktig varning.**
+
+### Bottennivån kan ligga FÖRE den ändring du gör
+
+Det mest kontraintuitiva i hela DBT-analysen. Pausen tar bort 740 000 kr kumulativt, men
+förbättrar bottennivån med bara **443 339** — för att den bindande bottnen flyttar till
+**2026-08-28**, tre dagar före pausens första uteblivna betalning. Ingen eftergift kan
+förbättra en dag som ligger före den.
+
+**Regel:** räkna alltid om VAR bottnen hamnar efter ändringen, inte bara hur mycket den
+rör sig. Och ställ följdfrågan: *kan ändringen börja en månad tidigare?* Aug–jan i stället
+för sep–jan tar bottnen från −933 426 till −785 426 — marginalen till golvet −950 000 går
+från 16 574 kr till 164 574 kr. **Tio gånger säkerhetsmarginalen för en mening till banken.**
+Den frågan var värd mer än allt annat granskningen producerade.
+
+### Två optimistiska antaganden staplade blir en osynlig risk
+
+Efter CR-2026-08-25 kan prognosen bära **både** en tillväxttakt och en osignerad
+bankeftergift. "0 dagar under checkkrediten" krävde båda: med platt intäkt lämnar pausen
+ensam ~31 dagar under gränsen och en botten på −1,45 MSEK. **Ange alltid vilka antaganden
+en bottensiffra vilar på när den citeras** — särskilt mot styrelsen.
+
+### Granskningens utfall måste filtreras, inte bara verkställas
+
+5-stegsprocessen är obligatorisk och billig. Det som blev dyrt 2026-08-25 var att behandla
+varje granskarfynd som ett arbetsmoment. Fyra granskaragenter på en fyraradersändring gav
+**tre** fynd som faktiskt ändrade något: siffrorna var räknade på fel bas, bottnen flyttade
+till en dag före pausen, och autogirofrågan. Resten — fem beskrivningsredigeringar, en
+checklistrad, en varningsbanner — vidgade omfattningen utan att ändra beslutet.
+
+CEO 2026-08-25: *"Why is this so complicated? Are you doing this the right way??"*
+
+**En adversariell agent hittar alltid något.** Testa varje fynd mot: *ändrar det vad vi
+skriver, eller vad CEO beslutar?* Om nej — notera det, gör det inte. Stegen ska köras; fynden
+ska vägas.
+
+### business_parameters ändras utan spår — skriv loggraden för hand
+
+Bekräftat igen 2026-08-25: `cashflow_revenue_growth_pct_monthly` sattes till 0,5 %/månad via
+portalen och **ingen loggrad skapades** — tabellen omfattas inte av triggern. Upptäcktes bara
+för att skillens obligatoriska sessionskontroll frågar efter den. Ratificerad i efterhand som
+`forecast_change_log` id 209 med `table_name='business_parameters'`, `row_id=0` och CEO:s ord
+ordagrant. Gör likadant varje gång.
+
+### Känt fel, inte åtgärdat: GRID_CATEGORIES bokför DBT Lån 1 amortering som RÄNTA
+
+`payment_schedule_service.py:49-58`: `'Loan interest'` fångar `account_number = '2352'` när
+`'Nordea' not in recipient`. Id 25 "DBT Lån 1 - amortering" ligger på 2352 → hamnar under
+**Loan interest**. 98 000/mån amortering visas som ränta i rutnätets kategorisummor.
+Kommentarens premiss ("to avoid catching DBT interest rows that share the same account") är
+fel — DBT:s ränta ligger på 8410. Kodändring → CR.
+
 ## Validating an amount against its real payment channel (CEO 2026-08-18)
 
 **Most costs never appear in the bank account as a readable line.** Validating against Nordea alone is why four rows sat 2,600–30,000 SEK/month wrong for three months. Every number must be checked against the channel it is *actually paid through*.
@@ -943,6 +1082,15 @@ and which are conventional. A trough built from placeholder dates is an artefact
 A number written into a basis is a prediction; the forecast is the observation. Both wrong predictions in this
 sweep — the broken offset on id 48 and the net-zero mirror on id 47 — were caught only by reading the trough
 immediately afterwards, and both had already been asserted as fact in an append-only log entry.
+
+**Fetch the baseline and the post-change forecast in the SAME session, minutes apart.** A pair of runs taken a
+day apart is not a measurement of your change, even when every summary parameter matches (`start_date`,
+`starting_cash`, `run_rate_daily`, `cogs_percent`, growth and anchor were all identical on 2026-09-19 and the
+diff still would not reconcile). Two things move underneath you overnight: **FX** — a Riksbanken tick of
+0.18% reprices *every* EUR/USD/INR row, not just yours, and shows up as steps on other vendors' pay-days — and
+**revenue actuals** for the days that have since closed, which land as an unexplained improvement on past days.
+When a diff refuses to reconcile, print the per-day divergence series before theorising; the step pattern names
+the cause in one read. Steps on your row's day = your change. Steps anywhere else = contamination.
 
 ### The bookkeeping runs AHEAD of the bank — use it to predict the next payment
 

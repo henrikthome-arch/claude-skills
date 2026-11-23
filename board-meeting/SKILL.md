@@ -147,9 +147,15 @@ Free-form prose for Claude's reference when producing slides. Not necessarily sh
 - Agenda is sent to board members once approved by Henrik
 
 ### Phase 3 – Slide Production
+- **Coverage first, every session:** from the meeting folder run
+  `python3 ~/.claude/skills/board-slides/scripts/coverage.py`. It lists every standing slide and
+  agenda item, what is missing, and who owes it, and writes `slides/COVERAGE.md`. Do the BUILD
+  items yourself; open the reply to Henrik with the WAIT/WRITE chase list, by person, and keep
+  raising it each session until it clears. The deck is not done while it exits 1. (board-slides §57)
 - For Henrik's sections: transform content inputs into structured slide outlines
 - For contributor sections: Prashant and Tomas drop their `.pptx` in their contribution folder
 - Claude can read `.pptx` metadata but cannot directly edit binary files
+- **Board action log (required for every board update and quarterly meeting):** pull the OPEN items from Sebastian's Excel at `~/Library/CloudStorage/Dropbox/Sonetel/Board/Board action log/Board Action Log <YEAR>.xlsx`, present them to Henrik with their current comments, get his status for each, and put the open items + status on a slide. Read-only — never write back to the workbook; Henrik relays status changes to Sebastian. Full procedure + slide format: board-slides skill §44.
 
 ### Phase 4 – Merge & Finalize
 - Merged deck versioning: `Sonetel board meeting [Month Day], [Year] v1.pptx`, `v2.pptx`...

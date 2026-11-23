@@ -75,7 +75,10 @@ def extract_prompt(period: Path) -> None:
 
 
 def _call_openai(system_file: Path, user_file: Path, out_file: Path,
-                 log_file: Path, max_tokens: int = 12000,
+                 # 12000 was not enough once the brief grew: GPT-5 spends most of the
+                 # budget on reasoning tokens and the v5 call returned finish_reason='length'
+                 # with an EMPTY draft file. The failure is silent unless the log is read.
+                 log_file: Path, max_tokens: int = 32000,
                  model: str = "gpt-5") -> None:
     if not OPENAI_CALL.exists():
         sys.exit(f"[draft] missing openai_call.py at {OPENAI_CALL}")
@@ -107,7 +110,22 @@ def draft(period: Path, version: int = 1) -> None:
     out = vd / "drafts" / f"vd-ordet-draft-v{version}.md"
     log = vd / "pipeline" / f"draft-v{version}.log"
     log.parent.mkdir(parents=True, exist_ok=True)
-    _call_openai(system_file, brief, out, log)
+
+    # The drafting model cannot read files. Until 2026-08-20 the pipeline only sent an
+    # abstract description of Henrik's voice, so six drafts of the jan-jun 2026 letter were
+    # written without the model ever having seen a published Sonetel VD-ordet. Append the
+    # verbatim exemplars to the user message so the voice is shown, not described.
+    examples = SKILL_DIR / "vd-ordet-exempel.md"
+    user_file = brief
+    if examples.exists():
+        merged = vd / "pipeline" / f"user-message-v{version}.md"
+        merged.write_text(
+            brief.read_text()
+            + "\n\n---\n\n# Publicerade VD-ord att skriva i rösten av\n\n"
+            + examples.read_text()
+        )
+        user_file = merged
+    _call_openai(system_file, user_file, out, log)
 
 
 def revise(period: Path, new_version: int) -> None:
@@ -170,6 +188,27 @@ def promote_final(period: Path, version: int) -> None:
     print(f"[promote-final] {src} -> {dst}")
 
 
+def chatgpt_export(period: Path, label: str) -> None:
+    """Standard flow (Henrik 2026-11-18): one self-contained file for Henrik to paste into
+    ChatGPT (Thinking, max). ChatGPT has no system prompt, so the §10 prompt goes first,
+    then the brief, then the published exemplars — the same content the API draft sends."""
+    vd = vd_dir(period)
+    system_file = vd / "briefs" / "system-prompt.txt"
+    brief = vd / "briefs" / "brief-for-drafter.md"
+    for f in (system_file, brief):
+        if not f.exists():
+            sys.exit(f"[chatgpt-export] missing {f}")
+    parts = [system_file.read_text().strip(), "---", brief.read_text().strip()]
+    examples = SKILL_DIR / "vd-ordet-exempel.md"
+    if examples.exists():
+        parts += ["---", "# Publicerade VD-ord att skriva i rösten av", examples.read_text().strip()]
+    out = Path.home() / "Downloads" / f"VD-ord {label} brief.md"
+    out.write_text("\n\n".join(parts) + "\n")
+    first = brief.read_text().splitlines()[0]
+    print(f"[chatgpt-export] wrote {out} ({len(out.read_text().split())} words)")
+    print(f"[chatgpt-export] brief first line: {first}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -196,6 +235,10 @@ def main():
     p.add_argument("period", type=Path)
     p.add_argument("version", type=int)
 
+    p = sub.add_parser("chatgpt-export", help="Write self-contained brief to ~/Downloads for ChatGPT")
+    p.add_argument("period", type=Path)
+    p.add_argument("label", help='e.g. "Q3 2026"')
+
     args = ap.parse_args()
     period = args.period.expanduser().resolve()
     if args.cmd == "init-period":
@@ -208,6 +251,8 @@ def main():
         revise(period, args.new_version)
     elif args.cmd == "log-score":
         log_score(period, args.payload)
+    elif args.cmd == "chatgpt-export":
+        chatgpt_export(period, args.label)
     elif args.cmd == "promote-final":
         promote_final(period, args.version)
 

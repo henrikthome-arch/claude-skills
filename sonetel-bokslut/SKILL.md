@@ -1,6 +1,6 @@
 ---
 name: sonetel-bokslut
-description: Create or update a Sonetel AB financial report (Bokslutskommuniké, Halvårsrapport, or Kvartalsrapport). Use when working on Swedish financial communiqués for Sonetel AB (publ).
+description: Create or update a Sonetel AB Bokslutskommuniké or Kvartalsrapport (Word-based). Use when working on these Swedish financial communiqués for Sonetel AB (publ). NOTE — Halvårsrapport moved to /kvartalsredogörelse as of CR-2026-08-19 and is no longer produced here.
 argument-hint: "[report-type]"
 ---
 
@@ -10,8 +10,12 @@ You are helping Henrik Thomé, CEO of **Sonetel AB (publ)**, prepare a Swedish f
 
 ## Report types
 - **Bokslutskommuniké** — Full-year (or 18-month) year-end report
-- **Halvårsrapport** — H1 half-year report
 - **Kvartalsrapport** — Q1 or Q3 interim report
+
+> **Halvårsrapport moved out of this skill** (CR-2026-08-19). It is produced by
+> `/kvartalsredogörelse`, on the JSON → WeasyPrint pipeline, with the financial tables extracted
+> from BDO's workbook by script rather than transcribed into Word. Do not start a Halvårsrapport
+> here. Moving Bokslutskommuniké and Kvartalsrapport across is proposed as a follow-up CR.
 
 ---
 
@@ -319,24 +323,36 @@ doc.save('output.docx')
 ## Kalendarium completeness rule (MANDATORY)
 
 > Why: CR-2026-04-22-investor-kalendarium-full-fiscal-year-completeness — the investor page kalendarium drifted out of sync with the Bokslutskommuniké (wrong Halvårsrapport date, mislabeled Q3 as "Periodrapport", missing Q1 entirely, and the whole next fiscal year absent). Rule formalizes the "all or nothing per fiscal year" expectation set by Nasdaq First North disclosure norms.
+>
+> Amended by CR-2026-08-13-investor-kalendarium-fiscal-year-cycle-retirement-rule — the original retirement clause let events expire one by one, which left a partial fiscal year live on the site for four months (the jul-24 – dec-25 Bokslutskommuniké was dropped alone in April 2026, stranding that year's Årsredovisning + Bolagsstämma as an orphan half-cycle). Retirement is now per fiscal year, matching the completeness half of the rule.
 
-**Every fiscal year listed in the kalendarium must include ALL of these events, or NONE:**
+**The unit is the FISCAL YEAR, not the individual date.** A fiscal year's row set is every date attached to that year:
 
-1. Bokslutskommuniké
-2. Årsredovisning
-3. Bolagsstämma
-4. Verksamhetsredogörelse Q1
-5. Halvårsrapport
-6. Verksamhetsredogörelse Q3
+*During the year:*
+1. Verksamhetsredogörelse Q1
+2. Halvårsrapport
+3. Verksamhetsredogörelse Q3
 
-A partial fiscal year is never acceptable. If a cycle's Bokslutskommuniké has been published as a press release, it drops out of the forward-looking kalendarium — but its subsequent Årsredovisning + Bolagsstämma MUST still be listed until they too have passed.
+*After year-end (closing the year):*
+4. Bokslutskommuniké
+5. Årsredovisning
+6. Bolagsstämma — the *ordinarie* stämma that fastställer resultatet
+
+**Two rules follow, and both are mandatory:**
+
+1. **All-or-none.** Every fiscal year listed must show ALL six events or NONE. A partial fiscal year is never acceptable.
+2. **Retire the year as a whole.** ALL of a prior fiscal year's entries are kept until **ALL of that year's events have passed** — then the whole set is removed together. Never drop rows one by one as their dates go by; a past date inside a still-open cycle **stays listed**. (In practice the bolagsstämma is chronologically last, so it is the stämma that retires the year. An *extraordinary* stämma is not a cycle event and neither belongs in the set nor affects retirement.)
+
+**Consequence, and it is intended:** the first row on the live page is often a date in the past. The kalendarium is a fiscal-year disclosure schedule, not a "what's next" list. Do not "tidy" past rows out of an open cycle — that reintroduces the exact defect this rule exists to prevent.
 
 **Label convention (per Bokslutskommuniké):**
 - Plain event names, no fiscal-year suffix. Example: `"Halvårsrapport"`, NOT `"Halvårsrapport januari – juni 26"`.
 - Use `"Bolagsstämma"`, not `"Årsstämma"` (Bokslutskommuniké terminology).
 - Use `"Verksamhetsredogörelse Q1"` / `"Verksamhetsredogörelse Q3"`, not `"Periodrapport …"`.
 
-**Companion website sync:** Every time the Bokslutskommuniké kalendarium changes (whether at draft time or when a new published report supersedes the previous forward view), the `FINANCIAL_CALENDAR` array in `sonetel.com/src/components/investor/investor-hub.tsx` MUST be updated in the same session. The arrays are source-of-truth siblings.
+**Companion website sync:** Every time the Bokslutskommuniké kalendarium changes (whether at draft time or when a new published report supersedes the previous forward view), the `FINANCIAL_CALENDAR` array in `sonetel.com/src/components/investor/financial-calendar.tsx` MUST be updated in the same session. The arrays are source-of-truth siblings. (That array is the single source for all three surfaces — the investor hub, `/sv/investerare/kalendarium/`, and `/en/investor-relations/calendar/` — since CR-2026-07-16; it previously lived in `investor-hub.tsx`.)
+
+**Also sync when a fiscal year retires**, even if no report is being drafted: once a year's last event has passed, remove that year's whole row set from `FINANCIAL_CALENDAR`. That moment is not tied to a Bokslutskommuniké session, which is how the 2026 orphan half-cycle survived four months unnoticed.
 
 ---
 

@@ -1,0 +1,254 @@
+{
+ "_about": "Every slide a Sonetel board deck is EXPECTED to contain, whether or not its data is ready. scripts/coverage.py checks a meeting folder against this list and prints who owes what. A standing slide that is absent is a GAP, never a silent omission. Add an entry here the first time a slide recurs in two decks. See SKILL.md §57. `local_file`: if this file is already in the meeting folder, a down source does not block the slide.",
+ "_status_legend": {
+  "OK": "in the deck, on the expected period",
+  "STALE": "in the deck, but on an older period than the data now allows",
+  "INCOMPLETE": "in the deck, but a required part is missing",
+  "BUILD": "missing, and the source is reachable: run the command",
+  "WAIT": "missing, and the source is not available yet: chase the owner",
+  "WRITE": "missing, and only a person can supply it",
+  "ASK": "optional: Henrik decides whether this deck wants it"
+ },
+ "slides": [
+  {
+   "id": "key_messages",
+   "title": "Key messages (opening summary)",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "summary",
+   "match": {
+    "type": "bullets",
+    "title_re": "key messages"
+   },
+   "source": "deck",
+   "owner": "Claude",
+   "build": "Build LAST, after every other slide is final: items['0'] in data.json, 4-5 labelled bullets (§70). Every figure must match the slide it comes from; show the draft to Henrik.",
+   "note": "Henrik 2026-11-04: every deck opens with this summary of the period. MoM movement in the key KPIs first, ARR above all."
+  },
+  {
+   "id": "pnl",
+   "title": "Condensed P&L vs budget",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "pnl_table"
+   },
+   "period": "booked",
+   "period_from": "title",
+   "source": "finops",
+   "build": "python3 ~/.claude/skills/board-slides/scripts/build_financials.py --period {booked} --write slides/data.json",
+   "owner": "Claude",
+   "blocked_owner": "Henrik (BDO books the month into Finops)",
+   "note": "Reconciliation against consolidated_profit is fatal by design; never hand-patch a failing month."
+  },
+  {
+   "id": "quarter_outlook",
+   "title": "Quarter outlook — revenue and EBITDA, YoY",
+   "applies_to": [
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "data_table",
+    "title_re": "how the quarter lands|quarter outlook"
+   },
+   "source": "finops",
+   "owner": "Claude",
+   "build": "agent in financial-ops: booked months actual + forecast for the rest, koncern basis, vs the same quarter last year. Mark every figure actual or forecast; a part-quarter is a management estimate, never a published number (§33).",
+   "note": "Asked for by Sebastian (chair) 2026-09-14: 'hur Q3 kommer att se ut och YoY… Intäkter och EBITDA'. Say what drives the YoY move — in Q3 2026 the whole EBITDA gain was a marketing cut on falling revenue."
+  },
+  {
+   "id": "pnl_comments",
+   "title": "Comments on the P&L",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "bullets",
+    "title_re": "comment"
+   },
+   "optional": true,
+   "source": "henrik",
+   "owner": "Henrik",
+   "note": "Henrik-authored (§41). Aug 4 had none; Jun and Jul did."
+  },
+  {
+   "id": "saas40",
+   "title": "SaaS40",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "saas40"
+   },
+   "source": "published_quarter",
+   "build": "derive the newest quarter from Financial/<year>/Quarter/Q*/<report>/tables.json (resultatrakning_koncern): growth = nettooms YoY, margin = (Rörelseresultat + Avskrivningar) / nettooms. Never Finops EBITDA for a published quarter (§33).",
+   "owner": "Claude",
+   "blocked_owner": "Henrik (the quarterly report must be published)"
+  },
+  {
+   "id": "kpi_grid",
+   "title": "KPI snapshot",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "kpi_grid"
+   },
+   "period": "complete",
+   "period_from": "title",
+   "source": "finops",
+   "build": "python3 ~/.claude/skills/board-slides/scripts/build_financials.py --kpis --period {complete} --write slides/data.json",
+   "owner": "Claude"
+  },
+  {
+   "id": "breakeven",
+   "title": "Breakeven & profitability",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "breakeven"
+   },
+   "source": "finops",
+   "build": "python3 ~/.claude/skills/board-slides/scripts/build_financials.py --breakeven --period {booked} --write slides/data.json",
+   "owner": "Claude"
+  },
+  {
+   "id": "trends_13m",
+   "title": "13-month trends",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "trends_grid",
+    "data_ref_re": "13-month-trends"
+   },
+   "period": "complete",
+   "period_from": "data_ref",
+   "source": "finops",
+   "build": "not deterministic yet (§42): pull from Finops into financials-data/13-month-trends.json; net_revenue_sek mixes statutory and USD×FX months, so agree the SEK basis with Henrik before generating",
+   "owner": "Claude",
+   "local_file": "financials-data/13-month-trends.json"
+  },
+  {
+   "id": "cash_position",
+   "title": "Cash position — end of month",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "cash_position"
+   },
+   "period": "complete",
+   "period_from": "data_ref",
+   "source": "finops",
+   "build": "financials-data/cash-position.json from Finops EOM balances; drivers reconciled against the ACTUAL bank statements, never the forecast model (§12)",
+   "owner": "Claude",
+   "blocked_owner": "Henrik (explain any one-off item; list payments deferred into next month)",
+   "local_file": "financials-data/cash-position.json"
+  },
+  {
+   "id": "cash_flow_forecast",
+   "title": "Cash flow forecast",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "financials",
+   "match": {
+    "type": "cash_flow_forecast"
+   },
+   "source": "finops",
+   "build": "python3 ~/.claude/skills/board-slides/scripts/build_financials.py --cashflow --cashflow-out financials-data/cash-flow-forecast.json",
+   "owner": "Claude",
+   "blocked_owner": "Henrik (only if a non-recurring item is worth naming)",
+   "local_file": "financials-data/cash-flow-forecast.json",
+   "note": "Top-items panel is OPTIONAL (Henrik 2026-09-12: \"Not sure any are needed as they are all recurring costs\") — do not chase it; add it only when a genuinely non-recurring item matters. The revenue rationale line IS required (§40), and must state the growth rate and any manual run-rate override."
+  },
+  {
+   "id": "web_traffic",
+   "title": "Signup funnel",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "web",
+   "match": {
+    "type": "trends_grid",
+    "layout_key": [
+     "opened_to_paid_pct",
+     "distinct_visitors",
+     "new_visitors"
+    ]
+   },
+   "period": "complete",
+   "period_from": "data_ref",
+   "source": "neon",
+   "build": "python3 ~/.claude/skills/board-slides/scripts/build_neon_metrics.py --write financials-data/neon-metrics.json",
+   "owner": "Claude",
+   "note": "Not Finops — sonetel.com's Neon DB. Four charts: distinct_visitors from 2026-07 ONLY (browser beacon launched 2026-06-10; earlier months not comparable), opened_persons, opened_to_paid_pct, paying_customers (from 2026-06). Openers x rate must ~ payers. Note line = share of visitors who opened the signup page. Definitions: SKILL.md §56 FINAL.",
+   "local_file": "financials-data/neon-metrics.json"
+  },
+  {
+   "id": "lead_sources",
+   "title": "Where new paying customers come from",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "web",
+   "match": {
+    "type": "trends_grid",
+    "layout_key": [
+     "paid_src_google_ads",
+     "lead_sources"
+    ]
+   },
+   "source": "neon",
+   "build": "same file as web_traffic (series.lead_sources); add a full-width trends_grid with key lead_sources",
+   "owner": "Claude",
+   "local_file": "financials-data/neon-metrics.json",
+   "note": "PAYING CUSTOMERS by source (not signups — Henrik 2026-09-10), stacked, plus the AI-search share line. Payers are traced to their signup's UTM/referrer; the untraced 6-9% is its own band. WEEKLY from 2026-07-13 only because the consistent window is short (UTM persisted 2026-07-02, referrer 2026-07-05). **SWITCH TO MONTHLY at the November 2026 meeting**, when Aug/Sep/Oct are three complete clean months (Henrik agreed 2026-09-10). Definitions: SKILL.md §56 FINAL, §62."
+  },
+  {
+   "id": "action_log",
+   "title": "Board action log — open items",
+   "applies_to": [
+    "board_update",
+    "quarterly"
+   ],
+   "section": "action_log",
+   "match": {
+    "type": "action_log"
+   },
+   "source": "action_log_xlsx",
+   "build": "read OPEN items from Board action log/Board Action Log <year>.xlsx, get Henrik's status per item (§44). Read-only.",
+   "owner": "Henrik",
+   "blocked_owner": "Henrik (status per open item)"
+  }
+ ],
+ "sections": {
+  "financials": "business update|financials|p&l|key points",
+  "web": "web traffic|website|business update|financials|key points",
+  "action_log": "action log|opening|formalities|wrap",
+  "summary": "key messages|summary"
+ }
+}

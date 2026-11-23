@@ -1,0 +1,189 @@
+{
+  "meta": {
+    "cover_subtitle": "If we want to raise prices",
+    "cover_date_label": "August 20, 2026",
+    "closing_message": "Questions?"
+  },
+  "items": {
+    "1": [
+      {
+        "type": "data_table",
+        "title": "The least bad way to raise prices",
+        "subtitle": "Where a rise does least damage. The cost in churn is unknown.",
+        "columns": ["Plan", "Now", "New", "Change"],
+        "rows": [
+          {"cells": ["Premium, billed monthly", "$13.95", "$16.95", "+21.5%"], "emphasis": true},
+          {"cells": ["Business, billed monthly", "$39.95", "$44.95", "+12.5%"], "emphasis": true},
+          {"cells": ["Premium, billed annually", "$9.95", "$9.95", "unchanged"]},
+          {"cells": ["Business, billed annually", "$29.95", "$29.95", "unchanged"]}
+        ],
+        "notes": "3,274 subscribers affected. No free users, no annual subscribers. Our website advertises annual prices, so no public price changes."
+      },
+      {
+        "type": "data_table",
+        "title": "What it raises turns on churn we can't predict",
+        "columns": ["If monthly churn goes from 14.9% to", "The increase raises per year"],
+        "rows": [
+          {"cells": ["14.9%, unchanged", "1.10 MSEK"]},
+          {"cells": ["15.9%", "0.70 MSEK"], "emphasis": true},
+          {"cells": ["16.9%", "0.35 MSEK"], "emphasis": true},
+          {"cells": ["18.1%", "nothing at all"]},
+          {"cells": ["18.9%", "we lose money"]}
+        ],
+        "notes": "14.9% a month is what monthly Premium customers already leave at today. Plan on 0.35 to 0.70 MSEK a year."
+      }
+    ],
+    "2": [
+      {
+        "type": "data_table",
+        "title": "Every avenue we looked at",
+        "columns": [
+          {"label": "Avenue", "align": "left"},
+          {"label": "Would raise per year", "align": "right"},
+          {"label": "Verdict", "align": "left"}
+        ],
+        "rows": [
+          {"cells": ["Monthly plan prices", "0.35 – 0.70 MSEK", "Proceed. The least bad of these."], "emphasis": true},
+          {"cells": ["Phone number prices, +$0.50", "2.19 MSEK", "No. We tried this in 2018–19."]},
+          {"cells": ["$2 setup fee on new numbers", "1.03 MSEK", "No. Doubles the cost of trying us."]},
+          {"cells": ["Cutting the free trial credit", "1.42 MSEK", "No. Taxes people who convert."]},
+          {"cells": ["Raising call rates by 25%", "not sized", "No. Falls on free-plan users."]},
+          {"cells": ["Annual plan prices", "not sized", "No. Annual is the escape route."]}
+        ],
+        "notes": "Every figure except the first is gross, before any customer response. Everything below the first row raises the cost of trying Sonetel."
+      },
+      {
+        "type": "bullets",
+        "title": "Why we landed on monthly plans",
+        "bullets": [
+          {"label": "Margin", "text": "Plans carry almost no direct cost. Phone numbers do."},
+          {"label": "Headroom", "text": "Our plans are about 30% cheaper than Grasshopper and OpenPhone."},
+          {"label": "Exposure", "text": "3,274 subscribers, against 23,046 who hold a US phone number."},
+          {"label": "Reversible", "text": "Everyone affected renews within a month."}
+        ],
+        "notes": "Our phone numbers already sit at the market price. Our plans do not."
+      },
+      {
+        "type": "data_table",
+        "title": "The new price still undercuts the market",
+        "columns": ["Provider", "Annual", "Monthly"],
+        "rows": [
+          {"cells": ["Sonetel Premium, proposed", "$9.95", "$16.95"], "emphasis": true},
+          {"cells": ["Grasshopper Solo", "$14", "$18"]},
+          {"cells": ["OpenPhone Starter", "$15", "$19"]},
+          {"cells": ["Dialpad Standard", "$15", "—"]},
+          {"cells": ["Sonetel Business, proposed", "$29.95", "$44.95"], "emphasis": true},
+          {"cells": ["CallHippo", "$30", "—"]}
+        ],
+        "notes": "Per user per month. Google Voice is cheaper but only sells inside the US. What limits us is our own customers, not the competition."
+      }
+    ],
+    "3": [
+      {
+        "type": "data_table",
+        "title": "2018–19: doubled prices, then put them back",
+        "columns": ["A US phone number", "Price"],
+        "rows": [
+          {"cells": ["Before February 2018", "$1.99"]},
+          {"cells": ["After the first rise", "$2.49"]},
+          {"cells": ["After the second rise", "$3.99"]},
+          {"cells": ["Today", "$1.99"], "emphasis": true}
+        ],
+        "notes": "About a third of our customers left. We created the free plan in July 2019 in response to the exodus, not before it."
+      },
+      {
+        "type": "two_column",
+        "title": "Why this time is different",
+        "left_title": "2018–19",
+        "right_title": "What we propose",
+        "left": [
+          "Phone numbers, our largest revenue line",
+          "Annual and three-year prices rose too, so customers had nowhere to go but out",
+          "A quarter only met the new price at renewal, up to 36 months later"
+        ],
+        "right": [
+          "Monthly plans only",
+          "Annual prices unchanged, and promoted as the cheaper alternative",
+          "Everyone affected renews within a month, so we could reverse it"
+        ]
+      },
+      {
+        "type": "data_table",
+        "title": "If we ever did raise number prices",
+        "subtitle": "Not recommended. Kept here so the size of the prize is visible.",
+        "columns": [
+          {"label": "US number price", "align": "left"},
+          {"label": "Raises per year", "align": "right"},
+          {"label": "What we know", "align": "left"}
+        ],
+        "rows": [
+          {"cells": ["$1.99, today", "—", "Held for years before 2018"]},
+          {"cells": ["$2.49", "2.19 MSEK", "Exactly the first 2018 rise"]},
+          {"cells": ["$2.74", "3.28 MSEK", "10% beyond it"]},
+          {"cells": ["$2.99", "4.38 MSEK", "Untested"]},
+          {"cells": ["$3.99, in 2018–19", "—", "We lost about a third of customers"]}
+        ],
+        "notes": "Before any customer response. Anything above $2.49 is territory where customers demonstrably left."
+      }
+    ],
+    "4": [
+      {
+        "type": "data_table",
+        "title": "Why not touch the trial economics",
+        "columns": [
+          {"label": "What we considered", "align": "left"},
+          {"label": "Would raise per year", "align": "right"},
+          {"label": "Pays nothing if", "align": "left"}
+        ],
+        "rows": [
+          {"cells": ["$2 setup fee on new numbers", "1.03 MSEK", "Sign-ups fall 3.2%"]},
+          {"cells": ["Cutting the free trial credit", "1.42 MSEK", "Conversion falls 2.2%"]},
+          {"cells": ["Raising call rates by 25%", "not sized", "Falls on free users, not payers"]}
+        ],
+        "notes": "Free-plan users generate 58% of our call revenue. The two break-even points rest on an untested assumption about how sign-ups respond to price."
+      }
+    ],
+    "5": [
+      {
+        "type": "data_table",
+        "title": "A push to annual, not a price increase",
+        "subtitle": "Monthly customers leave at 14.9% a month. Annual customers leave at 3.2%.",
+        "columns": ["What a Premium customer does", "Worth to us over twelve months"],
+        "rows": [
+          {"cells": ["Stays monthly at today's $13.95", "$80.26"]},
+          {"cells": ["Stays monthly at the new $16.95", "$97.52"]},
+          {"cells": ["Moves to annual at $119.40", "$119.40"], "emphasis": true}
+        ],
+        "notes": "Someone who moves to annual is worth more than someone who stays and pays more. The notice must present annual as the obvious cheaper option."
+      }
+    ],
+    "6": [
+      {
+        "type": "bullets",
+        "title": "What we don't know",
+        "dense": true,
+        "bullets": [
+          {"label": "The churn cost", "text": "Every estimate compares customers at different price levels today."},
+          {"label": "Thin margin", "text": "One point of extra churn separates 0.70 MSEK from nothing."},
+          {"label": "They already declined annual", "text": "They pay 40% above the advertised price today."},
+          {"label": "Number revenue is already falling", "text": "$1.6M of our $2.6M ARR."},
+          {"label": "Churn matters more than price", "text": "10% to 8% would beat any change here."}
+        ]
+      },
+      {
+        "type": "bullets",
+        "title": "What we need to find out",
+        "dense": true,
+        "bullets": [
+          "Did revenue actually rise during 2018–20? We judged it a failure on customer numbers alone.",
+          "Was the loss really about a third, and over what period?",
+          "How much of the 2019 decline was customers moving to the new free plan, not leaving?",
+          "Why is the Premium revenue line 50% higher than subscribers times price?",
+          "What share of new customers are outside the US buying a US number?",
+          "What is churn for monthly US number holders specifically?"
+        ],
+        "notes": "The first question decides how much weight the 2018–19 story carries. It does not affect the plan change."
+      }
+    ]
+  }
+}
